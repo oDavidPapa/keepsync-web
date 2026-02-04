@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+:root{
+  /* Accent (quente) */
+  --color-primary: #C35300;   /* laranja queimado */
+  --color-warning: #F59E0B;   /* âmbar */
+
+  /* Feedback */
+  --color-danger: #FF3B6B;
+  --color-success: #1B9C85;
+
+  /* Neutros (mais premium) */
+  --color-white: #ffffff;
+  --color-dark: #2b2f38;
+  --color-dark-variant: #667085;
+  --color-info-dark: #7d8da1;
+
+  /* Background mais neutro (tira “laranja no ar”) */
+  --color-background: #f6f6f9;  /* igual seu exemplo original */
+  --color-surface: #ffffff;
+
+  /* Hover/Active: laranja BEM leve */
+  --color-light: rgba(195, 83, 0, 0.10);
+
+  /* Shadow suave e limpa */
+  --color-light-2: rgba(17, 24, 39, 0.06);
+  --box-shadow: 0 1.2rem 2.2rem var(--color-light-2);
+
+  /* Radius / spacing */
+  --card-border-radius: 1.6rem;
+  --border-radius-1: 0.7rem;
+  --border-radius-2: 1.15rem;
+
+  --card-padding: 1.4rem;
+  --padding-1: 1.0rem;
+
+  /* Sidebar widths */
+  --sidebar-collapsed-width: 5.6rem;
+  --sidebar-expanded-width: 15.5rem;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --speed: 0.3s;
+
+  /* Borders */
+  --border-color: rgba(17, 24, 39, 0.08);
+
+  /* Extras (deixa mais sofisticado) */
+  --sidebar-hover: rgba(17, 24, 39, 0.03);
+  --chip-bg: rgba(17, 24, 39, 0.04);
+
+  
+  /* Calendar source colors */
+  --src-airbnb: #FF5A5F;
+  --src-booking: #0A66C2;
+  --src-manual: #F59E0B;
+  --src-site: #22C55E;
+
+  --calendar-grid-line: rgba(17, 24, 39, 0.08);
+  --calendar-muted: rgba(102, 112, 133, 0.85);
+}
+
+.dark-mode-variables{
+  --color-background: #181a1e;
+  --color-surface: #202528;
+  --color-dark: #edeffd;
+  --color-dark-variant: #a3bdcc;
+  --color-info-dark: #9aa8ba;
+  --color-light: rgba(0,0,0,0.35);
+  --color-light-2: rgba(0,0,0,0.35);
+  --box-shadow: 0 1.6rem 2.8rem var(--color-light-2);
+  --border-color: rgba(255,255,255,0.08);
+}

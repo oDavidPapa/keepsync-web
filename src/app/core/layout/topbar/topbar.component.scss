@@ -1,0 +1,35 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  z-index: 20;
+
+  background: rgba(11,18,32,.65);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.title { min-width: 0; }
+.h { font-weight: 800; }
+.s { font-size: 12px; margin-top: 2px; }
+
+.actions { margin-left: auto; display: flex; gap: 8px; }
+
+.btn {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+
+  &.ghost { background: transparent; }
+}
+
+@media (min-width: 1025px) {
+  .btn:first-child { display: none; }
+}

@@ -1,0 +1,15 @@
+<div class="container">
+  <app-sidebar class="sidebar-host" [mobileOpen]="mobileOpen"></app-sidebar>
+
+  <main class="main">
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
+
+<div class="backdrop" *ngIf="mobileOpen" (click)="mobileOpen=false"></div>
+
+<button class="mobile-toggle" type="button" (click)="mobileOpen = !mobileOpen">
+  <span class="material-symbols-rounded">menu</span>
+</button>

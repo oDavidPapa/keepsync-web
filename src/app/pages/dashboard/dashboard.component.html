@@ -1,0 +1,202 @@
+<div class="dash">
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="title">
+      <h1>Dashboard</h1>
+      <p class="muted">Visão geral do KeepSync — dados demonstrativos</p>
+    </div>
+
+    <div class="actions">
+      <div class="segmented">
+        <button class="seg active" type="button">7d</button>
+        <button class="seg" type="button">30d</button>
+        <button class="seg" type="button">90d</button>
+      </div>
+
+      <button class="btn primary" type="button">
+        <span class="material-symbols-rounded">add</span>
+        Nova Reserva
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <section class="kpis">
+    <article class="card kpi" *ngFor="let k of kpis">
+      <div class="kpi-top">
+        <div class="kpi-label">{{ k.label }}</div>
+        <span class="pill" [class.primary]="k.tone==='primary'" [class.success]="k.tone==='success'" [class.warning]="k.tone==='warning'">
+          {{ k.delta }}
+        </span>
+      </div>
+      <div class="kpi-value">{{ k.value }}</div>
+      <div class="kpi-sub muted">Comparado ao período anterior</div>
+    </article>
+  </section>
+
+  <!-- Main grid -->
+  <section class="grid">
+    <!-- Line chart card -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <h2>Ocupação por dia</h2>
+          <p class="muted">Últimos 14 dias (fake)</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="Opções">
+          <span class="material-symbols-rounded">more_horiz</span>
+        </button>
+      </div>
+
+      <div class="line-wrap">
+        <!-- SVG fake line chart -->
+        <svg class="line" viewBox="0 0 640 220" preserveAspectRatio="none" aria-hidden="true">
+          <!-- grid -->
+          <path class="gridline" d="M0 40 H640" />
+          <path class="gridline" d="M0 90 H640" />
+          <path class="gridline" d="M0 140 H640" />
+          <path class="gridline" d="M0 190 H640" />
+
+          <!-- area -->
+          <path class="area"
+                d="M0,170
+                   C40,150 70,150 100,140
+                   C140,120 170,140 210,110
+                   C250,80 290,105 330,90
+                   C370,75 410,85 450,60
+                   C490,40 530,55 570,45
+                   C600,38 620,40 640,35
+                   L640,220 L0,220 Z" />
+
+          <!-- line -->
+          <path class="stroke"
+                d="M0,170
+                   C40,150 70,150 100,140
+                   C140,120 170,140 210,110
+                   C250,80 290,105 330,90
+                   C370,75 410,85 450,60
+                   C490,40 530,55 570,45
+                   C600,38 620,40 640,35" />
+
+          <!-- points -->
+          <circle class="dot" cx="100" cy="140" r="4"/>
+          <circle class="dot" cx="210" cy="110" r="4"/>
+          <circle class="dot" cx="330" cy="90" r="4"/>
+          <circle class="dot" cx="450" cy="60" r="4"/>
+          <circle class="dot" cx="570" cy="45" r="4"/>
+        </svg>
+
+        <div class="legend">
+          <div class="chip"><span class="swatch"></span> Ocupação (%)</div>
+          <div class="muted">Pico: 92% • Média: 74%</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Bar chart card -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <h2>Reservas por canal</h2>
+          <p class="muted">Distribuição (fake)</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="Opções">
+          <span class="material-symbols-rounded">tune</span>
+        </button>
+      </div>
+
+      <div class="bars">
+        <div class="bar-row" *ngFor="let b of channelBars">
+          <div class="bar-label">
+            <span class="dot"></span>
+            <span>{{ b.channel }}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="b.value"></div>
+          </div>
+          <div class="bar-val muted">{{ b.value }}</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Table card -->
+    <article class="card table-card">
+      <div class="card-head">
+        <div>
+          <h2>Últimas reservas</h2>
+          <p class="muted">Acompanhamento rápido</p>
+        </div>
+        <button class="btn ghost" type="button">
+          Ver todas
+          <span class="material-symbols-rounded">chevron_right</span>
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Propriedade</th>
+              <th>Hóspede</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Canal</th>
+              <th>Status</th>
+              <th class="right">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of recent">
+              <td class="strong">{{ r.property }}</td>
+              <td>{{ r.guest }}</td>
+              <td>{{ r.checkin }}</td>
+              <td>{{ r.checkout }}</td>
+              <td><span class="tag">{{ r.channel }}</span></td>
+              <td><span [class]="badgeClass(r.status)">{{ r.status }}</span></td>
+              <td class="right strong">{{ r.amount }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <!-- Alerts card -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <h2>Alertas</h2>
+          <p class="muted">Conflitos e pendências</p>
+        </div>
+      </div>
+
+      <div class="alerts">
+        <div class="alert">
+          <span class="material-symbols-rounded aicon warning">warning</span>
+          <div class="abody">
+            <div class="strong">Conflito detectado</div>
+            <div class="muted">Casa Praia (B) • 18/02</div>
+          </div>
+          <button class="btn mini" type="button">Resolver</button>
+        </div>
+
+        <div class="alert">
+          <span class="material-symbols-rounded aicon primary">schedule</span>
+          <div class="abody">
+            <div class="strong">iCal desatualizado</div>
+            <div class="muted">Airbnb • última sync há 6h</div>
+          </div>
+          <button class="btn mini ghost" type="button">Sincronizar</button>
+        </div>
+
+        <div class="alert">
+          <span class="material-symbols-rounded aicon success">check_circle</span>
+          <div class="abody">
+            <div class="strong">Tudo ok</div>
+            <div class="muted">Nenhuma falha crítica</div>
+          </div>
+          <button class="btn mini ghost" type="button">Ver logs</button>
+        </div>
+      </div>
+    </article>
+  </section>
+</div>

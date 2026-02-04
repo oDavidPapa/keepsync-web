@@ -1,0 +1,81 @@
+<div class="cal">
+  <!-- Topbar da página -->
+  <div class="cal-top">
+    <div class="left">
+      <h1>Calendário</h1>
+      <div class="sub">Exibição mensal • reservas por canal</div>
+    </div>
+
+    <div class="right">
+      <button class="btn ghost" type="button" (click)="prevMonth()">
+        <span class="material-symbols-rounded">chevron_left</span>
+      </button>
+
+      <div class="month">{{ monthLabel() }}</div>
+
+      <button class="btn ghost" type="button" (click)="nextMonth()">
+        <span class="material-symbols-rounded">chevron_right</span>
+      </button>
+
+      <button class="btn" type="button" (click)="goToday()">Hoje</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="cal-filters">
+    <button class="chip" type="button" [class.off]="!filters().airbnb" (click)="toggle('airbnb')">
+      <span class="dot airbnb"></span> Airbnb
+    </button>
+
+    <button class="chip" type="button" [class.off]="!filters().booking" (click)="toggle('booking')">
+      <span class="dot booking"></span> Booking
+    </button>
+
+    <button class="chip" type="button" [class.off]="!filters().manual" (click)="toggle('manual')">
+      <span class="dot manual"></span> Manual
+    </button>
+
+    <button class="chip" type="button" [class.off]="!filters().site" (click)="toggle('site')">
+      <span class="dot site"></span> Site
+    </button>
+  </div>
+
+  <!-- Month view -->
+  <div class="month-card">
+    <div class="dow-row">
+      <div class="dow">Seg</div>
+      <div class="dow">Ter</div>
+      <div class="dow">Qua</div>
+      <div class="dow">Qui</div>
+      <div class="dow">Sex</div>
+      <div class="dow">Sáb</div>
+      <div class="dow">Dom</div>
+    </div>
+
+    <div class="grid">
+      <div
+        class="cell"
+        *ngFor="let d of days()"
+        [class.out]="!d.inMonth"
+        [class.today]="d.isToday"
+        [class.has-booking]="d.bookings.length > 0"
+      >
+        <div class="cell-overlay">
+          <div class="cell-head">
+            <span class="num">{{ d.day }}</span>
+          </div>
+
+          <!-- linhas com dot + título (mostra até 2) -->
+          <div class="cell-body" *ngIf="d.bookings.length > 0">
+            <div class="event-line" *ngFor="let ev of d.top">
+              <span class="event-dot" [attr.data-src]="ev.source"></span>
+              <span class="event-text">{{ ev.title }}</span>
+            </div>
+
+            <span class="more" *ngIf="d.extraCount > 0">+{{ d.extraCount }} mais</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<header class="topbar">
+  <button class="btn" type="button" (click)="toggleMobile.emit()">☰</button>
+
+  <div class="title">
+    <div class="h">KeepSync</div>
+    <div class="s muted">Calendários • Reservas • Notificações</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" type="button" (click)="toggleCollapse.emit()">
+      {{ collapsed ? 'Expandir' : 'Recolher' }}
+    </button>
+  </div>
+</header>

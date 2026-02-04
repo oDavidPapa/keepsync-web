@@ -1,0 +1,266 @@
+.cal{
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* header */
+.cal-top{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cal-top h1{
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.sub{
+  margin-top: 4px;
+  color: var(--calendar-muted);
+  font-weight: 600;
+}
+.right{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.month{
+  padding: 0 0.5rem;
+  font-weight: 900;
+  color: var(--color-dark);
+  text-transform: capitalize;
+  min-width: 14rem;
+  text-align: center;
+}
+
+/* buttons fallback */
+.btn{
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--color-white);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  transition: all var(--speed) var(--ease);
+}
+.btn.ghost{
+  width: 38px;
+  padding: 0;
+  justify-content: center;
+  background: transparent;
+}
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 1.0rem 2.0rem rgba(17,24,39,0.06);
+}
+
+/* filtros */
+.cal-filters{
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.chip{
+  border: 1px solid var(--border-color);
+  background: var(--color-white);
+  border-radius: 999px;
+  height: 34px;
+  padding: 0 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  color: var(--color-dark);
+  transition: all var(--speed) var(--ease);
+}
+.chip.off{ opacity: 0.45; }
+.dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+.dot.airbnb{ background: var(--src-airbnb); }
+.dot.booking{ background: var(--src-booking); }
+.dot.manual{ background: var(--src-manual); }
+.dot.site{ background: var(--src-site); }
+
+/* ============================
+   MONTH VIEW (grid clássico)
+   ============================ */
+
+.month-card{
+  flex: 1 1 auto;
+  min-height: 0;
+
+  background: var(--color-white);
+  border: 1px solid rgba(17,24,39,0.08);
+  border-radius: 18px;
+  box-shadow: 0 1.2rem 2.2rem rgba(17,24,39,0.06);
+
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dow-row{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(17, 24, 39, 0.015);
+}
+.dow{
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 900;
+  color: var(--color-dark-variant);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.grid{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* CÉLULA */
+.cell{
+  position: relative;
+  padding: 8px 10px;
+  min-height: 92px;
+
+  border-right: 1px solid rgba(17,24,39,0.08);
+  border-bottom: 1px solid rgba(17,24,39,0.08);
+  background: #fff;
+
+  overflow: hidden;
+}
+.cell:nth-child(7n){
+  border-right: none;
+}
+
+/* fora do mês */
+.cell.out{
+  background: rgba(17, 24, 39, 0.012);
+}
+.cell.out .event-line{
+  opacity: 0.55;
+}
+
+/* hoje */
+.cell.today{
+  box-shadow: inset 0 0 0 2px rgba(195, 83, 0, 0.18);
+  z-index: 2;
+}
+.cell.today .num{
+  color: var(--color-primary);
+}
+
+/* overlay */
+.cell-overlay{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* topo */
+.cell-head{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.num{
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 0.82rem;
+  color: var(--color-dark);
+}
+.cell.has-booking .num{
+  background: rgba(17,24,39,0.04);
+  border: 1px solid rgba(17,24,39,0.06);
+}
+
+/* ====== DOT + TEXTO (SEM BORDA/CAIXA) ====== */
+
+.cell-body{
+  margin-top: 8px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* linha do evento: só alinhamento, sem fundo/borda */
+.event-line{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;          /* sem padding pra não parecer “card” */
+}
+
+/* dot mais “delicado” */
+.event-dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  transform: translateY(1px);
+  box-shadow: 0 10px 18px rgba(17,24,39,0.12);
+}
+
+/* texto */
+.event-text{
+  min-width: 0;
+  font-weight: 900;
+  font-size: 0.74rem;
+  color: rgba(17,24,39,0.86);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* +N */
+.more{
+  margin-top: 2px;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(17,24,39,0.05);
+  border: 1px solid rgba(17,24,39,0.06);
+
+  font-weight: 900;
+  font-size: 0.70rem;
+  color: rgba(17,24,39,0.70);
+}
+
+/* cores do dot */
+.event-dot[data-src="airbnb"]{ background: var(--src-airbnb); }
+.event-dot[data-src="booking"]{ background: var(--src-booking); }
+.event-dot[data-src="manual"]{ background: var(--src-manual); }
+.event-dot[data-src="site"]{ background: var(--src-site); }
+
+/* responsivo */
+@media (max-width: 1100px){
+  .cell{ min-height: 120px; }
+}
+@media (max-width: 860px){
+  .dow{ padding: 10px 6px; font-size: 0.78rem; }
+  .cell{ padding: 8px; }
+  .event-text{ font-size: 0.76rem; }
+}
