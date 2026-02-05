@@ -3,8 +3,6 @@ import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 type Source = 'airbnb' | 'booking' | 'manual' | 'site';
-type Housekeeping = 'dirty' | 'cleaned';
-type Checkin = 'pending' | 'checkedin';
 
 interface Reservation {
   id: string;
@@ -12,10 +10,8 @@ interface Reservation {
   propertyName: string;
   guest: string;
   source: Source;
-  start: string; // yyyy-mm-dd (check-in)
-  end: string;   // yyyy-mm-dd (check-out) [start, end)
-  checkin: Checkin;
-  housekeeping: Housekeeping;
+  start: string;
+  end: string; // [start, end)
 }
 
 interface DayCell {
@@ -24,7 +20,8 @@ interface DayCell {
   day: number;
   inMonth: boolean;
   isToday: boolean;
-  bookings: Reservation[]; // reservas que ocupam o dia
+  bookings: Reservation[];
+  hasConflict: boolean;
 }
 
 interface Week {
@@ -35,8 +32,8 @@ interface Week {
 
 interface Segment {
   reservation: Reservation;
-  startCol: number; // 0..6
-  endCol: number;   // 0..6 (inclusive)
+  startCol: number;
+  endCol: number;
   isStart: boolean;
   isEnd: boolean;
 }
@@ -51,7 +48,6 @@ type SegmentLane = Segment[];
   styleUrl: './calendar-month.component.scss',
 })
 export class CalendarMonthComponent {
-  // Mock fixo para validar layout (Fev/2026)
   private readonly _month = signal(this.startOfMonth(new Date(2026, 1, 1)));
   month = computed(() => this._month());
 
@@ -62,10 +58,8 @@ export class CalendarMonthComponent {
     site: true,
   });
 
-  // filtro por propriedade
   selectedPropertyId = signal<string>('all');
 
-  // Mock propriedades
   properties = signal<{ id: string; name: string }[]>([
     { id: 'p1', name: 'Apto Centro (101)' },
     { id: 'p2', name: 'Casa Praia (B)' },
@@ -73,86 +67,14 @@ export class CalendarMonthComponent {
     { id: 'p4', name: 'Loft Garden (7)' },
   ]);
 
-  // ✅ Mock reservas (com status)
   reservations = signal<Reservation[]>([
-    {
-      id: 'r1',
-      propertyId: 'p1',
-      propertyName: 'Apto Centro (101)',
-      guest: 'Marina',
-      source: 'airbnb',
-      start: '2026-02-03',
-      end: '2026-02-07',
-      checkin: 'checkedin',
-      housekeeping: 'dirty',
-    },
-    {
-      id: 'r2',
-      propertyId: 'p2',
-      propertyName: 'Casa Praia (B)',
-      guest: 'Pedro',
-      source: 'booking',
-      start: '2026-02-06',
-      end: '2026-02-09',
-      checkin: 'pending',
-      housekeeping: 'dirty',
-    },
-    {
-      id: 'r3',
-      propertyId: 'p3',
-      propertyName: 'Studio Vila (3A)',
-      guest: 'Ana',
-      source: 'manual',
-      start: '2026-02-09',
-      end: '2026-02-10',
-      checkin: 'checkedin',
-      housekeeping: 'cleaned',
-    },
-    {
-      id: 'r4',
-      propertyId: 'p1',
-      propertyName: 'Apto Centro (101)',
-      guest: 'Bruna',
-      source: 'airbnb',
-      start: '2026-02-12',
-      end: '2026-02-15',
-      checkin: 'pending',
-      housekeeping: 'dirty',
-    },
-    {
-      id: 'r5',
-      propertyId: 'p2',
-      propertyName: 'Casa Praia (B)',
-      guest: 'Diego',
-      source: 'booking',
-      start: '2026-02-18',
-      end: '2026-02-22',
-      checkin: 'checkedin',
-      housekeeping: 'cleaned',
-    },
-    {
-      id: 'r6',
-      propertyId: 'p4',
-      propertyName: 'Loft Garden (7)',
-      guest: 'Carlos',
-      source: 'site',
-      start: '2026-02-25',
-      end: '2026-02-28',
-      checkin: 'pending',
-      housekeeping: 'dirty',
-    },
-    // Long stay atravessando mês
-    {
-      id: 'r7',
-      propertyId: 'p2',
-      propertyName: 'Casa Praia (B)',
-      guest: 'Long Stay',
-      source: 'booking',
-      start: '2026-02-20',
-      end: '2026-03-05',
-      checkin: 'checkedin',
-      housekeeping: 'dirty',
-    },
+    { id: 'r1', propertyId: 'p1', propertyName: 'Apto Centro (101)', guest: 'Marina', source: 'airbnb', start: '2026-02-03', end: '2026-02-07' },
+    { id: 'r2', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Pedro', source: 'booking', start: '2026-02-06', end: '2026-02-09' },
+    { id: 'r3', propertyId: 'p3', propertyName: 'Studio Vila (3A)', guest: 'Ana', source: 'manual', start: '2026-02-09', end: '2026-02-10' },
+    { id: 'r4', propertyId: 'p1', propertyName: 'Apto Centro (101)', guest: 'Bruna', source: 'airbnb', start: '2026-02-12', end: '2026-02-15' },
+    { id: 'r5', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Diego', source: 'booking', start: '2026-02-18', end: '2026-02-22' },
+    { id: 'r6', propertyId: 'p4', propertyName: 'Loft Garden (7)', guest: 'Carlos', source: 'site', start: '2026-02-25', end: '2026-02-28' },
+    { id: 'r7', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Long Stay', source: 'booking', start: '2026-02-20', end: '2026-03-05' },
   ]);
 
   monthLabel = computed(() => {
@@ -160,11 +82,9 @@ export class CalendarMonthComponent {
     return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   });
 
-  // ✅ 42 dias (6 semanas)
   days = computed<DayCell[]>(() => {
     const monthStart = this.month();
     const gridStart = this.startOfWeek(this.startOfMonth(monthStart));
-
     const todayIso = this.toISO(new Date());
 
     const srcFiltered = this.reservations().filter(r => this.filters()[r.source]);
@@ -181,6 +101,12 @@ export class CalendarMonthComponent {
       const iso = this.toISO(d);
       const bookings = propFiltered.filter(ev => this.intersectsDay(ev, iso));
 
+      const counts = new Map<string, number>();
+      for (const b of bookings) {
+        counts.set(b.propertyId, (counts.get(b.propertyId) ?? 0) + 1);
+      }
+      const hasConflict = Array.from(counts.values()).some(v => v >= 2);
+
       out.push({
         date: d,
         iso,
@@ -188,17 +114,15 @@ export class CalendarMonthComponent {
         inMonth: d.getMonth() === monthStart.getMonth(),
         isToday: iso === todayIso,
         bookings,
+        hasConflict,
       });
     }
     return out;
   });
 
-  // ✅ semanas com “lanes” (barras Gantt)
   weeks = computed<Week[]>(() => {
     const allDays = this.days();
-    const monthStart = this.month();
 
-    // reservas filtradas (mesma lógica da days)
     const srcFiltered = this.reservations().filter(r => this.filters()[r.source]);
     const propFiltered =
       this.selectedPropertyId() === 'all'
@@ -211,14 +135,12 @@ export class CalendarMonthComponent {
       const weekStart = new Date(weekDays[0].date);
       const weekEnd = new Date(weekDays[6].date);
 
-      // segmentos dessa semana
       const segments: Segment[] = [];
       for (const r of propFiltered) {
         const seg = this.segmentForWeek(r, weekStart, weekEnd);
         if (seg) segments.push(seg);
       }
 
-      // ordena para alocar lanes de forma estável
       segments.sort((a, b) => {
         if (a.startCol !== b.startCol) return a.startCol - b.startCol;
         return (b.endCol - b.startCol) - (a.endCol - a.startCol);
@@ -226,17 +148,12 @@ export class CalendarMonthComponent {
 
       const lanes = this.packIntoLanes(segments);
 
-      weeks.push({
-        weekStart,
-        days: weekDays,
-        lanes,
-      });
+      weeks.push({ weekStart, days: weekDays, lanes });
     }
 
     return weeks;
   });
 
-  // UI actions
   prevMonth() {
     const d = new Date(this.month());
     d.setMonth(d.getMonth() - 1);
@@ -258,31 +175,40 @@ export class CalendarMonthComponent {
   }
 
   createManual(day: DayCell) {
-    // mock do fluxo: aqui no futuro você abre o drawer
     console.log('Criar reserva manual em:', day.iso);
     alert(`Nova reserva manual em ${day.iso}`);
   }
 
-  // helpers
+  showCheckinIcon(r: Reservation, isoDay: string): boolean {
+    return r.start === isoDay;
+  }
+
+  showCheckoutIcon(r: Reservation, isoDay: string): boolean {
+    return this.addDaysISO(r.end, -1) === isoDay;
+  }
+
+  dayCheckinCount(d: DayCell): number {
+    return d.bookings.filter(r => this.showCheckinIcon(r, d.iso)).length;
+  }
+
+  dayCheckoutCount(d: DayCell): number {
+    return d.bookings.filter(r => this.showCheckoutIcon(r, d.iso)).length;
+  }
+
   sourceLetter(src: Source): string {
     return src === 'airbnb' ? 'A' : src === 'booking' ? 'B' : src === 'manual' ? 'M' : 'S';
   }
 
-  // ---- core helpers ----
   private intersectsDay(ev: Reservation, isoDay: string): boolean {
-    // [start, end) => checkout não ocupa o dia
     return ev.start <= isoDay && isoDay < ev.end;
   }
 
   private segmentForWeek(r: Reservation, weekStart: Date, weekEnd: Date): Segment | null {
-    // precisamos calcular a interseção entre [r.start, r.end) e [weekStart, weekEnd+1)
     const wsIso = this.toISO(weekStart);
     const weIso = this.toISO(weekEnd);
 
-    // dia final ocupado é checkout-1
     const rEndOccupied = this.addDaysISO(r.end, -1);
 
-    // se não intersecta, não cria segmento
     if (rEndOccupied < wsIso || r.start > weIso) return null;
 
     const startIso = r.start < wsIso ? wsIso : r.start;
@@ -314,7 +240,6 @@ export class CalendarMonthComponent {
       if (!placed) lanes.push([seg]);
     }
 
-    // ordena por coluna dentro de cada lane (bonitinho)
     for (const lane of lanes) lane.sort((a, b) => a.startCol - b.startCol);
 
     return lanes;
@@ -353,14 +278,13 @@ export class CalendarMonthComponent {
   }
 
   private startOfWeek(d: Date): Date {
-    // semana começa segunda
     const date = new Date(d);
-    const day = (date.getDay() + 6) % 7; // 0=seg
+    const day = (date.getDay() + 6) % 7;
     date.setDate(date.getDate() - day);
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
 
   laneRows(count: number): string {
-  return `repeat(${Math.max(1, count)}, 22px)`;
-}
+    return `repeat(${Math.max(1, count)}, 22px)`;
+  }
 }

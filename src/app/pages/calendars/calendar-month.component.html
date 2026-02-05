@@ -62,83 +62,89 @@
       <div class="dow">Dom</div>
     </div>
 
-    <!-- 6 semanas -->
-    <div class="weeks">
-      <div class="week" *ngFor="let w of weeks()">
-        <!-- Células do dia -->
-        <div
-          class="cell"
-          *ngFor="let d of w.days"
-          [class.out]="!d.inMonth"
-          [class.today]="d.isToday"
-          [class.has-booking]="d.bookings.length > 0"
-          [class.empty]="d.bookings.length === 0"
-        >
-          <div class="cell-head">
-            <span class="num">{{ d.day }}</span>
-          </div>
-
-          <!-- + no hover para dia vazio -->
-          <button
-            class="add"
-            type="button"
-            title="Nova reserva manual"
-            (click)="createManual(d)"
-            *ngIf="d.bookings.length === 0"
-          >
-            <span class="material-symbols-rounded">add</span>
-          </button>
-        </div>
-
-        <!-- Lanes (barras) -->
-        <div class="lanes" [style.gridTemplateRows]="laneRows(w.lanes.length)">
-          <ng-container *ngFor="let lane of w.lanes; let row = index">
+    <!-- ✅ viewport com scroll -->
+    <div class="month-viewport">
+      <!-- ✅ wrapper para permitir scroll horizontal quando precisar -->
+      <div class="month-grid">
+        <!-- 6 semanas -->
+        <div class="weeks">
+          <div class="week" *ngFor="let w of weeks()">
+            <!-- Células do dia -->
             <div
-              class="bar"
-              *ngFor="let seg of lane"
-              [attr.data-src]="seg.reservation.source"
-              [style.gridRow]="row + 1"
-              [style.gridColumn]="(seg.startCol + 1) + ' / ' + (seg.endCol + 2)"
-              [class.start]="seg.isStart"
-              [class.end]="seg.isEnd"
-              [class.mid]="!seg.isStart && !seg.isEnd"
+              class="cell"
+              *ngFor="let d of w.days"
+              [class.out]="!d.inMonth"
+              [class.today]="d.isToday"
+              [class.has-booking]="d.bookings.length > 0"
+              [class.empty]="d.bookings.length === 0"
+              [class.conflict]="d.hasConflict"
             >
-              <!-- canal acessível: cor + letra -->
-              <span class="src-badge" [attr.data-src]="seg.reservation.source">
-                {{ sourceLetter(seg.reservation.source) }}
-              </span>
+              <div class="cell-head">
+                <span class="num">{{ d.day }}</span>
+              </div>
 
-              <span class="bar-text">
-                {{ seg.reservation.propertyName }} • {{ seg.reservation.guest }}
-              </span>
-
-              <span class="bar-status">
-                <span
-                  class="st"
-                  [class.ok]="seg.reservation.checkin === 'checkedin'"
-                  [class.pending]="seg.reservation.checkin === 'pending'"
-                  title="Check-in"
-                >
-                  <span class="material-symbols-rounded">
-                    {{ seg.reservation.checkin === 'checkedin' ? 'check_circle' : 'schedule' }}
+              <!-- ✅ Ícones do dia (somente por data) -->
+              <div class="cell-status" *ngIf="d.bookings.length > 0">
+                <ng-container *ngFor="let r of d.bookings">
+                  <span class="cs checkin" *ngIf="showCheckinIcon(r, d.iso)" title="Check-in">
+                    <span class="material-symbols-rounded">check_circle</span>
                   </span>
-                </span>
 
-                <span
-                  class="st"
-                  [class.ok]="seg.reservation.housekeeping === 'cleaned'"
-                  [class.pending]="seg.reservation.housekeeping === 'dirty'"
-                  title="Limpeza"
-                >
-                  <span class="material-symbols-rounded">
-                    {{ seg.reservation.housekeeping === 'cleaned' ? 'mop' : 'warning' }}
+                  <span class="cs checkout" *ngIf="showCheckoutIcon(r, d.iso)" title="Checkout">
+                    <span class="material-symbols-rounded">mop</span>
                   </span>
+                </ng-container>
+
+                <!-- ✅ +N (mobile) -->
+                <span class="cs more" title="Mais ações">
+                  +{{ dayCheckinCount(d) + dayCheckoutCount(d) }}
                 </span>
+              </div>
+
+              <!-- Conflito -->
+              <span class="conflict-flag" *ngIf="d.hasConflict" title="Conflito (overbooking)">
+                <span class="material-symbols-rounded">error</span>
               </span>
+
+              <!-- + no hover para dia vazio -->
+              <button
+                class="add"
+                type="button"
+                title="Nova reserva manual"
+                (click)="createManual(d)"
+                *ngIf="d.bookings.length === 0"
+              >
+                <span class="material-symbols-rounded">add</span>
+              </button>
             </div>
-          </ng-container>
+
+            <!-- Lanes (barras) -->
+            <div class="lanes" [style.gridTemplateRows]="laneRows(w.lanes.length)">
+              <ng-container *ngFor="let lane of w.lanes; let row = index">
+                <div
+                  class="bar"
+                  *ngFor="let seg of lane"
+                  [attr.data-src]="seg.reservation.source"
+                  [style.gridRow]="row + 1"
+                  [style.gridColumn]="(seg.startCol + 1) + ' / ' + (seg.endCol + 2)"
+                  [class.start]="seg.isStart"
+                  [class.end]="seg.isEnd"
+                  [class.mid]="!seg.isStart && !seg.isEnd"
+                >
+                  <span class="src-badge" [attr.data-src]="seg.reservation.source">
+                    {{ sourceLetter(seg.reservation.source) }}
+                  </span>
+
+                  <span class="bar-text">
+                    {{ seg.reservation.propertyName }} • {{ seg.reservation.guest }}
+                  </span>
+                </div>
+              </ng-container>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <!-- /viewport -->
   </div>
 </div>
