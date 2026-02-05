@@ -1,9 +1,9 @@
 <div class="cal">
-  <!-- Topbar da página -->
+  <!-- Top -->
   <div class="cal-top">
     <div class="left">
       <h1>Calendário</h1>
-      <div class="sub">Exibição mensal • reservas por canal</div>
+      <div class="sub">Exibição mensal • ocupação por canal</div>
     </div>
 
     <div class="right">
@@ -21,26 +21,36 @@
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="cal-filters">
-    <button class="chip" type="button" [class.off]="!filters().airbnb" (click)="toggle('airbnb')">
-      <span class="dot airbnb"></span> Airbnb
-    </button>
+  <!-- Filters row -->
+  <div class="filters-row">
+    <div class="cal-filters">
+      <button class="chip" type="button" [class.off]="!filters().airbnb" (click)="toggle('airbnb')">
+        <span class="dot airbnb"></span> Airbnb
+      </button>
 
-    <button class="chip" type="button" [class.off]="!filters().booking" (click)="toggle('booking')">
-      <span class="dot booking"></span> Booking
-    </button>
+      <button class="chip" type="button" [class.off]="!filters().booking" (click)="toggle('booking')">
+        <span class="dot booking"></span> Booking
+      </button>
 
-    <button class="chip" type="button" [class.off]="!filters().manual" (click)="toggle('manual')">
-      <span class="dot manual"></span> Manual
-    </button>
+      <button class="chip" type="button" [class.off]="!filters().manual" (click)="toggle('manual')">
+        <span class="dot manual"></span> Manual
+      </button>
 
-    <button class="chip" type="button" [class.off]="!filters().site" (click)="toggle('site')">
-      <span class="dot site"></span> Site
-    </button>
+      <button class="chip" type="button" [class.off]="!filters().site" (click)="toggle('site')">
+        <span class="dot site"></span> Site
+      </button>
+    </div>
+
+    <div class="prop-filter">
+      <span class="label">Propriedade</span>
+      <select class="select" [ngModel]="selectedPropertyId()" (ngModelChange)="selectedPropertyId.set($event)">
+        <option value="all">Todas</option>
+        <option *ngFor="let p of properties()" [value]="p.id">{{ p.name }}</option>
+      </select>
+    </div>
   </div>
 
-  <!-- Month view -->
+  <!-- Month Card -->
   <div class="month-card">
     <div class="dow-row">
       <div class="dow">Seg</div>
@@ -52,28 +62,81 @@
       <div class="dow">Dom</div>
     </div>
 
-    <div class="grid">
-      <div
-        class="cell"
-        *ngFor="let d of days()"
-        [class.out]="!d.inMonth"
-        [class.today]="d.isToday"
-        [class.has-booking]="d.bookings.length > 0"
-      >
-        <div class="cell-overlay">
+    <!-- 6 semanas -->
+    <div class="weeks">
+      <div class="week" *ngFor="let w of weeks()">
+        <!-- Células do dia -->
+        <div
+          class="cell"
+          *ngFor="let d of w.days"
+          [class.out]="!d.inMonth"
+          [class.today]="d.isToday"
+          [class.has-booking]="d.bookings.length > 0"
+          [class.empty]="d.bookings.length === 0"
+        >
           <div class="cell-head">
             <span class="num">{{ d.day }}</span>
           </div>
 
-          <!-- linhas com dot + título (mostra até 2) -->
-          <div class="cell-body" *ngIf="d.bookings.length > 0">
-            <div class="event-line" *ngFor="let ev of d.top">
-              <span class="event-dot" [attr.data-src]="ev.source"></span>
-              <span class="event-text">{{ ev.title }}</span>
-            </div>
+          <!-- + no hover para dia vazio -->
+          <button
+            class="add"
+            type="button"
+            title="Nova reserva manual"
+            (click)="createManual(d)"
+            *ngIf="d.bookings.length === 0"
+          >
+            <span class="material-symbols-rounded">add</span>
+          </button>
+        </div>
 
-            <span class="more" *ngIf="d.extraCount > 0">+{{ d.extraCount }} mais</span>
-          </div>
+        <!-- Lanes (barras) -->
+        <div class="lanes" [style.gridTemplateRows]="laneRows(w.lanes.length)">
+          <ng-container *ngFor="let lane of w.lanes; let row = index">
+            <div
+              class="bar"
+              *ngFor="let seg of lane"
+              [attr.data-src]="seg.reservation.source"
+              [style.gridRow]="row + 1"
+              [style.gridColumn]="(seg.startCol + 1) + ' / ' + (seg.endCol + 2)"
+              [class.start]="seg.isStart"
+              [class.end]="seg.isEnd"
+              [class.mid]="!seg.isStart && !seg.isEnd"
+            >
+              <!-- canal acessível: cor + letra -->
+              <span class="src-badge" [attr.data-src]="seg.reservation.source">
+                {{ sourceLetter(seg.reservation.source) }}
+              </span>
+
+              <span class="bar-text">
+                {{ seg.reservation.propertyName }} • {{ seg.reservation.guest }}
+              </span>
+
+              <span class="bar-status">
+                <span
+                  class="st"
+                  [class.ok]="seg.reservation.checkin === 'checkedin'"
+                  [class.pending]="seg.reservation.checkin === 'pending'"
+                  title="Check-in"
+                >
+                  <span class="material-symbols-rounded">
+                    {{ seg.reservation.checkin === 'checkedin' ? 'check_circle' : 'schedule' }}
+                  </span>
+                </span>
+
+                <span
+                  class="st"
+                  [class.ok]="seg.reservation.housekeeping === 'cleaned'"
+                  [class.pending]="seg.reservation.housekeeping === 'dirty'"
+                  title="Limpeza"
+                >
+                  <span class="material-symbols-rounded">
+                    {{ seg.reservation.housekeeping === 'cleaned' ? 'mop' : 'warning' }}
+                  </span>
+                </span>
+              </span>
+            </div>
+          </ng-container>
         </div>
       </div>
     </div>
