@@ -10,8 +10,8 @@ interface Reservation {
   propertyName: string;
   guest: string;
   source: Source;
-  start: string;
-  end: string; // [start, end)
+  start: string; // yyyy-mm-dd (check-in)
+  end: string;   // yyyy-mm-dd (check-out) [start, end)
 }
 
 interface DayCell {
@@ -32,8 +32,8 @@ interface Week {
 
 interface Segment {
   reservation: Reservation;
-  startCol: number;
-  endCol: number;
+  startCol: number; // 0..6
+  endCol: number;   // 0..6 (inclusive)
   isStart: boolean;
   isEnd: boolean;
 }
@@ -50,6 +50,9 @@ type SegmentLane = Segment[];
 export class CalendarMonthComponent {
   private readonly _month = signal(this.startOfMonth(new Date(2026, 1, 1)));
   month = computed(() => this._month());
+
+  private readonly _isMobile = signal<boolean>(false);
+  isMobile = computed(() => this._isMobile());
 
   filters = signal<Record<Source, boolean>>({
     airbnb: true,
@@ -76,6 +79,14 @@ export class CalendarMonthComponent {
     { id: 'r6', propertyId: 'p4', propertyName: 'Loft Garden (7)', guest: 'Carlos', source: 'site', start: '2026-02-25', end: '2026-02-28' },
     { id: 'r7', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Long Stay', source: 'booking', start: '2026-02-20', end: '2026-03-05' },
   ]);
+
+  constructor() {
+    const mql = window.matchMedia('(max-width: 860px)');
+    const apply = () => this._isMobile.set(mql.matches);
+    apply();
+    if (mql.addEventListener) mql.addEventListener('change', apply);
+    else (mql as any).addListener(apply);
+  }
 
   monthLabel = computed(() => {
     const d = this.month();
@@ -187,14 +198,6 @@ export class CalendarMonthComponent {
     return this.addDaysISO(r.end, -1) === isoDay;
   }
 
-  dayCheckinCount(d: DayCell): number {
-    return d.bookings.filter(r => this.showCheckinIcon(r, d.iso)).length;
-  }
-
-  dayCheckoutCount(d: DayCell): number {
-    return d.bookings.filter(r => this.showCheckoutIcon(r, d.iso)).length;
-  }
-
   sourceLetter(src: Source): string {
     return src === 'airbnb' ? 'A' : src === 'booking' ? 'B' : src === 'manual' ? 'M' : 'S';
   }
@@ -208,7 +211,6 @@ export class CalendarMonthComponent {
     const weIso = this.toISO(weekEnd);
 
     const rEndOccupied = this.addDaysISO(r.end, -1);
-
     if (rEndOccupied < wsIso || r.start > weIso) return null;
 
     const startIso = r.start < wsIso ? wsIso : r.start;
@@ -225,10 +227,8 @@ export class CalendarMonthComponent {
 
   private packIntoLanes(segs: Segment[]): SegmentLane[] {
     const lanes: SegmentLane[] = [];
-
     for (const seg of segs) {
       let placed = false;
-
       for (const lane of lanes) {
         if (!this.collidesAny(seg, lane)) {
           lane.push(seg);
@@ -236,12 +236,9 @@ export class CalendarMonthComponent {
           break;
         }
       }
-
       if (!placed) lanes.push([seg]);
     }
-
     for (const lane of lanes) lane.sort((a, b) => a.startCol - b.startCol);
-
     return lanes;
   }
 

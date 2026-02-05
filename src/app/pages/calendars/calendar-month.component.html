@@ -51,7 +51,7 @@
   </div>
 
   <!-- Month Card -->
-  <div class="month-card">
+  <div class="month-card" [class.mobile]="isMobile()">
     <div class="dow-row">
       <div class="dow">Seg</div>
       <div class="dow">Ter</div>
@@ -62,14 +62,13 @@
       <div class="dow">Dom</div>
     </div>
 
-    <!-- ✅ viewport com scroll -->
-    <div class="month-viewport">
-      <!-- ✅ wrapper para permitir scroll horizontal quando precisar -->
-      <div class="month-grid">
-        <!-- 6 semanas -->
+    <!-- Desktop: rola se precisar / Mobile: SEM scroll -->
+    <div class="month-viewport" [class.no-scroll]="isMobile()">
+      <div class="month-grid" [class.mini]="isMobile()">
         <div class="weeks">
           <div class="week" *ngFor="let w of weeks()">
-            <!-- Células do dia -->
+
+            <!-- cells -->
             <div
               class="cell"
               *ngFor="let d of w.days"
@@ -78,13 +77,14 @@
               [class.has-booking]="d.bookings.length > 0"
               [class.empty]="d.bookings.length === 0"
               [class.conflict]="d.hasConflict"
+              [class.mini-cell]="isMobile()"
             >
               <div class="cell-head">
                 <span class="num">{{ d.day }}</span>
               </div>
 
-              <!-- ✅ Ícones do dia (somente por data) -->
-              <div class="cell-status" *ngIf="d.bookings.length > 0">
+              <!-- DESKTOP: ícones checkin/checkout -->
+              <div class="cell-status" *ngIf="!isMobile() && d.bookings.length > 0">
                 <ng-container *ngFor="let r of d.bookings">
                   <span class="cs checkin" *ngIf="showCheckinIcon(r, d.iso)" title="Check-in">
                     <span class="material-symbols-rounded">check_circle</span>
@@ -94,32 +94,37 @@
                     <span class="material-symbols-rounded">mop</span>
                   </span>
                 </ng-container>
-
-                <!-- ✅ +N (mobile) -->
-                <span class="cs more" title="Mais ações">
-                  +{{ dayCheckinCount(d) + dayCheckoutCount(d) }}
-                </span>
               </div>
 
-              <!-- Conflito -->
-              <span class="conflict-flag" *ngIf="d.hasConflict" title="Conflito (overbooking)">
+              <!-- MOBILE: dots por canal -->
+              <div class="mini-dots" *ngIf="isMobile() && d.bookings.length > 0">
+                <span
+                  class="dot-mini"
+                  *ngFor="let r of d.bookings | slice:0:3"
+                  [attr.data-src]="r.source"
+                ></span>
+                <span class="more-mini" *ngIf="d.bookings.length > 3">+{{ d.bookings.length - 3 }}</span>
+              </div>
+
+              <!-- conflito -->
+              <span class="conflict-flag" *ngIf="!isMobile() && d.hasConflict" title="Conflito (overbooking)">
                 <span class="material-symbols-rounded">error</span>
               </span>
 
-              <!-- + no hover para dia vazio -->
+              <!-- add -->
               <button
                 class="add"
                 type="button"
                 title="Nova reserva manual"
                 (click)="createManual(d)"
-                *ngIf="d.bookings.length === 0"
+                *ngIf="!isMobile() && d.bookings.length === 0"
               >
                 <span class="material-symbols-rounded">add</span>
               </button>
             </div>
 
-            <!-- Lanes (barras) -->
-            <div class="lanes" [style.gridTemplateRows]="laneRows(w.lanes.length)">
+            <!-- DESKTOP: barras -->
+            <div class="lanes" *ngIf="!isMobile()" [style.gridTemplateRows]="laneRows(w.lanes.length)">
               <ng-container *ngFor="let lane of w.lanes; let row = index">
                 <div
                   class="bar"
@@ -141,10 +146,10 @@
                 </div>
               </ng-container>
             </div>
+
           </div>
         </div>
       </div>
     </div>
-    <!-- /viewport -->
   </div>
 </div>

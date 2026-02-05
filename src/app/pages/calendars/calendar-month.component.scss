@@ -143,7 +143,6 @@
   grid-template-columns: repeat(7, 1fr);
   border-bottom: 1px solid var(--border-color);
   background: rgba(17, 24, 39, 0.015);
-  flex: 0 0 auto;
 }
 .dow{
   padding: 10px 8px;
@@ -154,37 +153,37 @@
   letter-spacing: 0.02em;
 }
 
-/* ✅ viewport com scroll vertical */
+/* viewport (desktop) */
 .month-viewport{
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;     /* ✅ scroll vertical */
-  overflow-x: auto;     /* ✅ scroll horizontal quando precisar */
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ✅ evita esmagar o grid em telas pequenas: vira scroll horizontal */
+/* month grid */
 .month-grid{
-  min-width: 980px;     /* ajuste: impede ficar micro e quebrar tudo */
+  min-width: 980px; /* desktop: pode rolar horizontal se precisar */
+}
+.month-grid.mini{
+  min-width: 0;
 }
 
-/* weeks container */
+/* weeks */
 .weeks{
   display: flex;
   flex-direction: column;
 }
-
-/* week row */
 .week{
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   border-bottom: 1px solid rgba(17,24,39,0.08);
 }
-.week:last-child{
-  border-bottom: none;
-}
+.week:last-child{ border-bottom: none; }
 
-/* day cell */
+/* cells (desktop default) */
 .cell{
   position: relative;
   min-height: 104px;
@@ -192,32 +191,21 @@
   border-right: 1px solid rgba(17,24,39,0.08);
   background: #fff;
 }
-.cell:nth-child(7n){
-  border-right: none;
-}
+.cell:nth-child(7n){ border-right: none; }
 
-.cell.out{
-  background: rgba(17, 24, 39, 0.012);
-}
+.cell.out{ background: rgba(17, 24, 39, 0.012); }
 
-.cell.today {
-  background: linear-gradient(
-    to bottom,
-    rgba(195, 83, 0, 0.06),
-    rgba(195, 83, 0, 0.02)
-  );
+.cell.today{
+  background: linear-gradient(to bottom, rgba(195, 83, 0, 0.06), rgba(195, 83, 0, 0.02));
 }
-
-.cell.today .num{
-  color: var(--color-primary);
-}
+.cell.today .num{ color: var(--color-primary); }
 
 .cell.has-booking .num{
   background: rgba(17,24,39,0.04);
   border: 1px solid rgba(17,24,39,0.06);
 }
 
-/* ✅ conflito: borda vermelha quadrada */
+/* conflito quadrado */
 .cell.conflict{
   box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.55);
   border-radius: 0;
@@ -240,17 +228,14 @@
   color: var(--color-dark);
 }
 
-/* ✅ slot dos ícones abaixo do número (responsivo) */
+/* icons */
 .cell-status{
   position: absolute;
   top: 34px;
   right: 10px;
-
-  display: grid;
-  grid-auto-flow: row;
-  grid-template-columns: repeat(2, 18px);
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-
   z-index: 3;
   pointer-events: none;
 }
@@ -264,28 +249,10 @@
   background: rgba(255,255,255,0.72);
   border: 1px solid rgba(17,24,39,0.10);
 }
+.cs .material-symbols-rounded{ font-size: 16px; line-height: 1; }
+.cs.checkin{ color: rgba(34,197,94,0.95); }
+.cs.checkout{ color: rgba(245,158,11,0.95); }
 
-.cs .material-symbols-rounded{
-  font-size: 16px;
-  line-height: 1;
-}
-
-.cs.checkin{
-  color: rgba(34,197,94,0.95);
-}
-.cs.checkout{
-  color: rgba(245,158,11,0.95);
-}
-
-/* +N (só no mobile) */
-.cs.more{
-  display: none;
-  font-weight: 1000;
-  font-size: 0.65rem;
-  color: rgba(17,24,39,0.75);
-}
-
-/* conflito flag vermelho */
 .conflict-flag{
   position: absolute;
   top: 10px;
@@ -294,12 +261,9 @@
   z-index: 3;
   pointer-events: none;
 }
-.conflict-flag .material-symbols-rounded{
-  font-size: 18px;
-  line-height: 1;
-}
+.conflict-flag .material-symbols-rounded{ font-size: 18px; line-height: 1; }
 
-/* + hover on empty */
+/* add */
 .add{
   position: absolute;
   left: 10px;
@@ -313,27 +277,19 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-
   opacity: 0;
   transform: translateY(2px);
   transition: all var(--speed) var(--ease);
 }
-.cell.empty:hover .add{
-  opacity: 1;
-  transform: translateY(0);
-}
-.add:hover{
-  box-shadow: 0 1.0rem 2.0rem rgba(17,24,39,0.08);
-}
+.cell.empty:hover .add{ opacity: 1; transform: translateY(0); }
 
-/* lanes overlay (gantt) */
+/* lanes */
 .lanes{
   position: absolute;
   left: 0;
   right: 0;
   top: 36px;
   bottom: 8px;
-
   padding: 0 8px;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -341,7 +297,6 @@
   pointer-events: none;
 }
 
-/* bars */
 .bar{
   pointer-events: auto;
   height: 22px;
@@ -398,45 +353,129 @@
   text-overflow: ellipsis;
 }
 
-/* responsive */
-@media (max-width: 1100px){
-  .cell{ min-height: 120px; }
-  .bar-text{ font-size: 0.76rem; }
+/* ===================== ✅ DELL G15 / LAPTOP BAIXO ===================== */
+/* Se a altura útil estiver curta, entra em modo compacto e remove scrollbar */
+@media (max-height: 820px){
+
+  .cal{ gap: 0.65rem; }
+
+  /* topo e filtros menores */
+  .cal-top h1{ font-size: 1.45rem; }
+  .sub{ margin-top: 2px; }
+
+  .btn{ height: 34px; border-radius: 11px; }
+  .btn.ghost{ width: 34px; }
+  .chip{ height: 30px; padding: 0 10px; font-size: 0.85rem; }
+  .select{ height: 30px; }
+
+  /* IMPORTANTÍSSIMO: sem scroll aqui */
+  .month-viewport{
+    overflow: hidden !important;
+  }
+
+  /* evita scroll horizontal também */
+  .month-grid{
+    min-width: 0 !important;
+  }
+
+  /* células mais baixas */
+  .cell{
+    min-height: 86px;
+    padding: 6px 8px;
+  }
+
+  .lanes{
+    top: 32px;
+    bottom: 6px;
+    padding: 0 6px;
+    gap: 4px 6px;
+  }
+
+  .bar{
+    height: 20px;
+    border-radius: 9px;
+    padding: 0 8px;
+  }
+
+  .bar-text{
+    font-size: 0.74rem;
+  }
+
+  /* ícones um pouco menores */
+  .cell-status{ top: 30px; right: 8px; gap: 5px; }
+  .cs{ width: 16px; height: 16px; }
+  .cs .material-symbols-rounded{ font-size: 14px; }
+
+  .num{
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.78rem;
+  }
 }
 
+/* ===================== MOBILE ===================== */
 @media (max-width: 860px){
-  .filters-row{ align-items: flex-start; }
-  .cell{ padding: 8px; }
-  .lanes{ padding: 0 6px; }
 
-  /* ícones menores no mobile */
-  .cell-status{
-    right: 6px;
-    top: 32px;
-    gap: 4px;
-    grid-template-columns: repeat(2, 16px);
+  .cal-top{
+    align-items: flex-start;
   }
 
-  .cs{
-    width: 16px;
-    height: 16px;
+  .month{
+    min-width: auto;
+    font-size: 0.95rem;
   }
 
-  .cs .material-symbols-rounded{
-    font-size: 14px;
+  /* no mobile: sem scroll, grid precisa CABER */
+  .month-viewport{
+    overflow: hidden !important;
   }
 
-  /* esconde ícones extras e mostra +N */
-  .cell-status .cs:nth-child(n+4){
-    display: none;
-  }
-  .cell-status .cs.more{
-    display: grid;
-    place-items: center;
-  }
-
-  /* força grid com rolagem horizontal em telas pequenas */
+  /* tira min-width desktop */
   .month-grid{
-    min-width: 980px;
+    min-width: 0 !important;
+  }
+
+  /* células viram quadradinhos que se adaptam */
+  .cell.mini-cell{
+    padding: 6px;
+    min-height: unset;
+    aspect-ratio: 1 / 1;
+  }
+
+  .dow{
+    padding: 8px 2px;
+    font-size: 0.68rem;
+  }
+
+  .num{
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 0.78rem;
+  }
+
+  /* dots */
+  .mini-dots{
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+  }
+  .dot-mini{
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    display: inline-block;
+    opacity: 0.9;
+  }
+  .dot-mini[data-src="airbnb"]{ background: var(--src-airbnb); }
+  .dot-mini[data-src="booking"]{ background: var(--src-booking); }
+  .dot-mini[data-src="manual"]{ background: var(--src-manual); }
+  .dot-mini[data-src="site"]{ background: var(--src-site); }
+
+  .more-mini{
+    font-weight: 900;
+    font-size: 0.68rem;
+    color: rgba(17,24,39,0.55);
   }
 }
