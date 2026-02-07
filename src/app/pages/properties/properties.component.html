@@ -1,1 +1,216 @@
-<p>properties works!</p>
+<form class="page" [formGroup]="form" (ngSubmit)="submit()">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="title">
+      <h1>Cadastro de propriedades</h1>
+      <p class="muted">Cadastre a base da propriedade e conecte os canais de reserva.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" type="button" [disabled]="saving">Cancelar</button>
+
+      <button class="btn primary solid" type="submit" [disabled]="saving">
+        <span class="material-symbols-rounded">save</span>
+        {{ saving ? 'Salvando...' : 'Salvar propriedade' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs / Stepper -->
+  <div class="steps">
+    <!-- STEP 1 -->
+    <button
+      class="step"
+      type="button"
+      (click)="goToStep(1)"
+      [class.active]="currentStep === 1"
+      [class.done]="currentStep > 1"
+    >
+      <span class="step-index">1</span>
+
+      <div class="step-body">
+        <div class="step-title">Dados da propriedade</div>
+        <div class="step-sub">Nome e endereço</div>
+      </div>
+
+      <span class="step-mark" *ngIf="currentStep > 1">
+        <span class="material-symbols-rounded">check_circle</span>
+      </span>
+    </button>
+
+    <!-- STEP 2 -->
+    <button
+      class="step"
+      type="button"
+      (click)="goToStep(2)"
+      [class.active]="currentStep === 2"
+      [class.done]="sourcesArray.length > 0"
+    >
+      <span class="step-index">2</span>
+
+      <div class="step-body">
+        <div class="step-title">Canais e iCal</div>
+        <div class="step-sub">Fontes por canal</div>
+      </div>
+
+      <span class="step-mark" *ngIf="sourcesArray.length > 0">
+        <span class="material-symbols-rounded">check_circle</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="grid" [ngSwitch]="currentStep">
+    <!-- ===================== STEP 1 ===================== -->
+    <section class="card" *ngSwitchCase="1">
+      <div class="card-head">
+        <div class="card-title">
+          <h2>Dados da propriedade</h2>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="name">Nome da propriedade</label>
+          <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
+          <span class="error" *ngIf="hasError('name')">Informe o nome (até 120 caracteres).</span>
+        </div>
+
+        <div class="field span-2">
+          <label for="addressLine1">Endereço</label>
+          <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="Rua, número" />
+        </div>
+
+        <div class="field span-2">
+          <label for="addressLine2">Complemento</label>
+          <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referência" />
+        </div>
+
+        <div class="field">
+          <label for="city">Cidade</label>
+          <input id="city" type="text" formControlName="city" placeholder="Ex: Florianópolis" />
+        </div>
+
+        <div class="field">
+          <label for="state">Estado</label>
+          <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
+        </div>
+
+        <div class="field">
+          <label for="country">País</label>
+          <select id="country" formControlName="country">
+            <option value="" disabled>Selecione</option>
+            <option *ngFor="let c of countries" [value]="c.code">{{ c.name }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="postalCode">CEP</label>
+          <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <button class="btn ghost" type="button" (click)="resetStep1()">Limpar</button>
+        <button class="btn primary" type="button" (click)="nextStep()">
+          Continuar
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================== STEP 2 ===================== -->
+    <section class="card step2" *ngSwitchCase="2">
+      <div class="card-head split">
+        <div class="card-title">
+          <h2>Canais e iCal</h2>
+        </div>
+      </div>
+
+      <!-- Novo canal -->
+      <div class="subcard">
+        <div class="subcard-head">
+          <div class="sub-title">Novo canal</div>
+        </div>
+
+        <div class="new-row" [formGroup]="newSourceForm">
+          <div class="field">
+            <label>Canal</label>
+            <select #newChannelEl formControlName="channel">
+              <option value="" disabled>Selecione</option>
+              <option *ngFor="let c of channels" [value]="c.id">{{ c.name }}</option>
+            </select>
+            <span class="error" *ngIf="newSourceError('channel')">Selecione o canal.</span>
+          </div>
+
+          <div class="field grow">
+            <label>Link iCal</label>
+            <input type="url" formControlName="icalUrl" placeholder="https://..." />
+            <span class="error" *ngIf="newSourceError('icalUrl')">Informe o link iCal.</span>
+          </div>
+
+          <button class="btn primary" type="button" (click)="addSourceFromDraft()">
+            Adicionar
+          </button>
+        </div>
+      </div>
+
+      <!-- Canais cadastrados -->
+      <div class="subcard">
+        <div class="subcard-head">
+          <div class="sub-title">Canais cadastrados</div>
+        </div>
+
+        <div class="empty-state" *ngIf="sourcesArray.length === 0">
+          Nenhum canal cadastrado ainda.
+        </div>
+
+        <div class="table-wrap" *ngIf="sourcesArray.length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width: 220px;">Canal</th>
+                <th>Link iCal</th>
+                <th class="right" style="width: 64px;">Ação</th>
+              </tr>
+            </thead>
+
+            <tbody formArrayName="sources">
+              <tr *ngFor="let source of sourcesArray.controls; let i = index" [formGroupName]="i">
+                <td class="td-cell">
+                  {{ channelLabel(source.get('channel')?.value) }}
+                </td>
+
+                <td class="td-url">
+                  <span class="truncate" [title]="source.get('icalUrl')?.value">
+                    {{ source.get('icalUrl')?.value }}
+                  </span>
+                </td>
+
+                <td class="right">
+                  <button
+                    class="icon-btn"
+                    type="button"
+                    (click)="removeSource(i)"
+                    aria-label="Remover canal"
+                    title="Remover"
+                  >
+                    <span class="material-symbols-rounded">delete</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="sticky-foot">
+        <button class="btn ghost" type="button" (click)="prevStep()">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Voltar
+        </button>
+      </div>
+    </section>
+  </div>
+</form>
