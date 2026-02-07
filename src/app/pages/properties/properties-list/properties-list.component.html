@@ -1,0 +1,104 @@
+<div class="page">
+  <div class="page-header">
+    <div class="title">
+      <h1>Propriedades</h1>
+      <p class="muted">Gerencie as propriedades cadastradas e seus canais conectados.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary solid" type="button" (click)="goNew()">
+        <span class="material-symbols-rounded">add</span>
+        Nova propriedade
+      </button>
+    </div>
+  </div>
+
+  <section class="card">
+    <!-- Filtros -->
+    <div class="subcard">
+      <div class="subcard-head">
+        <div>
+          <div class="sub-title">Filtros</div>
+        </div>
+
+        <button class="btn ghost mini" type="button" (click)="clearFilters()">
+          Limpar
+        </button>
+      </div>
+
+      <div class="filters" [formGroup]="filterForm">
+        <div class="field grow">
+          <label>Buscar</label>
+          <input formControlName="q" placeholder="Nome, cidade..." />
+        </div>
+
+        <div class="field">
+          <label>País</label>
+          <select formControlName="country">
+            <option value="">Todos</option>
+            <option value="BR">Brasil</option>
+            <option value="US">Estados Unidos</option>
+            <option value="PT">Portugal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="subcard">
+      <div class="subcard-head">
+        <div>
+          <div class="sub-title">Propriedades cadastradas</div>
+        </div>
+      </div>
+
+      <div class="table-wrap" *ngIf="rows().length > 0; else empty">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th style="width: 220px;">Local</th>
+              <th style="width: 90px;">País</th>
+              <th class="right" style="width: 180px;">Criada em</th>
+              <th class="right" style="width: 110px;">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows()">
+              <td class="td-strong">{{ r.name }}</td>
+
+              <td class="td-muted">
+                {{ r.city }}<span *ngIf="r.state"> - {{ r.state }}</span>
+              </td>
+
+              <td class="td-muted">{{ r.country }}</td>
+
+              <td class="right td-muted">
+                {{ r.createdAt | date:'dd/MM/yyyy' }}
+              </td>
+
+              <td class="right actions-cell">
+                <button class="icon-btn" title="Editar" type="button" (click)="edit(r.publicId)">
+                  <span class="material-symbols-rounded">edit</span>
+                </button>
+
+                <button class="icon-btn danger" title="Excluir" type="button" (click)="remove(r)">
+                  <span class="material-symbols-rounded">delete</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #empty>
+        <div class="empty-state">
+          <span class="material-symbols-rounded empty-icon">home_work</span>
+          <div class="empty-title">Nenhuma propriedade encontrada</div>
+          <div class="empty-sub">Cadastre uma propriedade para começar a sincronizar seus canais.</div>
+        </div>
+      </ng-template>
+    </div>
+  </section>
+</div>

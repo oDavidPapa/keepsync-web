@@ -3,9 +3,10 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
 import { CalendarMonthComponent } from './pages/calendars/calendar-month.component';
 import { PropertiesComponent } from './pages/properties/properties.component';
+import { PropertiesListComponent } from './pages/properties/properties-list/properties-list.component';
 
 export const routes: Routes = [
-  // opcional: redireciona raiz para dashboard
+  // redireciona raiz para dashboard
   { path: '', redirectTo: 'app/dashboard', pathMatch: 'full' },
 
   {
@@ -13,12 +14,17 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     children: [
       { path: 'dashboard', component: DashboardComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'calendars', component: CalendarMonthComponent },
-      { path: 'properties', component: PropertiesComponent },
 
+      { path: 'properties', component: PropertiesListComponent },
+      { path: 'properties/new', component: PropertiesComponent },
+
+      // FUTURO: EDIÇÃO
+      // { path: 'properties/:id/edit', component: PropertiesComponent },
+
+      // fallback interno
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-
   { path: '**', redirectTo: 'app/dashboard' },
 ];

@@ -1,0 +1,50 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+import { Observable, map } from 'rxjs';
+import {
+  PropertyResponse,
+  CreatePropertyRequest,
+  UpdatePropertyRequest,
+} from './property.models';
+import { ApiEnvelope, Page } from '../../../core/api/api.models';
+
+@Injectable({ providedIn: 'root' })
+export class PropertyService {
+  private readonly baseUrl = `${environment.apiBaseUrl}/v1/properties`;
+
+  constructor(private readonly http: HttpClient) {}
+
+  list(params: { page?: number; size?: number; sort?: string }): Observable<Page<PropertyResponse>> {
+    let httpParams = new HttpParams();
+    if (params.page != null) httpParams = httpParams.set('page', params.page);
+    if (params.size != null) httpParams = httpParams.set('size', params.size);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<ApiEnvelope<Page<PropertyResponse>>>(this.baseUrl, { params: httpParams })
+      .pipe(map(r => r.data));
+  }
+
+  get(publicId: string): Observable<PropertyResponse> {
+    return this.http
+      .get<ApiEnvelope<PropertyResponse>>(`${this.baseUrl}/${publicId}`)
+      .pipe(map(r => r.data));
+  }
+
+  create(payload: CreatePropertyRequest): Observable<PropertyResponse> {
+    return this.http
+      .post<ApiEnvelope<PropertyResponse>>(this.baseUrl, payload)
+      .pipe(map(r => r.data));
+  }
+
+  update(publicId: string, payload: UpdatePropertyRequest): Observable<PropertyResponse> {
+    return this.http
+      .put<ApiEnvelope<PropertyResponse>>(`${this.baseUrl}/${publicId}`, payload)
+      .pipe(map(r => r.data));
+  }
+
+  delete(publicId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${publicId}`);
+  }
+}
