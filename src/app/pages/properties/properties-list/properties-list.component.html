@@ -59,13 +59,14 @@
               <th>Nome</th>
               <th style="width: 220px;">Local</th>
               <th style="width: 90px;">País</th>
-              <th class="right" style="width: 180px;">Criada em</th>
-              <th class="right" style="width: 110px;">Ações</th>
+              <th style="width: 120px;">Status</th>
+              <th class="right" style="width: 140px;">Criada em</th>
+              <th class="right" style="width: 160px;">Ações</th>
             </tr>
           </thead>
 
           <tbody>
-            <tr *ngFor="let r of rows()">
+            <tr *ngFor="let r of rows()" [class.inactive]="!r.active">
               <td class="td-strong">{{ r.name }}</td>
 
               <td class="td-muted">
@@ -74,6 +75,12 @@
 
               <td class="td-muted">{{ r.country }}</td>
 
+              <td>
+                <span class="badge" [class.success]="r.active" [class.warning]="!r.active">
+                  {{ r.active ? 'Ativa' : 'Inativa' }}
+                </span>
+              </td>
+
               <td class="right td-muted">
                 {{ r.createdAt | date:'dd/MM/yyyy' }}
               </td>
@@ -81,6 +88,17 @@
               <td class="right actions-cell">
                 <button class="icon-btn" title="Editar" type="button" (click)="edit(r.publicId)">
                   <span class="material-symbols-rounded">edit</span>
+                </button>
+
+                <button
+                  class="icon-btn warning"
+                  [title]="r.active ? 'Inativar' : 'Ativar'"
+                  type="button"
+                  (click)="toggleActive(r)"
+                >
+                  <span class="material-symbols-rounded">
+                    {{ r.active ? 'pause_circle' : 'play_circle' }}
+                  </span>
                 </button>
 
                 <button class="icon-btn danger" title="Excluir" type="button" (click)="remove(r)">

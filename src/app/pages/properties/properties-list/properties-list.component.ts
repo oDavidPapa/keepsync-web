@@ -7,6 +7,11 @@ import { PropertyService } from '../../../modules/properties/api/property.servic
 import { PropertyResponse } from '../../../modules/properties/api/property.models';
 import { apiErrorMessage } from '../../../modules/properties/api/api-error.util';
 
+type PropertyRow = PropertyResponse & {
+  // ✅ enquanto o backend não tem, a UI controla
+  active: boolean;
+};
+
 @Component({
   selector: 'app-properties-list',
   standalone: true,
@@ -23,7 +28,7 @@ export class PropertiesListComponent {
   readonly totalElements = signal(0);
   readonly totalPages = signal(0);
 
-  private readonly serverRows = signal<PropertyResponse[]>([]);
+  private readonly serverRows = signal<PropertyRow[]>([]);
 
   readonly filterForm = this.fb.group({
     q: [''],
@@ -57,7 +62,13 @@ export class PropertiesListComponent {
       sort: 'createdAt,desc',
     }).subscribe({
       next: (p) => {
-        this.serverRows.set(p.content ?? []);
+        // ✅ mapeia PropertyResponse -> PropertyRow (active default true)
+        const mapped: PropertyRow[] = (p.content ?? []).map((it) => ({
+          ...it,
+          active: true,
+        }));
+
+        this.serverRows.set(mapped);
         this.totalElements.set(p.totalElements ?? 0);
         this.totalPages.set(p.totalPages ?? 0);
         this.loading.set(false);
@@ -78,7 +89,7 @@ export class PropertiesListComponent {
     this.router.navigate(['/app/properties', publicId, 'edit']);
   }
 
-  remove(row: PropertyResponse) {
+  remove(row: PropertyRow) {
     const ok = confirm(`Deseja excluir a propriedade "${row.name}"?`);
     if (!ok) return;
 
@@ -89,6 +100,15 @@ export class PropertiesListComponent {
         console.error(err);
       }
     });
+  }
+
+  toggleActive(row: PropertyRow) {
+    const next = !row.active;
+
+    // mock: atualiza somente na UI
+    this.serverRows.update((list) =>
+      list.map((it) => it.publicId === row.publicId ? { ...it, active: next } : it)
+    );
   }
 
   clearFilters() {
