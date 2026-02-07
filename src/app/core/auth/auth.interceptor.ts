@@ -15,23 +15,19 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const isApiCall = req.url.startsWith(environment.apiBaseUrl);
+    if (!isApiCall) return next.handle(req);
 
-    if (!isApiCall) {
-      return next.handle(req);
-    }
+    if (req.headers.has('Authorization')) return next.handle(req);
 
-    const token = this.tokenStorage.get();
+    const token = (this.tokenStorage.get() ?? environment.mockToken ?? '').trim();
+    if (!token) return next.handle(req);
 
-    if (!token) {
-      return next.handle(req);
-    }
-
-    const authReq = req.clone({
-      setHeaders: {
-        access_token: token,
-      },
-    });
-
-    return next.handle(authReq);
+    return next.handle(
+      req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    );
   }
 }
