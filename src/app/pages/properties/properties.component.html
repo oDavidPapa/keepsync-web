@@ -7,7 +7,9 @@
     </div>
 
     <div class="actions">
-      <button class="btn ghost" type="button" [disabled]="saving()" (click)="cancel()">Cancelar</button>
+      <button class="btn ghost" type="button" [disabled]="saving()" (click)="cancel()">
+        Cancelar
+      </button>
 
       <button class="btn primary solid" type="submit" [disabled]="saving()">
         <span class="material-symbols-rounded">save</span>
@@ -112,6 +114,7 @@
       </div>
     </section>
 
+    <!-- ===================== STEP 2 ===================== -->
     <section class="card step2" *ngSwitchCase="2">
       <div class="card-head split">
         <div class="card-title">
@@ -147,41 +150,44 @@
         </div>
       </div>
 
-      <!-- Canais cadastrados -->
-      <div class="subcard">
-        <div class="subcard-head">
-          <div class="sub-title">Canais cadastrados</div>
-        </div>
-
-        <div class="empty-state" *ngIf="sourcesArray.length === 0">
-          Nenhum canal cadastrado ainda.
-        </div>
-
-        <div class="table-wrap" *ngIf="sourcesArray.length > 0">
-          <table class="table">
+      <!-- ✅ TABLE-CARD (reuso do padrão do properties-list) -->
+      <app-table-card title="Canais cadastrados" [hasRows]="sourcesArray.length > 0" [loading]="loading()"
+        [hasFilters]="false">
+        <!-- Conteúdo da tabela -->
+        <div tableContent>
+          <table class="ui-table">
             <thead>
               <tr>
-                <th style="width: 220px;">Canal</th>
+                <th style="width: 160px;">Canal</th>
                 <th>Link iCal</th>
-                <th class="right" style="width: 64px;">Ação</th>
+                <th style="width: 120px;">Status</th>
+                <th class="ui-right" style="width: 80px;">Ações</th>
               </tr>
             </thead>
 
             <tbody formArrayName="sources">
-              <tr *ngFor="let source of sourcesArray.controls; let i = index" [formGroupName]="i">
-                <td class="td-cell">
-                  {{ channelLabel(source.get('channel')?.value) }}
+              <tr *ngFor="let source of sourcesArray.controls; let i = index" [formGroupName]="i"
+                [class.ui-row-inactive]="!source.get('active')?.value">
+                <td class="ui-td-strong">
+                  {{ source.get('provider')?.value }}
                 </td>
 
-                <td class="td-url">
+                <td class="ui-td-muted">
                   <span class="truncate" [title]="source.get('icalUrl')?.value">
                     {{ source.get('icalUrl')?.value }}
                   </span>
                 </td>
 
-                <td class="right">
-                  <button class="icon-btn" type="button" (click)="removeSource(i)" aria-label="Remover canal"
-                    title="Remover">
+                <td>
+                  <!-- ✅ Padrão do sistema: success / warning (amarelo) -->
+                  <span class="ui-badge" [class.success]="source.get('active')?.value"
+                    [class.warning]="!source.get('active')?.value">
+                    {{ source.get('active')?.value ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+
+                <td class="ui-right ui-actions-cell">
+                  <button class="ui-icon-btn danger" type="button" title="Remover" (click)="removeSource(i)">
                     <span class="material-symbols-rounded">delete</span>
                   </button>
                 </td>
@@ -189,7 +195,7 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </app-table-card>
 
       <!-- Footer -->
       <div class="sticky-foot">

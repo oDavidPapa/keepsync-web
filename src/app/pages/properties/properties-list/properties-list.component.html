@@ -1,38 +1,37 @@
-<div class="page">
-  <div class="page-header">
-    <div class="title">
+<div class="ui-page">
+  <div class="ui-page-header">
+    <div class="ui-title">
       <h1>Propriedades</h1>
-      <p class="muted">Gerencie as propriedades cadastradas e seus canais conectados.</p>
+      <p class="ui-muted">Gerencie as propriedades cadastradas e seus canais conectados.</p>
     </div>
 
-    <div class="actions">
-      <button class="btn primary solid" type="button" (click)="goNew()">
+    <div class="ui-actions">
+      <button class="ui-btn primary solid" type="button" (click)="goNew()">
         <span class="material-symbols-rounded">add</span>
         Nova propriedade
       </button>
     </div>
   </div>
 
-  <section class="card">
+  <app-table-card title="Propriedades cadastradas" [hasRows]="rows().length > 0" [loading]="loading()"
+    [hasFilters]="true">
     <!-- Filtros -->
-    <div class="subcard">
-      <div class="subcard-head">
-        <div>
-          <div class="sub-title">Filtros</div>
-        </div>
+    <div tableFilters>
+      <div class="ui-subcard-head">
+        <div class="ui-sub-title">Filtros</div>
 
-        <button class="btn ghost mini" type="button" (click)="clearFilters()">
+        <button class="ui-btn ghost mini" type="button" (click)="clearFilters()">
           Limpar
         </button>
       </div>
 
-      <div class="filters" [formGroup]="filterForm">
-        <div class="field grow">
+      <div class="ui-filters" [formGroup]="filterForm">
+        <div class="ui-field grow">
           <label>Buscar</label>
           <input formControlName="q" placeholder="Nome, cidade..." />
         </div>
 
-        <div class="field">
+        <div class="ui-field">
           <label>País</label>
           <select formControlName="country">
             <option value="">Todos</option>
@@ -44,79 +43,59 @@
       </div>
     </div>
 
-    <!-- Grid -->
-    <div class="subcard">
-      <div class="subcard-head">
-        <div>
-          <div class="sub-title">Propriedades cadastradas</div>
-        </div>
-      </div>
+    <!-- Conteúdo da tabela -->
+    <div tableContent>
+      <table class="ui-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th style="width: 220px;">Local</th>
+            <th style="width: 90px;">País</th>
+            <th style="width: 120px;">Status</th>
+            <th class="ui-right" style="width: 140px;">Criada em</th>
+            <th class="ui-right" style="width: 160px;">Ações</th>
+          </tr>
+        </thead>
 
-      <div class="table-wrap" *ngIf="rows().length > 0; else empty">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th style="width: 220px;">Local</th>
-              <th style="width: 90px;">País</th>
-              <th style="width: 120px;">Status</th>
-              <th class="right" style="width: 140px;">Criada em</th>
-              <th class="right" style="width: 160px;">Ações</th>
-            </tr>
-          </thead>
+        <tbody>
+          <tr *ngFor="let property of rows()" [class.ui-row-inactive]="!property.active">
+            <td class="ui-td-strong">{{ property.name }}</td>
 
-          <tbody>
-            <tr *ngFor="let property of rows()" [class.inactive]="!property.active">
-              <td class="td-strong">{{ property.name }}</td>
+            <td class="ui-td-muted">
+              {{ property.city }}<span *ngIf="property.state"> - {{ property.state }}</span>
+            </td>
 
-              <td class="td-muted">
-                {{ property.city }}<span *ngIf="property.state"> - {{ property.state }}</span>
-              </td>
+            <td class="ui-td-muted">{{ property.country }}</td>
 
-              <td class="td-muted">{{ property.country }}</td>
+            <td>
+              <span class="ui-badge" [class.success]="property.active" [class.warning]="!property.active">
+                {{ property.active ? 'Ativa' : 'Inativa' }}
+              </span>
+            </td>
 
-              <td>
-                <span class="badge" [class.success]="property.active" [class.warning]="!property.active">
-                  {{ property.active ? 'Ativa' : 'Inativa' }}
+            <td class="ui-right ui-td-muted">
+              {{ property.createdAt | date:'dd/MM/yyyy' }}
+            </td>
+
+            <td class="ui-right ui-actions-cell">
+              <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(property.publicId)">
+                <span class="material-symbols-rounded">edit</span>
+              </button>
+
+              <button class="ui-icon-btn warning" title="Ativar/Inativar" type="button"
+                (click)="toggleActive(property)">
+                <span class="material-symbols-rounded">
+                  {{ property.active ? 'pause_circle' : 'play_circle' }}
                 </span>
-              </td>
+              </button>
 
-              <td class="right td-muted">
-                {{ property.createdAt | date:'dd/MM/yyyy' }}
-              </td>
-
-              <td class="right actions-cell">
-                <button class="icon-btn" title="Editar" type="button" (click)="edit(property.publicId)">
-                  <span class="material-symbols-rounded">edit</span>
-                </button>
-
-                <button
-                  class="icon-btn warning"
-                  [title]="property.active ? 'Inativar' : 'Ativar'"
-                  type="button"
-                  (click)="toggleActive(property)"
-                >
-                  <span class="material-symbols-rounded">
-                    {{ property.active ? 'pause_circle' : 'play_circle' }}
-                  </span>
-                </button>
-
-                <button class="icon-btn danger" title="Excluir" type="button" (click)="remove(property)">
-                  <span class="material-symbols-rounded">delete</span>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <ng-template #empty>
-        <div class="empty-state">
-          <span class="material-symbols-rounded empty-icon">home_work</span>
-          <div class="empty-title">Nenhuma propriedade encontrada</div>
-          <div class="empty-sub">Cadastre uma propriedade para começar a sincronizar seus canais.</div>
-        </div>
-      </ng-template>
+              <button class="ui-icon-btn danger" title="Excluir" type="button" (click)="remove(property)">
+                <span class="material-symbols-rounded">delete</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </section>
+  </app-table-card>
 </div>

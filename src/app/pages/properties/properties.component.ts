@@ -7,11 +7,14 @@ import { PropertyService } from '../../modules/properties/api/property.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 import { CreatePropertyRequest, UpdatePropertyRequest, PropertyResponse } from '../../modules/properties/api/property.models';
+import { CalendarSourceService } from '../../modules/calendar-source/api/calendar-source.service';
+import { CalendarSourceResponse, CreateCalendarSourceRequest } from '../../modules/calendar-source/api/calendar-source.model';
+import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
 
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TableCardComponent],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.scss',
 })
@@ -25,10 +28,10 @@ export class PropertiesComponent {
   ];
 
   readonly channels = [
-    { id: 'airbnb', name: 'Airbnb' },
-    { id: 'vrbo', name: 'VRBO' },
-    { id: 'booking', name: 'Booking' },
-    { id: 'other', name: 'Outro' },
+    { id: 'AIRBNB', name: 'AIRBNB' },
+    { id: 'VRBO', name: 'VRBO' },
+    { id: 'BOOKING', name: 'BOOKING' },
+    { id: 'OTHER', name: 'OUTRO' },
   ];
 
   readonly saving = signal(false);
@@ -62,6 +65,7 @@ export class PropertiesComponent {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly propertyService: PropertyService,
+    private readonly calendarSourceService: CalendarSourceService,
     private readonly toast: ToastService
   ) {
     this.route.paramMap.subscribe((params) => {
@@ -76,6 +80,30 @@ export class PropertiesComponent {
 
       this.publicId.set(routePublicId);
       this.loadForEdit(routePublicId);
+    });
+  }
+
+  private createSourceGroup(source: CalendarSourceResponse) {
+    return this.fb.group({
+      publicId: [source.publicId],
+      provider: [source.provider],
+      icalUrl: [source.icalUrl],
+      active: [source.active],
+    });
+  }
+
+  private loadSources(propertyPublicId: string) {
+    this.calendarSourceService.listByProperty(propertyPublicId).subscribe({
+      next: (sources) => {
+        this.sourcesArray.clear();
+        sources.forEach(source =>
+          this.sourcesArray.push(this.createSourceGroup(source))
+        );
+      },
+      error: (err) => {
+        this.toast.error('Erro ao carregar canais/iCal');
+        console.error(err);
+      }
     });
   }
 
@@ -133,29 +161,50 @@ export class PropertiesComponent {
     this.form.markAsUntouched();
   }
 
-  /* Canais */
   addSourceFromDraft() {
     this.newSourceForm.markAllAsTouched();
-    if (this.newSourceForm.invalid) return;
+    if (this.newSourceForm.invalid || !this.publicId()) return;
 
-    const { channel, icalUrl } = this.newSourceForm.getRawValue();
+    const request: CreateCalendarSourceRequest = {
+      provider: this.newSourceForm.value.channel as any,
+      icalUrl: this.newSourceForm.value.icalUrl!,
+    };
 
-    const group = this.fb.group({
-      channel: [channel, [Validators.required]],
-      icalUrl: [icalUrl, [Validators.required, Validators.maxLength(300)]],
-    });
-
-    this.sourcesArray.push(group);
-
-    this.newSourceForm.reset({ channel: '', icalUrl: '' });
-    this.newSourceForm.markAsPristine();
-    this.newSourceForm.markAsUntouched();
+    this.calendarSourceService
+      .create(this.publicId()!, request)
+      .subscribe({
+        next: (created) => {
+          this.sourcesArray.push(this.createSourceGroup(created));
+          this.newSourceForm.reset();
+          this.toast.success('Canal adicionado.');
+        },
+        error: (err) => {
+          this.toast.error('Erro ao adicionar canal.');
+          console.error(err);
+        }
+      });
   }
 
   removeSource(index: number) {
-    this.sourcesArray.removeAt(index);
-  }
+    const source = this.sourcesArray.at(index);
+    const publicId = source.get('publicId')?.value;
 
+    if (!publicId) {
+      this.sourcesArray.removeAt(index);
+      return;
+    }
+
+    this.calendarSourceService.delete(publicId).subscribe({
+      next: () => {
+        this.sourcesArray.removeAt(index);
+        this.toast.success('Canal removido.');
+      },
+      error: (err) => {
+        this.toast.error('Erro ao remover canal.');
+        console.error(err);
+      }
+    });
+  }
   /* Load edit */
   private loadForEdit(publicId: string) {
     this.loading.set(true);
@@ -164,6 +213,7 @@ export class PropertiesComponent {
       next: (property) => {
         this.applyPropertyToForm(property);
         this.loading.set(false);
+        this.loadSources(publicId);
       },
       error: (err) => {
         this.toast.error(apiErrorMessage(err, 'Não foi possível carregar a propriedade.'));
@@ -171,6 +221,7 @@ export class PropertiesComponent {
         this.router.navigate(['/app/properties']);
       }
     });
+
   }
 
   private applyPropertyToForm(property: PropertyResponse) {

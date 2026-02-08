@@ -8,11 +8,12 @@ import { PropertyResponse } from '../../../modules/properties/api/property.model
 import { apiErrorMessage } from '../../../modules/properties/api/api-error.util';
 import { ToastService } from '../../../core/ui/toast/toast.service';
 import { ConfirmService } from '../../../core/ui/confirm/confirm.service';
+import { TableCardComponent } from '../../../core/ui/table-card/table-card.component';
 
 @Component({
   selector: 'app-properties-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TableCardComponent],
   templateUrl: './properties-list.component.html',
   styleUrls: ['./properties-list.component.scss'],
 })
