@@ -1,13 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+
+import { PropertyService } from '../../modules/properties/api/property.service';
+import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
+import { ToastService } from '../../core/ui/toast/toast.service';
+
+type PropertySourceDraft = {
+  channel: string;
+  icalUrl: string;
+};
 
 @Component({
   selector: 'app-properties',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './properties.component.html',
-  styleUrl: './properties.component.scss'
+  styleUrl: './properties.component.scss',
 })
 export class PropertiesComponent {
   @ViewChild('newChannelEl') newChannelEl?: ElementRef<HTMLSelectElement>;
@@ -36,7 +46,6 @@ export class PropertiesComponent {
     sources: this.fb.array([]),
   });
 
-  // draft do “Novo canal”
   readonly newSourceForm = this.fb.group({
     channel: ['', [Validators.required]],
     icalUrl: ['', [Validators.required, Validators.maxLength(300)]],
@@ -44,17 +53,24 @@ export class PropertiesComponent {
 
   saving = false;
   submitted = false;
+  errorMessage: string | null = null;
+
   currentStep: 1 | 2 = 1;
 
-  constructor(private readonly fb: FormBuilder) {}
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly router: Router,
+    private readonly toast: ToastService,
+    private readonly propertyService: PropertyService
+  ) { }
 
-  get sourcesArray() {
+  get sourcesArray(): FormArray {
     return this.form.get('sources') as FormArray;
   }
 
-  channelLabel(id: string | null | undefined) {
-    if (!id) return '-';
-    return this.channels.find(c => c.id === id)?.name ?? id;
+  channelLabel(channelId: string | null | undefined): string {
+    if (!channelId) return '-';
+    return this.channels.find(channelOption => channelOption.id === channelId)?.name ?? channelId;
   }
 
   /* Stepper */
@@ -74,6 +90,11 @@ export class PropertiesComponent {
       return;
     }
     this.currentStep = 1;
+  }
+
+  cancel() {
+    // volta pra listagem
+    this.router.navigate(['/app/properties']);
   }
 
   resetStep1() {
@@ -100,14 +121,14 @@ export class PropertiesComponent {
     this.newSourceForm.markAllAsTouched();
     if (this.newSourceForm.invalid) return;
 
-    const { channel, icalUrl } = this.newSourceForm.getRawValue();
+    const draft = this.newSourceForm.getRawValue() as PropertySourceDraft;
 
-    const group = this.fb.group({
-      channel: [channel, [Validators.required]],
-      icalUrl: [icalUrl, [Validators.required, Validators.maxLength(300)]],
+    const sourceGroup = this.fb.group({
+      channel: [draft.channel, [Validators.required]],
+      icalUrl: [draft.icalUrl, [Validators.required, Validators.maxLength(300)]],
     });
 
-    this.sourcesArray.push(group);
+    this.sourcesArray.push(sourceGroup);
 
     this.newSourceForm.reset({ channel: '', icalUrl: '' });
     this.newSourceForm.markAsPristine();
@@ -118,9 +139,10 @@ export class PropertiesComponent {
     this.sourcesArray.removeAt(index);
   }
 
-  /* Submit */
+  /* Submit -> POST /v1/properties */
   submit() {
     this.submitted = true;
+    this.errorMessage = null;
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -128,15 +150,38 @@ export class PropertiesComponent {
     }
 
     this.saving = true;
-    const payload = this.form.getRawValue();
-    console.log('CreatePropertyRequest', payload);
 
-    setTimeout(() => {
-      this.saving = false;
-    }, 600);
+    const rawValue = this.form.getRawValue();
+    const createRequest = {
+      name: rawValue.name!,
+      timezone: 'America/Sao_Paulo', 
+      addressLine1: rawValue.addressLine1 || null,
+      addressLine2: rawValue.addressLine2 || null,
+      city: rawValue.city || null,
+      state: rawValue.state || null,
+      country: rawValue.country || null,
+      postalCode: rawValue.postalCode || null,
+
+      sources: (rawValue.sources ?? []).map((sourceItem: any) => ({
+        channel: sourceItem.channel,
+        icalUrl: sourceItem.icalUrl,
+      })),
+    };
+
+    this.propertyService.create(createRequest).subscribe({
+      next: (createdProperty) => {
+        this.saving = false;
+        this.toast.success('Propriedade cadastrada com sucesso.');
+        this.router.navigate(['/app/properties']);
+      },
+      error: (error) => {
+        this.saving = false;
+        this.errorMessage = apiErrorMessage(error, 'Não foi possível salvar a propriedade.');
+        console.error(error);
+      },
+    });
   }
 
-  /* Errors */
   hasError(controlName: keyof typeof this.form.controls) {
     const control = this.form.get(controlName);
     return !!control && control.invalid && (control.dirty || control.touched || this.submitted);
@@ -158,7 +203,7 @@ export class PropertiesComponent {
       'postalCode',
     ] as const;
 
-    return controls.some((key) => this.form.get(key)?.invalid);
+    return controls.some((controlName) => this.form.get(controlName)?.invalid);
   }
 
   private markStepOneTouched() {
@@ -172,6 +217,6 @@ export class PropertiesComponent {
       'postalCode',
     ] as const;
 
-    controls.forEach((key) => this.form.get(key)?.markAsTouched());
+    controls.forEach((controlName) => this.form.get(controlName)?.markAsTouched());
   }
 }

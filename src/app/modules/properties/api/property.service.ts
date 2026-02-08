@@ -13,7 +13,7 @@ import { ApiEnvelope, Page } from '../../../core/api/api.models';
 export class PropertyService {
   private readonly baseUrl = `${environment.apiBaseUrl}/v1/properties`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) { }
 
   list(params: { page?: number; size?: number; sort?: string }): Observable<Page<PropertyResponse>> {
     let httpParams = new HttpParams();
@@ -32,10 +32,10 @@ export class PropertyService {
       .pipe(map(r => r.data));
   }
 
-  create(payload: CreatePropertyRequest): Observable<PropertyResponse> {
+  create(request: CreatePropertyRequest): Observable<PropertyResponse> {
     return this.http
-      .post<ApiEnvelope<PropertyResponse>>(this.baseUrl, payload)
-      .pipe(map(r => r.data));
+      .post<ApiEnvelope<PropertyResponse>>(this.baseUrl, request)
+      .pipe(map((response) => response.data));
   }
 
   update(publicId: string, payload: UpdatePropertyRequest): Observable<PropertyResponse> {
@@ -46,5 +46,11 @@ export class PropertyService {
 
   delete(publicId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${publicId}`);
+  }
+
+  toggleActive(publicId: string) {
+    return this.http.patch<ApiEnvelope<PropertyResponse>>(
+      `${this.baseUrl}/${publicId}/toggle-active`, null
+    ).pipe(map(r => r.data));
   }
 }

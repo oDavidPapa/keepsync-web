@@ -1,0 +1,26 @@
+<div class="toast-host" aria-live="polite" aria-atomic="true">
+  <div class="toast" *ngFor="let t of toast.toasts(); trackBy: trackById" [class]="t.type">
+    <div class="toast-icon">
+      <span class="material-symbols-rounded" *ngIf="t.type === 'success'">check_circle</span>
+      <span class="material-symbols-rounded" *ngIf="t.type === 'info'">info</span>
+      <span class="material-symbols-rounded" *ngIf="t.type === 'warning'">warning</span>
+      <span class="material-symbols-rounded" *ngIf="t.type === 'danger'">error</span>
+    </div>
+
+    <div class="toast-body">
+      <div class="toast-title" *ngIf="t.title">{{ t.title }}</div>
+      <div class="toast-message">{{ t.message }}</div>
+    </div>
+
+    <button
+      class="toast-close"
+      type="button"
+      *ngIf="t.dismissible"
+      (click)="toast.dismiss(t.id)"
+      aria-label="Fechar alerta"
+      title="Fechar"
+    >
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </div>
+</div>

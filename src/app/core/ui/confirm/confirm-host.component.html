@@ -1,0 +1,50 @@
+<div class="backdrop" *ngIf="confirm.state().open" (click)="confirm.cancel()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="head center">
+      <div class="icon" [class.danger]="confirm.state().tone === 'danger'">
+        <span class="material-symbols-rounded" *ngIf="confirm.state().tone !== 'danger'">help</span>
+        <span class="material-symbols-rounded" *ngIf="confirm.state().tone === 'danger'">warning</span>
+      </div>
+
+      <div class="titles center">
+        <div class="title">{{ confirm.state().title }}</div>
+        <div class="message">{{ confirm.state().message }}</div>
+
+        <!-- ✅ agora é só texto, sem borda -->
+        <div class="hint" *ngIf="confirm.state().hint">
+          {{ confirm.state().hint }}
+        </div>
+      </div>
+    </div>
+
+    <div class="body" *ngIf="confirm.state().requireText">
+      <label class="label center">
+        Digite <strong>{{ confirm.state().requireText }}</strong> para confirmar
+      </label>
+
+      <input
+        class="input"
+        type="text"
+        [value]="confirm.state().inputValue"
+        (input)="confirm.setInput(($any($event.target)).value)"
+        placeholder="Digite para confirmar..."
+      />
+    </div>
+
+    <div class="actions center">
+      <button class="btn ghost" type="button" (click)="confirm.cancel()">
+        {{ confirm.state().cancelText }}
+      </button>
+
+      <button
+        class="btn"
+        [class.danger]="confirm.state().tone === 'danger'"
+        type="button"
+        (click)="confirm.confirm()"
+        [disabled]="!canConfirm()"
+      >
+        {{ confirm.state().confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -66,42 +66,42 @@
           </thead>
 
           <tbody>
-            <tr *ngFor="let r of rows()" [class.inactive]="!r.active">
-              <td class="td-strong">{{ r.name }}</td>
+            <tr *ngFor="let property of rows()" [class.inactive]="!property.active">
+              <td class="td-strong">{{ property.name }}</td>
 
               <td class="td-muted">
-                {{ r.city }}<span *ngIf="r.state"> - {{ r.state }}</span>
+                {{ property.city }}<span *ngIf="property.state"> - {{ property.state }}</span>
               </td>
 
-              <td class="td-muted">{{ r.country }}</td>
+              <td class="td-muted">{{ property.country }}</td>
 
               <td>
-                <span class="badge" [class.success]="r.active" [class.warning]="!r.active">
-                  {{ r.active ? 'Ativa' : 'Inativa' }}
+                <span class="badge" [class.success]="property.active" [class.warning]="!property.active">
+                  {{ property.active ? 'Ativa' : 'Inativa' }}
                 </span>
               </td>
 
               <td class="right td-muted">
-                {{ r.createdAt | date:'dd/MM/yyyy' }}
+                {{ property.createdAt | date:'dd/MM/yyyy' }}
               </td>
 
               <td class="right actions-cell">
-                <button class="icon-btn" title="Editar" type="button" (click)="edit(r.publicId)">
+                <button class="icon-btn" title="Editar" type="button" (click)="edit(property.publicId)">
                   <span class="material-symbols-rounded">edit</span>
                 </button>
 
                 <button
                   class="icon-btn warning"
-                  [title]="r.active ? 'Inativar' : 'Ativar'"
+                  [title]="property.active ? 'Inativar' : 'Ativar'"
                   type="button"
-                  (click)="toggleActive(r)"
+                  (click)="toggleActive(property)"
                 >
                   <span class="material-symbols-rounded">
-                    {{ r.active ? 'pause_circle' : 'play_circle' }}
+                    {{ property.active ? 'pause_circle' : 'play_circle' }}
                   </span>
                 </button>
 
-                <button class="icon-btn danger" title="Excluir" type="button" (click)="remove(r)">
+                <button class="icon-btn danger" title="Excluir" type="button" (click)="remove(property)">
                   <span class="material-symbols-rounded">delete</span>
                 </button>
               </td>

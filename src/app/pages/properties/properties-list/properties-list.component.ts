@@ -6,11 +6,8 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { PropertyService } from '../../../modules/properties/api/property.service';
 import { PropertyResponse } from '../../../modules/properties/api/property.models';
 import { apiErrorMessage } from '../../../modules/properties/api/api-error.util';
-
-type PropertyRow = PropertyResponse & {
-  // ✅ enquanto o backend não tem, a UI controla
-  active: boolean;
-};
+import { ToastService } from '../../../core/ui/toast/toast.service';
+import { ConfirmService } from '../../../core/ui/confirm/confirm.service';
 
 @Component({
   selector: 'app-properties-list',
@@ -28,7 +25,7 @@ export class PropertiesListComponent {
   readonly totalElements = signal(0);
   readonly totalPages = signal(0);
 
-  private readonly serverRows = signal<PropertyRow[]>([]);
+  private readonly serverRows = signal<PropertyResponse[]>([]);
 
   readonly filterForm = this.fb.group({
     q: [''],
@@ -36,17 +33,23 @@ export class PropertiesListComponent {
   });
 
   readonly rows = computed(() => {
-    const q = (this.filterForm.value.q ?? '').toLowerCase().trim();
+    const queryText = (this.filterForm.value.q ?? '').toLowerCase().trim();
     const country = (this.filterForm.value.country ?? '').trim();
 
     return this.serverRows()
-      .filter(r => !q || r.name.toLowerCase().includes(q) || (r.city ?? '').toLowerCase().includes(q))
-      .filter(r => !country || (r.country ?? '') === country);
+      .filter(property =>
+        !queryText ||
+        property.name.toLowerCase().includes(queryText) ||
+        (property.city ?? '').toLowerCase().includes(queryText)
+      )
+      .filter(property => !country || (property.country ?? '') === country);
   });
 
   constructor(
     private readonly router: Router,
     private readonly fb: FormBuilder,
+    private readonly toast: ToastService,
+    private readonly confirm: ConfirmService,
     private readonly propertyService: PropertyService
   ) {
     this.load();
@@ -61,16 +64,11 @@ export class PropertiesListComponent {
       size: this.size(),
       sort: 'createdAt,desc',
     }).subscribe({
-      next: (p) => {
-        // ✅ mapeia PropertyResponse -> PropertyRow (active default true)
-        const mapped: PropertyRow[] = (p.content ?? []).map((it) => ({
-          ...it,
-          active: true,
-        }));
-
-        this.serverRows.set(mapped);
-        this.totalElements.set(p.totalElements ?? 0);
-        this.totalPages.set(p.totalPages ?? 0);
+      next: (page) => {
+        // ✅ NÃO força active=true. Usa exatamente o que veio do backend.
+        this.serverRows.set(page.content ?? []);
+        this.totalElements.set(page.totalElements ?? 0);
+        this.totalPages.set(page.totalPages ?? 0);
         this.loading.set(false);
       },
       error: (err) => {
@@ -89,26 +87,48 @@ export class PropertiesListComponent {
     this.router.navigate(['/app/properties', publicId, 'edit']);
   }
 
-  remove(row: PropertyRow) {
-    const ok = confirm(`Deseja excluir a propriedade "${row.name}"?`);
-    if (!ok) return;
+  remove(row: PropertyResponse) {
+    this.confirm.ask({
+      title: 'Excluir propriedade',
+      message: `Deseja excluir a propriedade "${row.name}"?`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      tone: 'danger',
+      hint: 'Essa ação não pode ser desfeita.',
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
 
-    this.propertyService.delete(row.publicId).subscribe({
-      next: () => this.load(),
-      error: (err) => {
-        alert(apiErrorMessage(err, 'Não foi possível excluir a propriedade.'));
-        console.error(err);
-      }
+      this.propertyService.delete(row.publicId).subscribe({
+        next: () => {
+          this.toast.success('Propriedade excluída.');
+          this.load();
+        },
+        error: (err) => {
+          this.toast.error(apiErrorMessage(err, 'Não foi possível excluir a propriedade.'));
+          console.error(err);
+        }
+      });
     });
   }
 
-  toggleActive(row: PropertyRow) {
-    const next = !row.active;
+  // ✅ SEM confirmação na inativação/ativação
+  toggleActive(row: PropertyResponse) {
+    this.propertyService.toggleActive(row.publicId).subscribe({
+      next: (updated) => {
+        // ✅ Atualiza a linha local imediatamente (sem depender do reload)
+        this.serverRows.update((current) =>
+          current.map((property) =>
+            property.publicId === updated.publicId ? updated : property
+          )
+        );
 
-    // mock: atualiza somente na UI
-    this.serverRows.update((list) =>
-      list.map((it) => it.publicId === row.publicId ? { ...it, active: next } : it)
-    );
+        this.toast.success(updated.active ? 'Propriedade ativada.' : 'Propriedade inativada.');
+      },
+      error: (err) => {
+        this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar o status.'));
+        console.error(err);
+      }
+    });
   }
 
   clearFilters() {

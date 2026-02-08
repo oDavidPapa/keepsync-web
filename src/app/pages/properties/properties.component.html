@@ -1,14 +1,19 @@
 <form class="page" [formGroup]="form" (ngSubmit)="submit()">
   <!-- Header -->
   <div class="page-header">
+    <div class="error-banner" *ngIf="errorMessage">
+      <span class="material-symbols-rounded">error</span>
+      {{ errorMessage }}
+    </div>
     <div class="title">
       <h1>Cadastro de propriedades</h1>
       <p class="muted">Cadastre a base da propriedade e conecte os canais de reserva.</p>
     </div>
 
     <div class="actions">
-      <button class="btn ghost" type="button" [disabled]="saving">Cancelar</button>
-
+      <button class="btn ghost" type="button" [disabled]="saving" (click)="cancel()">
+        Cancelar
+      </button>
       <button class="btn primary solid" type="submit" [disabled]="saving">
         <span class="material-symbols-rounded">save</span>
         {{ saving ? 'Salvando...' : 'Salvar propriedade' }}
@@ -19,13 +24,8 @@
   <!-- Tabs / Stepper -->
   <div class="steps">
     <!-- STEP 1 -->
-    <button
-      class="step"
-      type="button"
-      (click)="goToStep(1)"
-      [class.active]="currentStep === 1"
-      [class.done]="currentStep > 1"
-    >
+    <button class="step" type="button" (click)="goToStep(1)" [class.active]="currentStep === 1"
+      [class.done]="currentStep > 1">
       <span class="step-index">1</span>
 
       <div class="step-body">
@@ -39,13 +39,8 @@
     </button>
 
     <!-- STEP 2 -->
-    <button
-      class="step"
-      type="button"
-      (click)="goToStep(2)"
-      [class.active]="currentStep === 2"
-      [class.done]="sourcesArray.length > 0"
-    >
+    <button class="step" type="button" (click)="goToStep(2)" [class.active]="currentStep === 2"
+      [class.done]="sourcesArray.length > 0">
       <span class="step-index">2</span>
 
       <div class="step-body">
@@ -188,13 +183,8 @@
                 </td>
 
                 <td class="right">
-                  <button
-                    class="icon-btn"
-                    type="button"
-                    (click)="removeSource(i)"
-                    aria-label="Remover canal"
-                    title="Remover"
-                  >
+                  <button class="icon-btn" type="button" (click)="removeSource(i)" aria-label="Remover canal"
+                    title="Remover">
                     <span class="material-symbols-rounded">delete</span>
                   </button>
                 </td>

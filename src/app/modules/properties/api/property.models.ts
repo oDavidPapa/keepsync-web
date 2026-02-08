@@ -1,3 +1,4 @@
+import { ApiEnvelope, Page } from "../../../core/api/api.models";
 
 export interface PropertyResponse {
   publicId: string;
@@ -10,6 +11,8 @@ export interface PropertyResponse {
   state?: string | null;
   country?: string | null;
   postalCode?: string | null;
+  
+  active: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -31,7 +34,7 @@ export interface CreatePropertyRequest {
   country?: string | null;
   postalCode?: string | null;
 
-  sources: PropertySourceRequest[];
+  sources?: PropertySourceRequest[];
 }
 
 export interface UpdatePropertyRequest {
@@ -47,3 +50,8 @@ export interface UpdatePropertyRequest {
 
   sources?: PropertySourceRequest[];
 }
+
+
+export type PropertyListResponse = ApiEnvelope<Page<PropertyResponse>>;
+export type PropertyGetResponse = ApiEnvelope<PropertyResponse>;
+export type PropertyCreateResponse = ApiEnvelope<PropertyResponse>;

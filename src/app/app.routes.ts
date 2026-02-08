@@ -18,11 +18,8 @@ export const routes: Routes = [
 
       { path: 'properties', component: PropertiesListComponent },
       { path: 'properties/new', component: PropertiesComponent },
+      { path: 'properties/:id/edit', component: PropertiesComponent },
 
-      // FUTURO: EDIÇÃO
-      // { path: 'properties/:id/edit', component: PropertiesComponent },
-
-      // fallback interno
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
