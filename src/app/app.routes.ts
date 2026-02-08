@@ -18,7 +18,7 @@ export const routes: Routes = [
 
       { path: 'properties', component: PropertiesListComponent },
       { path: 'properties/new', component: PropertiesComponent },
-      { path: 'properties/:id/edit', component: PropertiesComponent },
+      { path: 'properties/:publicId/edit', component: PropertiesComponent },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

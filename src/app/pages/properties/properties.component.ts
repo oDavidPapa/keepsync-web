@@ -1,16 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { PropertyService } from '../../modules/properties/api/property.service';
-import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 import { ToastService } from '../../core/ui/toast/toast.service';
-
-type PropertySourceDraft = {
-  channel: string;
-  icalUrl: string;
-};
+import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
+import { CreatePropertyRequest, UpdatePropertyRequest, PropertyResponse } from '../../modules/properties/api/property.models';
 
 @Component({
   selector: 'app-properties',
@@ -35,13 +31,23 @@ export class PropertiesComponent {
     { id: 'other', name: 'Outro' },
   ];
 
+  readonly saving = signal(false);
+  readonly submitted = signal(false);
+  readonly loading = signal(false);
+
+  currentStep: 1 | 2 = 1;
+
+  private readonly publicId = signal<string | null>(null);
+  readonly isEditMode = computed(() => !!this.publicId());
+
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
+    timezone: ['America/Sao_Paulo', [Validators.required, Validators.maxLength(60)]],
     addressLine1: ['', [Validators.maxLength(160)]],
     addressLine2: ['', [Validators.maxLength(160)]],
     city: ['', [Validators.maxLength(80)]],
     state: ['', [Validators.maxLength(80)]],
-    country: ['', [Validators.maxLength(2)]],
+    country: ['BR', [Validators.maxLength(2)]],
     postalCode: ['', [Validators.maxLength(20)]],
     sources: this.fb.array([]),
   });
@@ -51,26 +57,35 @@ export class PropertiesComponent {
     icalUrl: ['', [Validators.required, Validators.maxLength(300)]],
   });
 
-  saving = false;
-  submitted = false;
-  errorMessage: string | null = null;
-
-  currentStep: 1 | 2 = 1;
-
   constructor(
     private readonly fb: FormBuilder,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly toast: ToastService,
-    private readonly propertyService: PropertyService
-  ) { }
+    private readonly propertyService: PropertyService,
+    private readonly toast: ToastService
+  ) {
+    this.route.paramMap.subscribe((params) => {
+      const routePublicId = params.get('publicId');
 
-  get sourcesArray(): FormArray {
+      if (!routePublicId) {
+        this.publicId.set(null);
+        this.loading.set(false);
+        this.resetFormForCreate();
+        return;
+      }
+
+      this.publicId.set(routePublicId);
+      this.loadForEdit(routePublicId);
+    });
+  }
+
+  get sourcesArray() {
     return this.form.get('sources') as FormArray;
   }
 
-  channelLabel(channelId: string | null | undefined): string {
+  channelLabel(channelId: string | null | undefined) {
     if (!channelId) return '-';
-    return this.channels.find(channelOption => channelOption.id === channelId)?.name ?? channelId;
+    return this.channels.find(channel => channel.id === channelId)?.name ?? channelId;
   }
 
   /* Stepper */
@@ -93,42 +108,44 @@ export class PropertiesComponent {
   }
 
   cancel() {
-    // volta pra listagem
     this.router.navigate(['/app/properties']);
   }
 
-  resetStep1() {
-    this.form.patchValue({
+  private resetFormForCreate() {
+    this.currentStep = 1;
+    this.submitted.set(false);
+
+    this.form.reset({
       name: '',
+      timezone: 'America/Sao_Paulo',
       addressLine1: '',
       addressLine2: '',
       city: '',
       state: '',
-      country: '',
+      country: 'BR',
       postalCode: '',
     });
+
+    this.sourcesArray.clear();
+    this.newSourceForm.reset({ channel: '', icalUrl: '' });
+
     this.form.markAsPristine();
     this.form.markAsUntouched();
-    this.submitted = false;
   }
 
   /* Canais */
-  focusNewChannel() {
-    setTimeout(() => this.newChannelEl?.nativeElement?.focus(), 0);
-  }
-
   addSourceFromDraft() {
     this.newSourceForm.markAllAsTouched();
     if (this.newSourceForm.invalid) return;
 
-    const draft = this.newSourceForm.getRawValue() as PropertySourceDraft;
+    const { channel, icalUrl } = this.newSourceForm.getRawValue();
 
-    const sourceGroup = this.fb.group({
-      channel: [draft.channel, [Validators.required]],
-      icalUrl: [draft.icalUrl, [Validators.required, Validators.maxLength(300)]],
+    const group = this.fb.group({
+      channel: [channel, [Validators.required]],
+      icalUrl: [icalUrl, [Validators.required, Validators.maxLength(300)]],
     });
 
-    this.sourcesArray.push(sourceGroup);
+    this.sourcesArray.push(group);
 
     this.newSourceForm.reset({ channel: '', icalUrl: '' });
     this.newSourceForm.markAsPristine();
@@ -139,52 +156,106 @@ export class PropertiesComponent {
     this.sourcesArray.removeAt(index);
   }
 
-  /* Submit -> POST /v1/properties */
+  /* Load edit */
+  private loadForEdit(publicId: string) {
+    this.loading.set(true);
+
+    this.propertyService.get(publicId).subscribe({
+      next: (property) => {
+        this.applyPropertyToForm(property);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.toast.error(apiErrorMessage(err, 'Não foi possível carregar a propriedade.'));
+        this.loading.set(false);
+        this.router.navigate(['/app/properties']);
+      }
+    });
+  }
+
+  private applyPropertyToForm(property: PropertyResponse) {
+    this.currentStep = 1;
+    this.submitted.set(false);
+
+    this.form.patchValue({
+      name: property.name ?? '',
+      timezone: property.timezone ?? 'America/Sao_Paulo',
+      addressLine1: property.addressLine1 ?? '',
+      addressLine2: property.addressLine2 ?? '',
+      city: property.city ?? '',
+      state: property.state ?? '',
+      country: property.country ?? 'BR',
+      postalCode: property.postalCode ?? '',
+    });
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+  }
+
+  /* Submit */
   submit() {
-    this.submitted = true;
-    this.errorMessage = null;
+    this.submitted.set(true);
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    this.saving = true;
+    this.saving.set(true);
 
-    const rawValue = this.form.getRawValue();
-    const createRequest = {
-      name: rawValue.name!,
-      timezone: 'America/Sao_Paulo', 
-      addressLine1: rawValue.addressLine1 || null,
-      addressLine2: rawValue.addressLine2 || null,
-      city: rawValue.city || null,
-      state: rawValue.state || null,
-      country: rawValue.country || null,
-      postalCode: rawValue.postalCode || null,
+    const raw = this.form.getRawValue();
 
-      sources: (rawValue.sources ?? []).map((sourceItem: any) => ({
-        channel: sourceItem.channel,
-        icalUrl: sourceItem.icalUrl,
-      })),
+    const payloadBase = {
+      name: raw.name ?? '',
+      timezone: raw.timezone ?? 'America/Sao_Paulo',
+      addressLine1: (raw.addressLine1 ?? '').trim() || undefined,
+      addressLine2: (raw.addressLine2 ?? '').trim() || undefined,
+      city: (raw.city ?? '').trim() || undefined,
+      state: (raw.state ?? '').trim() || undefined,
+      country: (raw.country ?? '').trim() || undefined,
+      postalCode: (raw.postalCode ?? '').trim() || undefined,
     };
 
-    this.propertyService.create(createRequest).subscribe({
-      next: (createdProperty) => {
-        this.saving = false;
-        this.toast.success('Propriedade cadastrada com sucesso.');
+    const publicId = this.publicId();
+
+    if (!publicId) {
+      const createRequest: CreatePropertyRequest = payloadBase;
+
+      this.propertyService.create(createRequest).subscribe({
+        next: () => {
+          this.toast.success('Propriedade cadastrada com sucesso.');
+          this.saving.set(false);
+          this.router.navigate(['/app/properties']);
+        },
+        error: (err) => {
+          this.toast.error(apiErrorMessage(err, 'Não foi possível salvar a propriedade.'));
+          this.saving.set(false);
+          console.error(err);
+        }
+      });
+
+      return;
+    }
+
+    const updateRequest: UpdatePropertyRequest = payloadBase;
+
+    this.propertyService.update(publicId, updateRequest).subscribe({
+      next: () => {
+        this.toast.success('Propriedade atualizada com sucesso.');
+        this.saving.set(false);
         this.router.navigate(['/app/properties']);
       },
-      error: (error) => {
-        this.saving = false;
-        this.errorMessage = apiErrorMessage(error, 'Não foi possível salvar a propriedade.');
-        console.error(error);
-      },
+      error: (err) => {
+        this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar a propriedade.'));
+        this.saving.set(false);
+        console.error(err);
+      }
     });
   }
 
   hasError(controlName: keyof typeof this.form.controls) {
     const control = this.form.get(controlName);
-    return !!control && control.invalid && (control.dirty || control.touched || this.submitted);
+    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
   }
 
   newSourceError(controlName: 'channel' | 'icalUrl') {
@@ -193,30 +264,12 @@ export class PropertiesComponent {
   }
 
   private stepOneInvalid() {
-    const controls = [
-      'name',
-      'addressLine1',
-      'addressLine2',
-      'city',
-      'state',
-      'country',
-      'postalCode',
-    ] as const;
-
-    return controls.some((controlName) => this.form.get(controlName)?.invalid);
+    const controls = ['name', 'timezone', 'addressLine1', 'addressLine2', 'city', 'state', 'country', 'postalCode'] as const;
+    return controls.some((key) => this.form.get(key)?.invalid);
   }
 
   private markStepOneTouched() {
-    const controls = [
-      'name',
-      'addressLine1',
-      'addressLine2',
-      'city',
-      'state',
-      'country',
-      'postalCode',
-    ] as const;
-
-    controls.forEach((controlName) => this.form.get(controlName)?.markAsTouched());
+    const controls = ['name', 'timezone', 'addressLine1', 'addressLine2', 'city', 'state', 'country', 'postalCode'] as const;
+    controls.forEach((key) => this.form.get(key)?.markAsTouched());
   }
 }

@@ -1,22 +1,17 @@
 <form class="page" [formGroup]="form" (ngSubmit)="submit()">
   <!-- Header -->
   <div class="page-header">
-    <div class="error-banner" *ngIf="errorMessage">
-      <span class="material-symbols-rounded">error</span>
-      {{ errorMessage }}
-    </div>
     <div class="title">
-      <h1>Cadastro de propriedades</h1>
+      <h1>{{ isEditMode() ? 'Editar propriedade' : 'Cadastro de propriedades' }}</h1>
       <p class="muted">Cadastre a base da propriedade e conecte os canais de reserva.</p>
     </div>
 
     <div class="actions">
-      <button class="btn ghost" type="button" [disabled]="saving" (click)="cancel()">
-        Cancelar
-      </button>
-      <button class="btn primary solid" type="submit" [disabled]="saving">
+      <button class="btn ghost" type="button" [disabled]="saving()" (click)="cancel()">Cancelar</button>
+
+      <button class="btn primary solid" type="submit" [disabled]="saving()">
         <span class="material-symbols-rounded">save</span>
-        {{ saving ? 'Salvando...' : 'Salvar propriedade' }}
+        {{ saving() ? 'Salvando...' : (isEditMode() ? 'Salvar alterações' : 'Salvar propriedade') }}
       </button>
     </div>
   </div>
@@ -106,7 +101,10 @@
       </div>
 
       <div class="card-foot">
-        <button class="btn ghost" type="button" (click)="resetStep1()">Limpar</button>
+        <button class="btn ghost" type="button" (click)="cancel()">
+          Cancelar
+        </button>
+
         <button class="btn primary" type="button" (click)="nextStep()">
           Continuar
           <span class="material-symbols-rounded">arrow_forward</span>
@@ -114,7 +112,6 @@
       </div>
     </section>
 
-    <!-- ===================== STEP 2 ===================== -->
     <section class="card step2" *ngSwitchCase="2">
       <div class="card-head split">
         <div class="card-title">
