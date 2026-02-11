@@ -68,6 +68,9 @@ export class PropertiesComponent {
     private readonly calendarSourceService: CalendarSourceService,
     private readonly toast: ToastService
   ) {
+    const navStep = (history.state?.step as 1 | 2 | undefined);
+    if (navStep) this.currentStep = navStep;
+
     this.route.paramMap.subscribe((params) => {
       const routePublicId = params.get('publicId');
 
@@ -116,12 +119,56 @@ export class PropertiesComponent {
     return this.channels.find(channel => channel.id === channelId)?.name ?? channelId;
   }
 
-  /* Stepper */
   nextStep() {
     this.markStepOneTouched();
     if (this.stepOneInvalid()) return;
-    this.currentStep = 2;
+
+    const existingId = this.publicId();
+    if (existingId) {
+      this.currentStep = 2;
+      return;
+    }
+
+    this.saving.set(true);
+
+    const raw = this.form.getRawValue();
+
+    const createRequest: CreatePropertyRequest = {
+      name: raw.name ?? '',
+      timezone: raw.timezone ?? 'America/Sao_Paulo',
+      addressLine1: (raw.addressLine1 ?? '').trim() || undefined,
+      addressLine2: (raw.addressLine2 ?? '').trim() || undefined,
+      city: (raw.city ?? '').trim() || undefined,
+      state: (raw.state ?? '').trim() || undefined,
+      country: (raw.country ?? '').trim() || undefined,
+      postalCode: (raw.postalCode ?? '').trim() || undefined,
+    };
+
+    this.propertyService.create(createRequest).subscribe({
+      next: (created: PropertyResponse) => {
+        this.publicId.set(created.publicId);
+        this.currentStep = 2;
+
+        this.router.navigate(
+          ['/app/properties', created.publicId, 'edit'],
+          {
+            replaceUrl: true,
+            state: { step: 2 },
+          }
+        );
+
+        this.toast.success('Propriedade criada. Agora adicione os canais.');
+        this.saving.set(false);
+        this.loadSources(created.publicId);
+      },
+      error: (err) => {
+        this.toast.error(apiErrorMessage(err, 'Não foi possível criar a propriedade.'));
+        this.saving.set(false);
+        console.error(err);
+      }
+    });
   }
+
 
   prevStep() {
     this.currentStep = 1;
@@ -225,7 +272,6 @@ export class PropertiesComponent {
   }
 
   private applyPropertyToForm(property: PropertyResponse) {
-    this.currentStep = 1;
     this.submitted.set(false);
 
     this.form.patchValue({
