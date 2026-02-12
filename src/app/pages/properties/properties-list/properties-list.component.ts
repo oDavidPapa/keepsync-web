@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, DestroyRef, computed, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PropertyService } from '../../../modules/properties/api/property.service';
 import { PropertyResponse } from '../../../modules/properties/api/property.models';
@@ -29,21 +31,21 @@ export class PropertiesListComponent {
   private readonly serverRows = signal<PropertyResponse[]>([]);
 
   readonly filterForm = this.fb.group({
-    q: [''],
+    query: [''],
     country: [''],
   });
 
   readonly rows = computed(() => {
-    const queryText = (this.filterForm.value.q ?? '').toLowerCase().trim();
+    const queryText = (this.filterForm.value.query ?? '').toLowerCase().trim();
     const country = (this.filterForm.value.country ?? '').trim();
 
     return this.serverRows()
-      .filter(property =>
+      .filter(row =>
         !queryText ||
-        property.name.toLowerCase().includes(queryText) ||
-        (property.city ?? '').toLowerCase().includes(queryText)
+        row.name.toLowerCase().includes(queryText) ||
+        (row.city ?? '').toLowerCase().includes(queryText)
       )
-      .filter(property => !country || (property.country ?? '') === country);
+      .filter(row => !country || (row.country ?? '') === country);
   });
 
   constructor(
@@ -51,8 +53,17 @@ export class PropertiesListComponent {
     private readonly fb: FormBuilder,
     private readonly toast: ToastService,
     private readonly confirm: ConfirmService,
-    private readonly propertyService: PropertyService
+    private readonly propertyService: PropertyService,
+    private readonly destroyRef: DestroyRef
   ) {
+
+    this.filterForm.valueChanges
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.page.set(0);
+        this.load();
+      });
+
     this.load();
   }
 
@@ -66,7 +77,6 @@ export class PropertiesListComponent {
       sort: 'createdAt,desc',
     }).subscribe({
       next: (page) => {
-        // ✅ NÃO força active=true. Usa exatamente o que veio do backend.
         this.serverRows.set(page.content ?? []);
         this.totalElements.set(page.totalElements ?? 0);
         this.totalPages.set(page.totalPages ?? 0);
@@ -112,14 +122,12 @@ export class PropertiesListComponent {
     });
   }
 
-  // ✅ SEM confirmação na inativação/ativação
   toggleActive(row: PropertyResponse) {
     this.propertyService.toggleActive(row.publicId).subscribe({
       next: (updated) => {
-        // ✅ Atualiza a linha local imediatamente (sem depender do reload)
-        this.serverRows.update((current) =>
-          current.map((property) =>
-            property.publicId === updated.publicId ? updated : property
+        this.serverRows.update((currentRows) =>
+          currentRows.map((currentRow) =>
+            currentRow.publicId === updated.publicId ? updated : currentRow
           )
         );
 
@@ -133,7 +141,7 @@ export class PropertiesListComponent {
   }
 
   clearFilters() {
-    this.filterForm.reset({ q: '', country: '' });
+    this.filterForm.reset({ query: '', country: '' });
   }
 
   prevPage() {

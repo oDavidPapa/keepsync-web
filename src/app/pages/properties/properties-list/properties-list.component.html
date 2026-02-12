@@ -13,8 +13,12 @@
     </div>
   </div>
 
-  <app-table-card title="Propriedades cadastradas" [hasRows]="rows().length > 0" [loading]="loading()"
-    [hasFilters]="true">
+  <app-table-card
+    title="Propriedades cadastradas"
+    [hasRows]="rows().length > 0"
+    [loading]="loading()"
+    [hasFilters]="true"
+  >
     <!-- Filtros -->
     <div tableFilters>
       <div class="ui-subcard-head">
@@ -58,38 +62,38 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let property of rows()" [class.ui-row-inactive]="!property.active">
-            <td class="ui-td-strong">{{ property.name }}</td>
+          <!-- ✅ padrão: row -->
+          <tr *ngFor="let row of rows()" [class.ui-row-inactive]="!row.active">
+            <td class="ui-td-strong">{{ row.name }}</td>
 
             <td class="ui-td-muted">
-              {{ property.city }}<span *ngIf="property.state"> - {{ property.state }}</span>
+              {{ row.city }}<span *ngIf="row.state"> - {{ row.state }}</span>
             </td>
 
-            <td class="ui-td-muted">{{ property.country }}</td>
+            <td class="ui-td-muted">{{ row.country }}</td>
 
             <td>
-              <span class="ui-badge" [class.success]="property.active" [class.warning]="!property.active">
-                {{ property.active ? 'Ativa' : 'Inativa' }}
+              <span class="ui-badge" [class.success]="row.active" [class.warning]="!row.active">
+                {{ row.active ? 'Ativa' : 'Inativa' }}
               </span>
             </td>
 
             <td class="ui-right ui-td-muted">
-              {{ property.createdAt | date:'dd/MM/yyyy' }}
+              {{ row.createdAt | date:'dd/MM/yyyy' }}
             </td>
 
             <td class="ui-right ui-actions-cell">
-              <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(property.publicId)">
+              <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(row.publicId)">
                 <span class="material-symbols-rounded">edit</span>
               </button>
 
-              <button class="ui-icon-btn warning" title="Ativar/Inativar" type="button"
-                (click)="toggleActive(property)">
+              <button class="ui-icon-btn warning" title="Ativar/Inativar" type="button" (click)="toggleActive(row)">
                 <span class="material-symbols-rounded">
-                  {{ property.active ? 'pause_circle' : 'play_circle' }}
+                  {{ row.active ? 'pause_circle' : 'play_circle' }}
                 </span>
               </button>
 
-              <button class="ui-icon-btn danger" title="Excluir" type="button" (click)="remove(property)">
+              <button class="ui-icon-btn danger" title="Excluir" type="button" (click)="remove(row)">
                 <span class="material-symbols-rounded">delete</span>
               </button>
             </td>

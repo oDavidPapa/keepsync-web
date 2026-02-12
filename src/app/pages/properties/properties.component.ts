@@ -1,15 +1,59 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, signal } from '@angular/core';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { PropertyService } from '../../modules/properties/api/property.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
-import { CreatePropertyRequest, UpdatePropertyRequest, PropertyResponse } from '../../modules/properties/api/property.models';
+import {
+  CreatePropertyRequest,
+  UpdatePropertyRequest,
+  PropertyResponse
+} from '../../modules/properties/api/property.models';
 import { CalendarSourceService } from '../../modules/calendar-source/api/calendar-source.service';
-import { CalendarSourceResponse, CreateCalendarSourceRequest } from '../../modules/calendar-source/api/calendar-source.model';
+import {
+  CalendarSourceResponse,
+  CreateCalendarSourceRequest
+} from '../../modules/calendar-source/api/calendar-source.model';
 import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
+
+type ChannelId = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
+
+type PropertyBasicInfoForm = FormGroup<{
+  name: FormControl<string>;
+  timezone: FormControl<string>;
+  addressLine1: FormControl<string>;
+  addressLine2: FormControl<string>;
+  city: FormControl<string>;
+  state: FormControl<string>;
+  country: FormControl<string>;
+  postalCode: FormControl<string>;
+}>;
+
+type SourceForm = FormGroup<{
+  publicId: FormControl<string>;
+  provider: FormControl<ChannelId>;
+  icalUrl: FormControl<string>;
+  active: FormControl<boolean>;
+}>;
+
+type PropertiesForm = FormGroup<{
+  basicInfo: PropertyBasicInfoForm;
+  sources: FormArray<SourceForm>;
+}>;
+
+type NewSourceForm = FormGroup<{
+  channel: FormControl<ChannelId>;
+  icalUrl: FormControl<string>;
+}>;
 
 @Component({
   selector: 'app-properties',
@@ -27,7 +71,7 @@ export class PropertiesComponent {
     { code: 'PT', name: 'Portugal' },
   ];
 
-  readonly channels = [
+  readonly channels: Array<{ id: ChannelId; name: string }> = [
     { id: 'AIRBNB', name: 'AIRBNB' },
     { id: 'VRBO', name: 'VRBO' },
     { id: 'BOOKING', name: 'BOOKING' },
@@ -40,24 +84,26 @@ export class PropertiesComponent {
 
   currentStep: 1 | 2 = 1;
 
-  private readonly publicId = signal<string | null>(null);
-  readonly isEditMode = computed(() => !!this.publicId());
+  private readonly propertyPublicId = signal<string | null>(null);
+  readonly isEditMode = computed(() => !!this.propertyPublicId());
 
-  readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(120)]],
-    timezone: ['America/Sao_Paulo', [Validators.required, Validators.maxLength(60)]],
-    addressLine1: ['', [Validators.maxLength(160)]],
-    addressLine2: ['', [Validators.maxLength(160)]],
-    city: ['', [Validators.maxLength(80)]],
-    state: ['', [Validators.maxLength(80)]],
-    country: ['BR', [Validators.maxLength(2)]],
-    postalCode: ['', [Validators.maxLength(20)]],
-    sources: this.fb.array([]),
+  readonly form: PropertiesForm = this.fb.group({
+    basicInfo: this.fb.group({
+      name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
+      timezone: this.fb.nonNullable.control('America/Sao_Paulo', [Validators.required, Validators.maxLength(60)]),
+      addressLine1: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
+      addressLine2: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
+      city: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
+      state: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
+      country: this.fb.nonNullable.control('BR', [Validators.maxLength(2)]),
+      postalCode: this.fb.nonNullable.control('', [Validators.maxLength(20)]),
+    }),
+    sources: this.fb.array<SourceForm>([]),
   });
 
-  readonly newSourceForm = this.fb.group({
-    channel: ['', [Validators.required]],
-    icalUrl: ['', [Validators.required, Validators.maxLength(300)]],
+  readonly newSourceForm: NewSourceForm = this.fb.group({
+    channel: this.fb.nonNullable.control<ChannelId>('OTHER', [Validators.required]),
+    icalUrl: this.fb.nonNullable.control<string>('', [Validators.required, Validators.maxLength(300)]),
   });
 
   constructor(
@@ -68,30 +114,49 @@ export class PropertiesComponent {
     private readonly calendarSourceService: CalendarSourceService,
     private readonly toast: ToastService
   ) {
-    const navStep = (history.state?.step as 1 | 2 | undefined);
-    if (navStep) this.currentStep = navStep;
+    const navigationStep = (history.state?.step as 1 | 2 | undefined);
+    if (navigationStep) this.currentStep = navigationStep;
 
     this.route.paramMap.subscribe((params) => {
       const routePublicId = params.get('publicId');
 
       if (!routePublicId) {
-        this.publicId.set(null);
+        this.propertyPublicId.set(null);
         this.loading.set(false);
         this.resetFormForCreate();
         return;
       }
 
-      this.publicId.set(routePublicId);
+      this.propertyPublicId.set(routePublicId);
       this.loadForEdit(routePublicId);
     });
   }
 
-  private createSourceGroup(source: CalendarSourceResponse) {
+  get sourcesArray(): FormArray<SourceForm> {
+    return this.form.controls.sources;
+  }
+
+  channelLabel(channelId: ChannelId | null | undefined) {
+    if (!channelId) return '-';
+    return this.channels.find(channel => channel.id === channelId)?.name ?? channelId;
+  }
+
+  private normalizeProvider(value: unknown): ChannelId {
+    const provider = String(value ?? '').toUpperCase();
+    if (provider === 'AIRBNB' || provider === 'VRBO' || provider === 'BOOKING' || provider === 'OTHER') {
+      return provider;
+    }
+    return 'OTHER';
+  }
+
+  private createSourceGroup(source: CalendarSourceResponse): SourceForm {
+    const normalizedProvider = this.normalizeProvider((source as any).provider);
+
     return this.fb.group({
-      publicId: [source.publicId],
-      provider: [source.provider],
-      icalUrl: [source.icalUrl],
-      active: [source.active],
+      publicId: this.fb.nonNullable.control(source.publicId),
+      provider: this.fb.nonNullable.control(normalizedProvider),
+      icalUrl: this.fb.nonNullable.control(source.icalUrl),
+      active: this.fb.nonNullable.control(!!source.active),
     });
   }
 
@@ -99,9 +164,7 @@ export class PropertiesComponent {
     this.calendarSourceService.listByProperty(propertyPublicId).subscribe({
       next: (sources) => {
         this.sourcesArray.clear();
-        sources.forEach(source =>
-          this.sourcesArray.push(this.createSourceGroup(source))
-        );
+        sources.forEach((source) => this.sourcesArray.push(this.createSourceGroup(source)));
       },
       error: (err) => {
         this.toast.error('Erro ao carregar canais/iCal');
@@ -110,51 +173,48 @@ export class PropertiesComponent {
     });
   }
 
-  get sourcesArray() {
-    return this.form.get('sources') as FormArray;
+  private normalizeOptionalText(value: string): string | undefined {
+    const trimmedValue = value?.trim();
+    return trimmedValue ? trimmedValue : undefined;
   }
 
-  channelLabel(channelId: string | null | undefined) {
-    if (!channelId) return '-';
-    return this.channels.find(channel => channel.id === channelId)?.name ?? channelId;
+  private mapFormToPropertyPayload(): CreatePropertyRequest {
+    const basicInfoValue = this.form.controls.basicInfo.getRawValue();
+
+    return {
+      name: basicInfoValue.name,
+      timezone: basicInfoValue.timezone,
+      addressLine1: this.normalizeOptionalText(basicInfoValue.addressLine1),
+      addressLine2: this.normalizeOptionalText(basicInfoValue.addressLine2),
+      city: this.normalizeOptionalText(basicInfoValue.city),
+      state: this.normalizeOptionalText(basicInfoValue.state),
+      country: this.normalizeOptionalText(basicInfoValue.country),
+      postalCode: this.normalizeOptionalText(basicInfoValue.postalCode),
+    };
   }
 
   nextStep() {
     this.markStepOneTouched();
     if (this.stepOneInvalid()) return;
 
-    const existingId = this.publicId();
-    if (existingId) {
+    const existingPublicId = this.propertyPublicId();
+    if (existingPublicId) {
       this.currentStep = 2;
       return;
     }
 
     this.saving.set(true);
 
-    const raw = this.form.getRawValue();
-
-    const createRequest: CreatePropertyRequest = {
-      name: raw.name ?? '',
-      timezone: raw.timezone ?? 'America/Sao_Paulo',
-      addressLine1: (raw.addressLine1 ?? '').trim() || undefined,
-      addressLine2: (raw.addressLine2 ?? '').trim() || undefined,
-      city: (raw.city ?? '').trim() || undefined,
-      state: (raw.state ?? '').trim() || undefined,
-      country: (raw.country ?? '').trim() || undefined,
-      postalCode: (raw.postalCode ?? '').trim() || undefined,
-    };
+    const createRequest: CreatePropertyRequest = this.mapFormToPropertyPayload();
 
     this.propertyService.create(createRequest).subscribe({
       next: (created: PropertyResponse) => {
-        this.publicId.set(created.publicId);
+        this.propertyPublicId.set(created.publicId);
         this.currentStep = 2;
 
         this.router.navigate(
           ['/app/properties', created.publicId, 'edit'],
-          {
-            replaceUrl: true,
-            state: { step: 2 },
-          }
+          { replaceUrl: true, state: { step: 2 } }
         );
 
         this.toast.success('Propriedade criada. Agora adicione os canais.');
@@ -168,7 +228,6 @@ export class PropertiesComponent {
       }
     });
   }
-
 
   prevStep() {
     this.currentStep = 1;
@@ -190,7 +249,7 @@ export class PropertiesComponent {
     this.currentStep = 1;
     this.submitted.set(false);
 
-    this.form.reset({
+    this.form.controls.basicInfo.reset({
       name: '',
       timezone: 'America/Sao_Paulo',
       addressLine1: '',
@@ -202,7 +261,7 @@ export class PropertiesComponent {
     });
 
     this.sourcesArray.clear();
-    this.newSourceForm.reset({ channel: '', icalUrl: '' });
+    this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
@@ -210,38 +269,31 @@ export class PropertiesComponent {
 
   addSourceFromDraft() {
     this.newSourceForm.markAllAsTouched();
-    if (this.newSourceForm.invalid || !this.publicId()) return;
+    if (this.newSourceForm.invalid || !this.propertyPublicId()) return;
 
     const request: CreateCalendarSourceRequest = {
-      provider: this.newSourceForm.value.channel as any,
-      icalUrl: this.newSourceForm.value.icalUrl!,
+      provider: this.newSourceForm.controls.channel.value,
+      icalUrl: this.newSourceForm.controls.icalUrl.value,
     };
 
-    this.calendarSourceService
-      .create(this.publicId()!, request)
-      .subscribe({
-        next: (created) => {
-          this.sourcesArray.push(this.createSourceGroup(created));
-          this.newSourceForm.reset();
-          this.toast.success('Canal adicionado.');
-        },
-        error: (err) => {
-          this.toast.error('Erro ao adicionar canal.');
-          console.error(err);
-        }
-      });
+    this.calendarSourceService.create(this.propertyPublicId()!, request).subscribe({
+      next: (created) => {
+        this.sourcesArray.push(this.createSourceGroup(created));
+        this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+        this.toast.success('Canal adicionado.');
+      },
+      error: (err) => {
+        this.toast.error('Erro ao adicionar canal.');
+        console.error(err);
+      }
+    });
   }
 
   removeSource(index: number) {
-    const source = this.sourcesArray.at(index);
-    const publicId = source.get('publicId')?.value;
+    const sourceFormGroup = this.sourcesArray.at(index);
+    const sourcePublicId = sourceFormGroup.controls.publicId.value;
 
-    if (!publicId) {
-      this.sourcesArray.removeAt(index);
-      return;
-    }
-
-    this.calendarSourceService.delete(publicId).subscribe({
+    this.calendarSourceService.delete(sourcePublicId).subscribe({
       next: () => {
         this.sourcesArray.removeAt(index);
         this.toast.success('Canal removido.');
@@ -252,15 +304,15 @@ export class PropertiesComponent {
       }
     });
   }
-  /* Load edit */
-  private loadForEdit(publicId: string) {
+
+  private loadForEdit(propertyPublicId: string) {
     this.loading.set(true);
 
-    this.propertyService.get(publicId).subscribe({
+    this.propertyService.get(propertyPublicId).subscribe({
       next: (property) => {
         this.applyPropertyToForm(property);
         this.loading.set(false);
-        this.loadSources(publicId);
+        this.loadSources(propertyPublicId);
       },
       error: (err) => {
         this.toast.error(apiErrorMessage(err, 'Não foi possível carregar a propriedade.'));
@@ -268,13 +320,12 @@ export class PropertiesComponent {
         this.router.navigate(['/app/properties']);
       }
     });
-
   }
 
   private applyPropertyToForm(property: PropertyResponse) {
     this.submitted.set(false);
 
-    this.form.patchValue({
+    this.form.controls.basicInfo.patchValue({
       name: property.name ?? '',
       timezone: property.timezone ?? 'America/Sao_Paulo',
       addressLine1: property.addressLine1 ?? '',
@@ -289,7 +340,6 @@ export class PropertiesComponent {
     this.form.markAsUntouched();
   }
 
-  /* Submit */
   submit() {
     this.submitted.set(true);
 
@@ -300,25 +350,11 @@ export class PropertiesComponent {
 
     this.saving.set(true);
 
-    const raw = this.form.getRawValue();
+    const propertyPayload = this.mapFormToPropertyPayload();
+    const existingPublicId = this.propertyPublicId();
 
-    const payloadBase = {
-      name: raw.name ?? '',
-      timezone: raw.timezone ?? 'America/Sao_Paulo',
-      addressLine1: (raw.addressLine1 ?? '').trim() || undefined,
-      addressLine2: (raw.addressLine2 ?? '').trim() || undefined,
-      city: (raw.city ?? '').trim() || undefined,
-      state: (raw.state ?? '').trim() || undefined,
-      country: (raw.country ?? '').trim() || undefined,
-      postalCode: (raw.postalCode ?? '').trim() || undefined,
-    };
-
-    const publicId = this.publicId();
-
-    if (!publicId) {
-      const createRequest: CreatePropertyRequest = payloadBase;
-
-      this.propertyService.create(createRequest).subscribe({
+    if (!existingPublicId) {
+      this.propertyService.create(propertyPayload).subscribe({
         next: () => {
           this.toast.success('Propriedade cadastrada com sucesso.');
           this.saving.set(false);
@@ -334,9 +370,9 @@ export class PropertiesComponent {
       return;
     }
 
-    const updateRequest: UpdatePropertyRequest = payloadBase;
+    const updateRequest: UpdatePropertyRequest = propertyPayload;
 
-    this.propertyService.update(publicId, updateRequest).subscribe({
+    this.propertyService.update(existingPublicId, updateRequest).subscribe({
       next: () => {
         this.toast.success('Propriedade atualizada com sucesso.');
         this.saving.set(false);
@@ -350,23 +386,21 @@ export class PropertiesComponent {
     });
   }
 
-  hasError(controlName: keyof typeof this.form.controls) {
-    const control = this.form.get(controlName);
+  hasError(path: string) {
+    const control = this.form.get(path);
     return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
   }
 
   newSourceError(controlName: 'channel' | 'icalUrl') {
-    const control = this.newSourceForm.get(controlName);
-    return !!control && control.invalid && (control.dirty || control.touched);
+    const control = this.newSourceForm.controls[controlName];
+    return control.invalid && (control.dirty || control.touched);
   }
 
   private stepOneInvalid() {
-    const controls = ['name', 'timezone', 'addressLine1', 'addressLine2', 'city', 'state', 'country', 'postalCode'] as const;
-    return controls.some((key) => this.form.get(key)?.invalid);
+    return this.form.controls.basicInfo.invalid;
   }
 
   private markStepOneTouched() {
-    const controls = ['name', 'timezone', 'addressLine1', 'addressLine2', 'city', 'state', 'country', 'postalCode'] as const;
-    controls.forEach((key) => this.form.get(key)?.markAsTouched());
+    this.form.controls.basicInfo.markAllAsTouched();
   }
 }
