@@ -13,12 +13,8 @@
     </div>
   </div>
 
-  <app-table-card
-    title="Propriedades cadastradas"
-    [hasRows]="rows().length > 0"
-    [loading]="loading()"
-    [hasFilters]="true"
-  >
+  <app-table-card title="Propriedades cadastradas" [hasRows]="rows().length > 0" [loading]="loading()"
+    [hasFilters]="true">
     <!-- Filtros -->
     <div tableFilters>
       <div class="ui-subcard-head">
@@ -32,7 +28,7 @@
       <div class="ui-filters" [formGroup]="filterForm">
         <div class="ui-field grow">
           <label>Buscar</label>
-          <input formControlName="q" placeholder="Nome, cidade..." />
+          <input formControlName="query" placeholder="Nome, cidade..." />
         </div>
 
         <div class="ui-field">
@@ -102,4 +98,8 @@
       </table>
     </div>
   </app-table-card>
+  <app-pagination [vm]="paginationVm()" [disabled]="loading()" [sizeOptions]="[5, 10, 20]"
+    (pageChange)="onPageChange($event)" (sizeChange)="onSizeChange($event)">
+  </app-pagination>
+
 </div>

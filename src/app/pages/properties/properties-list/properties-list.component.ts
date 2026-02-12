@@ -11,11 +11,12 @@ import { apiErrorMessage } from '../../../modules/properties/api/api-error.util'
 import { ToastService } from '../../../core/ui/toast/toast.service';
 import { ConfirmService } from '../../../core/ui/confirm/confirm.service';
 import { TableCardComponent } from '../../../core/ui/table-card/table-card.component';
+import { PaginationComponent, PaginationVM } from '../../../core/ui/pagination/pagination.component';
 
 @Component({
   selector: 'app-properties-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TableCardComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TableCardComponent, PaginationComponent],
   templateUrl: './properties-list.component.html',
   styleUrls: ['./properties-list.component.scss'],
 })
@@ -23,30 +24,27 @@ export class PropertiesListComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly page = signal(0);
-  readonly size = signal(10);
-  readonly totalElements = signal(0);
-  readonly totalPages = signal(0);
+  private readonly pageNumber = signal(0);
+  private readonly pageSize = signal(5);
 
-  private readonly serverRows = signal<PropertyResponse[]>([]);
+  private readonly totalElements = signal(0);
+  private readonly totalPages = signal(1);
+
+  private readonly pageRows = signal<PropertyResponse[]>([]);
 
   readonly filterForm = this.fb.group({
     query: [''],
     country: [''],
   });
 
-  readonly rows = computed(() => {
-    const queryText = (this.filterForm.value.query ?? '').toLowerCase().trim();
-    const country = (this.filterForm.value.country ?? '').trim();
+  readonly rows = computed(() => this.pageRows());
 
-    return this.serverRows()
-      .filter(row =>
-        !queryText ||
-        row.name.toLowerCase().includes(queryText) ||
-        (row.city ?? '').toLowerCase().includes(queryText)
-      )
-      .filter(row => !country || (row.country ?? '') === country);
-  });
+  readonly paginationVm = computed<PaginationVM>(() => ({
+    page: this.pageNumber(),
+    size: this.pageSize(),
+    totalElements: this.totalElements(),
+    totalPages: this.totalPages(),
+  }));
 
   constructor(
     private readonly router: Router,
@@ -56,13 +54,9 @@ export class PropertiesListComponent {
     private readonly propertyService: PropertyService,
     private readonly destroyRef: DestroyRef
   ) {
-
     this.filterForm.valueChanges
       .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.page.set(0);
-        this.load();
-      });
+      .subscribe(() => this.pageNumber.set(0));
 
     this.load();
   }
@@ -71,23 +65,55 @@ export class PropertiesListComponent {
     this.loading.set(true);
     this.error.set(null);
 
-    this.propertyService.list({
-      page: this.page(),
-      size: this.size(),
-      sort: 'createdAt,desc',
-    }).subscribe({
-      next: (page) => {
-        this.serverRows.set(page.content ?? []);
-        this.totalElements.set(page.totalElements ?? 0);
-        this.totalPages.set(page.totalPages ?? 0);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(apiErrorMessage(err, 'Falha ao carregar propriedades.'));
-        console.error(err);
-        this.loading.set(false);
-      }
-    });
+    const requestPage = this.pageNumber();
+    const requestSize = this.pageSize();
+
+    console.log('[LOAD] sending', { page: requestPage, size: requestSize });
+
+    this.propertyService
+      .list({
+        page: requestPage,
+        size: requestSize,
+        sort: 'createdAt,desc',
+      })
+      .subscribe({
+        next: (pageResult: any) => {
+          const content = pageResult?.content ?? [];
+          const totalElements = Number(pageResult?.totalElements ?? 0);
+          const totalPages = Number(pageResult?.totalPages ?? 1);
+          const number = Number(pageResult?.number ?? requestPage);
+          const size = Number(pageResult?.size ?? requestSize);
+
+          console.log('[LOAD] received', { totalElements, totalPages, number, size, contentLen: content.length });
+
+          this.pageRows.set(content);
+          this.totalElements.set(Number.isFinite(totalElements) ? totalElements : 0);
+          this.totalPages.set(Math.max(1, Number.isFinite(totalPages) ? totalPages : 1));
+
+          this.pageNumber.set(Number.isFinite(number) ? number : requestPage);
+          this.pageSize.set(Number.isFinite(size) ? size : requestSize);
+
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.error.set(apiErrorMessage(err, 'Falha ao carregar propriedades.'));
+          console.error(err);
+          this.loading.set(false);
+        },
+      });
+  }
+
+  onPageChange(nextPage: number) {
+    if (nextPage === this.pageNumber()) return;
+    this.pageNumber.set(nextPage);
+    this.load();
+  }
+
+  onSizeChange(nextSize: number) {
+    if (nextSize === this.pageSize()) return;
+    this.pageSize.set(nextSize);
+    this.pageNumber.set(0);
+    this.load();
   }
 
   goNew() {
@@ -98,61 +124,49 @@ export class PropertiesListComponent {
     this.router.navigate(['/app/properties', publicId, 'edit']);
   }
 
-  remove(row: PropertyResponse) {
-    this.confirm.ask({
-      title: 'Excluir propriedade',
-      message: `Deseja excluir a propriedade "${row.name}"?`,
-      confirmText: 'Excluir',
-      cancelText: 'Cancelar',
-      tone: 'danger',
-      hint: 'Essa ação não pode ser desfeita.',
-    }).subscribe((confirmed) => {
-      if (!confirmed) return;
+  clearFilters() {
+    this.filterForm.reset({ query: '', country: '' });
+    this.pageNumber.set(0);
+  }
 
-      this.propertyService.delete(row.publicId).subscribe({
-        next: () => {
-          this.toast.success('Propriedade excluída.');
-          this.load();
-        },
-        error: (err) => {
-          this.toast.error(apiErrorMessage(err, 'Não foi possível excluir a propriedade.'));
-          console.error(err);
-        }
+  remove(row: PropertyResponse) {
+    this.confirm
+      .ask({
+        title: 'Excluir propriedade',
+        message: `Deseja excluir a propriedade "${row.name}"?`,
+        confirmText: 'Excluir',
+        cancelText: 'Cancelar',
+        tone: 'danger',
+        hint: 'Essa ação não pode ser desfeita.',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.propertyService.delete(row.publicId).subscribe({
+          next: () => {
+            this.toast.success('Propriedade excluída.');
+            this.load();
+          },
+          error: (err) => {
+            this.toast.error(apiErrorMessage(err, 'Não foi possível excluir a propriedade.'));
+            console.error(err);
+          },
+        });
       });
-    });
   }
 
   toggleActive(row: PropertyResponse) {
     this.propertyService.toggleActive(row.publicId).subscribe({
       next: (updated) => {
-        this.serverRows.update((currentRows) =>
-          currentRows.map((currentRow) =>
-            currentRow.publicId === updated.publicId ? updated : currentRow
-          )
+        this.pageRows.update((current) =>
+          current.map((item) => (item.publicId === updated.publicId ? updated : item))
         );
-
         this.toast.success(updated.active ? 'Propriedade ativada.' : 'Propriedade inativada.');
       },
       error: (err) => {
         this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar o status.'));
         console.error(err);
-      }
+      },
     });
-  }
-
-  clearFilters() {
-    this.filterForm.reset({ query: '', country: '' });
-  }
-
-  prevPage() {
-    if (this.page() <= 0) return;
-    this.page.set(this.page() - 1);
-    this.load();
-  }
-
-  nextPage() {
-    if (this.page() + 1 >= this.totalPages()) return;
-    this.page.set(this.page() + 1);
-    this.load();
   }
 }

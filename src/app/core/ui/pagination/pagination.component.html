@@ -1,0 +1,25 @@
+<div class="ui-pagination" [class.is-disabled]="disabled">
+  <div class="ui-pagination-range">
+    {{ rangeLabel }}
+  </div>
+
+  <div class="ui-pagination-nav">
+    <button class="ui-nav-btn" type="button" (click)="prev()" [disabled]="disabled || isFirst">
+      ‹
+    </button>
+
+    <div class="ui-page-indicator">
+      {{ vm.page + 1 }} / {{ vm.totalPages }}
+    </div>
+
+    <button class="ui-nav-btn" type="button" (click)="next()" [disabled]="disabled || isLast">
+      ›
+    </button>
+  </div>
+
+  <div class="ui-pagination-size">
+    <select class="ui-size-select" [disabled]="disabled" [value]="vm.size" (change)="onSizeChangeEvent($event)">
+      <option *ngFor="let opt of sizeOptions" [value]="opt">{{ opt }}</option>
+    </select>
+  </div>
+</div>
