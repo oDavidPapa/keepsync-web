@@ -21,8 +21,13 @@
   <!-- Tabs / Stepper -->
   <div class="steps">
     <!-- STEP 1 -->
-    <button class="step" type="button" (click)="goToStep(1)" [class.active]="currentStep === 1"
-      [class.done]="currentStep > 1">
+    <button
+      class="step"
+      type="button"
+      (click)="goToStep(1)"
+      [class.active]="currentStep === 1"
+      [class.done]="currentStep > 1"
+    >
       <span class="step-index">1</span>
 
       <div class="step-body">
@@ -36,8 +41,13 @@
     </button>
 
     <!-- STEP 2 -->
-    <button class="step" type="button" (click)="goToStep(2)" [class.active]="currentStep === 2"
-      [class.done]="sourcesArray.length > 0">
+    <button
+      class="step"
+      type="button"
+      (click)="goToStep(2)"
+      [class.active]="currentStep === 2"
+      [class.done]="sourcesArray.length > 0"
+    >
       <span class="step-index">2</span>
 
       <div class="step-body">
@@ -61,11 +71,12 @@
         </div>
       </div>
 
-      <div class="form-grid">
+      <!-- ✅ Subgrupo basicInfo -->
+      <div class="form-grid" formGroupName="basicInfo">
         <div class="field span-2">
           <label for="name">Nome da propriedade</label>
           <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
-          <span class="error" *ngIf="hasError('name')">Informe o nome (até 120 caracteres).</span>
+          <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome (até 120 caracteres).</span>
         </div>
 
         <div class="field span-2">
@@ -75,7 +86,12 @@
 
         <div class="field span-2">
           <label for="addressLine2">Complemento</label>
-          <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referência" />
+          <input
+            id="addressLine2"
+            type="text"
+            formControlName="addressLine2"
+            placeholder="Apto, bloco, referência"
+          />
         </div>
 
         <div class="field">
@@ -150,8 +166,12 @@
         </div>
       </div>
 
-      <app-table-card title="Canais cadastrados" [hasRows]="sourcesArray.length > 0" [loading]="loading()"
-        [hasFilters]="false">
+      <app-table-card
+        title="Canais cadastrados"
+        [hasRows]="sourcesArray.length > 0"
+        [loading]="loading()"
+        [hasFilters]="false"
+      >
         <div tableContent>
           <table class="ui-table">
             <thead>
@@ -164,8 +184,11 @@
             </thead>
 
             <tbody formArrayName="sources">
-              <tr *ngFor="let source of sourcesArray.controls; let i = index" [formGroupName]="i"
-                [class.ui-row-inactive]="!source.get('active')?.value">
+              <tr
+                *ngFor="let source of sourcesArray.controls; let i = index"
+                [formGroupName]="i"
+                [class.ui-row-inactive]="!source.get('active')?.value"
+              >
                 <td class="ui-td-strong">
                   {{ source.get('provider')?.value }}
                 </td>
@@ -177,15 +200,22 @@
                 </td>
 
                 <td>
-                  <!-- ✅ Padrão do sistema: success / warning (amarelo) -->
-                  <span class="ui-badge" [class.success]="source.get('active')?.value"
-                    [class.warning]="!source.get('active')?.value">
+                  <span
+                    class="ui-badge"
+                    [class.success]="source.get('active')?.value"
+                    [class.warning]="!source.get('active')?.value"
+                  >
                     {{ source.get('active')?.value ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
 
                 <td class="ui-right ui-actions-cell">
-                  <button class="ui-icon-btn danger" type="button" title="Remover" (click)="removeSource(i)">
+                  <button
+                    class="ui-icon-btn danger"
+                    type="button"
+                    title="Remover"
+                    (click)="removeSource(i)"
+                  >
                     <span class="material-symbols-rounded">delete</span>
                   </button>
                 </td>
