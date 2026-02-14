@@ -137,11 +137,16 @@
   font-weight: 650;
 }
 
+.ui-center { text-align: center; }
 .ui-right { text-align: right; }
+.ui-left { text-align: left; }
 
-/* Ações */
+.ui-actions-th {margin-left: 3px;}
+
 .ui-actions-cell {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 6px;
 }
 

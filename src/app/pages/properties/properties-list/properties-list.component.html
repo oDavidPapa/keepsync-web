@@ -1,8 +1,11 @@
 <div class="ui-page ui-page-fit">
 
-  <app-page-header title="Propriedades" subtitle="Gerencie as propriedades cadastradas e seus canais conectados."
-    [sticky]="true" [top]="16">
-
+  <app-page-header
+    title="Propriedades"
+    subtitle="Gerencie as propriedades cadastradas e seus canais conectados."
+    [sticky]="true"
+    [top]="16"
+  >
     <button class="ui-btn primary solid" type="button" (click)="goNew()">
       <span class="material-symbols-rounded">add</span>
       Nova propriedade
@@ -39,47 +42,45 @@
   <!-- ✅ BODY: ocupa o resto da altura -->
   <div class="ui-page-body">
 
-    <app-table-card class="ui-table-card" title="Propriedades cadastradas" [hasRows]="rows().length > 0"
-      [loading]="loading()">
-
+    <app-table-card
+      class="ui-table-card"
+      title="Propriedades cadastradas"
+      [hasRows]="rows().length > 0"
+      [loading]="loading()"
+    >
       <div tableContent class="ui-table-stack">
-        <!-- HEADER FIXO -->
+
+        <!-- ✅ HEADER FIXO -->
         <table class="ui-table ui-table-head">
           <thead>
             <tr>
               <th>Nome</th>
-              <th style="width: 220px;">Local</th>
-              <th style="width: 90px;">País</th>
-              <th style="width: 120px;">Status</th>
-              <th class="ui-right" style="width: 140px;">Criada em</th>
-              <th class="ui-right" style="width: 160px;">Ações</th>
+              <th>Local</th>
+              <th>País</th>
+              <th>Status</th>
+              <th>Criada em</th>
+              <th class="ui-center">Ações</th>
             </tr>
           </thead>
         </table>
 
-        <!-- BODY ROLÁVEL -->
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <tbody>
               <tr *ngFor="let row of rows()" [class.ui-row-inactive]="!row.active">
                 <td class="ui-td-muted">{{ row.name }}</td>
-
                 <td class="ui-td-muted">
                   {{ row.city }}<span *ngIf="row.state"> - {{ row.state }}</span>
                 </td>
-
                 <td class="ui-td-muted">{{ row.country }}</td>
-
                 <td>
-                  <span class="ui-badge" [class.success]="row.active" [class.warning]="!row.active">
+                  <span class="badge" [class.success]="row.active" [class.warning]="!row.active">
                     {{ row.active ? 'Ativa' : 'Inativa' }}
                   </span>
                 </td>
-
-                <td class="ui-right ui-td-muted">
+                <td class="ui-td-muted">
                   {{ row.createdAt | date:'dd/MM/yyyy' }}
                 </td>
-
                 <td class="ui-right ui-actions-cell">
                   <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(row.publicId)">
                     <span class="material-symbols-rounded">edit</span>
@@ -101,10 +102,14 @@
         </div>
       </div>
 
-      <!-- ✅ FOOTER: paginação fixa -->
       <div tableFooter>
-        <app-pagination [vm]="paginationVm()" [disabled]="loading()" [sizeOptions]="[5, 10, 20]"
-          (pageChange)="onPageChange($event)" (sizeChange)="onSizeChange($event)">
+        <app-pagination
+          [vm]="paginationVm()"
+          [disabled]="loading()"
+          [sizeOptions]="[5, 10, 20]"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onSizeChange($event)"
+        >
         </app-pagination>
       </div>
 

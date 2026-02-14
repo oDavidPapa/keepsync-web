@@ -36,11 +36,11 @@
   gap: 0.6rem;
 }
 
-/* ✅ CONTEÚDO (slot do tableContent) precisa ocupar o resto */
+/* Slot do tableContent ocupa o restante */
 .ui-table-wrap {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden; /* NÃO rola aqui */
+  overflow: hidden; /* 🔥 não rola aqui */
   padding: 12px 14px 14px;
 }
 
@@ -88,8 +88,16 @@
 .ui-table-stack {
   display: flex;
   flex-direction: column;
-  height: 100%;     /* 🔥 ocupa o slot */
-  min-height: 0;    /* 🔥 permite o body rolar */
+  height: 100%;
+  min-height: 0;
+}
+
+/* =========================
+   ✅ ALINHAMENTO COM SCROLLBAR
+   ========================= */
+/* Define a largura do scrollbar (bate com o ::-webkit-scrollbar width: 10px) */
+.ui-table-stack {
+  --ui-scrollbar-w: 10px;
 }
 
 /* Header fixo */
@@ -99,27 +107,70 @@
   border-bottom: 0;
   border-radius: 16px 16px 0 0;
   background: #fff;
+
+  /* ✅ Reserva o mesmo “gutter” do scroll pra não desalinha */
+  box-sizing: border-box;
+  padding-right: var(--ui-scrollbar-w);
 }
 
 /* Body rolável */
 .ui-table-body-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto; /* ✅ rola aqui */
+
+  overflow-y: auto;
+  overflow-x: hidden;
 
   border: 1px solid rgba(17, 24, 39, 0.10);
   border-top: 0;
   border-radius: 0 0 16px 16px;
   background: #fff;
+
+  /* ✅ mantém a largura reservada mesmo quando não tem scroll */
+  scrollbar-gutter: stable;
 }
 
-/* Tabelas */
+/* ========================= */
+/* Scroll visual premium */
+/* ========================= */
+
+/* Firefox */
+.ui-table-body-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.25) transparent;
+}
+
+/* Chrome / Edge */
+.ui-table-body-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.ui-table-body-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ui-table-body-scroll::-webkit-scrollbar-thumb {
+  background: transparent; /* escondido por padrão */
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* Só aparece ao interagir */
+.ui-table-body-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.25);
+}
+
+/* ========================= */
+/* TABLE STRUCTURE */
+/* ========================= */
+
 .ui-table-head,
 .ui-table-body {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed; /* 🔥 alinha colunas */
+  table-layout: fixed;
 }
 
 /* Header cells */
@@ -129,7 +180,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(17, 24, 39, 0.78);
-  font-weight: 950;
+  font-weight: 800;
   padding: 12px 12px;
   background: rgba(17, 24, 39, 0.04);
   border-bottom: 1px solid rgba(17, 24, 39, 0.12);
@@ -144,10 +195,15 @@
   vertical-align: middle;
 }
 
-.ui-table-body tbody tr:last-child td { border-bottom: none; }
-.ui-table-body tbody tr:hover { background: rgba(195, 83, 0, 0.04); }
+.ui-table-body tbody tr:last-child td {
+  border-bottom: none;
+}
 
-/* Colunas com widths inline */
+.ui-table-body tbody tr:hover {
+  background: rgba(195, 83, 0, 0.04);
+}
+
+/* Colunas alinhadas */
 .ui-table-head th,
 .ui-table-body td {
   overflow: hidden;
