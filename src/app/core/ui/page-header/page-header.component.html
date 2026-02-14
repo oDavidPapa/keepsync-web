@@ -1,0 +1,14 @@
+<header
+  class="ph"
+  [class.is-sticky]="sticky"
+  [style.top.px]="top"
+>
+  <div class="ph-left">
+    <h1>{{ title }}</h1>
+    <p class="muted" *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+
+  <div class="ph-actions">
+    <ng-content></ng-content>
+  </div>
+</header>

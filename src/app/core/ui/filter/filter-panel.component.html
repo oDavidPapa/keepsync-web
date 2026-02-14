@@ -1,0 +1,21 @@
+<section class="fp" [class.is-open]="open()">
+
+  <div class="fp-head">
+    <button class="fp-toggle" type="button" (click)="toggle()">
+      <span class="fp-chev">{{ open() ? '−' : '+' }}</span>
+      <span class="fp-title">{{ title }}</span>
+
+      <span class="fp-pill" *ngIf="activeCount > 0">
+        {{ activeCount }} ativo{{ activeCount > 1 ? 's' : '' }}
+      </span>
+    </button>
+
+    <div class="fp-actions">
+      <ng-content select="[filterActions]"></ng-content>
+    </div>
+  </div>
+
+  <div class="fp-body" *ngIf="open()">
+    <ng-content></ng-content>
+  </div>
+</section>

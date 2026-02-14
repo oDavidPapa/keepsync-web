@@ -12,11 +12,13 @@ import { ToastService } from '../../../core/ui/toast/toast.service';
 import { ConfirmService } from '../../../core/ui/confirm/confirm.service';
 import { TableCardComponent } from '../../../core/ui/table-card/table-card.component';
 import { PaginationComponent, PaginationVM } from '../../../core/ui/pagination/pagination.component';
+import { PageHeaderComponent } from '../../../core/ui/page-header/page-header.component';
+import { FilterPanelComponent } from '../../../core/ui/filter/filter-panel.component';
 
 @Component({
   selector: 'app-properties-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TableCardComponent, PaginationComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TableCardComponent, PaginationComponent, PageHeaderComponent, FilterPanelComponent],
   templateUrl: './properties-list.component.html',
   styleUrls: ['./properties-list.component.scss'],
 })
@@ -169,4 +171,12 @@ export class PropertiesListComponent {
       },
     });
   }
+
+  readonly activeFiltersCount = computed(() => {
+    const v = this.filterForm.value;
+    const query = (v.query ?? '').trim();
+    const country = (v.country ?? '').trim();
+    return (query ? 1 : 0) + (country ? 1 : 0);
+  });
+
 }

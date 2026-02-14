@@ -1,45 +1,39 @@
-<section class="ui-card">
-  <!-- HEADER DA PÁGINA (opcional fora daqui; aqui é só o card) -->
-
-  <!-- SLOT: filtros/toolbar acima da grid -->
-<div class="ui-subcard" *ngIf="hasFilters && !loading">
-  <ng-content select="[tableFilters]"></ng-content>
-</div>
-
-  <!-- GRID -->
-  <div class="ui-subcard">
-    <div class="ui-subcard-head">
-      <div>
-        <div class="ui-sub-title">{{ title }}</div>
-      </div>
-
-      <div class="ui-actions">
-        <ng-content select="[tableActions]"></ng-content>
-      </div>
+<div class="ui-subcard">
+  <div class="ui-subcard-head">
+    <div>
+      <div class="ui-sub-title">{{ title }}</div>
     </div>
 
-    <!-- LOADING -->
-    <div class="ui-empty-state" *ngIf="loading">
-      <span class="material-symbols-rounded ui-empty-icon">progress_activity</span>
-      <div class="ui-empty-title">Carregando...</div>
-      <div class="ui-empty-sub">Aguarde um momento.</div>
+    <div class="ui-actions">
+      <ng-content select="[tableActions]"></ng-content>
     </div>
-
-    <!-- TABELA -->
-    <div class="ui-table-wrap" *ngIf="!loading && hasRows; else emptyTpl">
-      <ng-content select="[tableContent]"></ng-content>
-    </div>
-
-    <!-- EMPTY -->
-    <ng-template #emptyTpl>
-      <ng-content select="[tableEmpty]"></ng-content>
-
-      <!-- fallback se não passar tableEmpty -->
-      <div class="ui-empty-state" *ngIf="!loading">
-        <span class="material-symbols-rounded ui-empty-icon">inbox</span>
-        <div class="ui-empty-title">Sem dados</div>
-        <div class="ui-empty-sub">Nada para exibir no momento.</div>
-      </div>
-    </ng-template>
   </div>
-</section>
+
+  <!-- LOADING -->
+  <div class="ui-empty-state" *ngIf="loading">
+    <span class="material-symbols-rounded ui-empty-icon">progress_activity</span>
+    <div class="ui-empty-title">Carregando...</div>
+    <div class="ui-empty-sub">Aguarde um momento.</div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="ui-table-wrap" *ngIf="!loading && hasRows; else emptyTpl">
+    <ng-content select="[tableContent]"></ng-content>
+  </div>
+
+  <!-- EMPTY -->
+  <ng-template #emptyTpl>
+    <ng-content select="[tableEmpty]"></ng-content>
+
+    <div class="ui-empty-state" *ngIf="!loading">
+      <span class="material-symbols-rounded ui-empty-icon">inbox</span>
+      <div class="ui-empty-title">Sem dados</div>
+      <div class="ui-empty-sub">Nada para exibir no momento.</div>
+    </div>
+  </ng-template>
+
+  <!-- ✅ FOOTER (ex: paginação) -->
+  <div class="ui-subcard-footer" *ngIf="!loading">
+    <ng-content select="[tableFooter]"></ng-content>
+  </div>
+</div>
