@@ -36,7 +36,7 @@ export class PropertiesListComponent {
 
   readonly filterForm = this.fb.group({
     query: [''],
-    country: [''],
+    status: [''],
   });
 
   readonly rows = computed(() => this.pageRows());
@@ -58,7 +58,10 @@ export class PropertiesListComponent {
   ) {
     this.filterForm.valueChanges
       .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.pageNumber.set(0));
+      .subscribe(() => {
+        this.pageNumber.set(0);
+        this.load();
+      });
 
     this.load();
   }
@@ -70,14 +73,12 @@ export class PropertiesListComponent {
     const requestPage = this.pageNumber();
     const requestSize = this.pageSize();
 
-    console.log('[LOAD] sending', { page: requestPage, size: requestSize });
+    const filterValues = this.filterForm.getRawValue();
+    const query = (filterValues.query ?? '').trim() || undefined;
+    const status = (filterValues.status ?? '').trim() || undefined;
 
     this.propertyService
-      .list({
-        page: requestPage,
-        size: requestSize,
-        sort: 'createdAt,desc',
-      })
+      .list({ page: requestPage, size: requestSize, sort: 'createdAt,desc', query, status })
       .subscribe({
         next: (pageResult: any) => {
           const content = pageResult?.content ?? [];
@@ -85,8 +86,6 @@ export class PropertiesListComponent {
           const totalPages = Number(pageResult?.totalPages ?? 1);
           const number = Number(pageResult?.number ?? requestPage);
           const size = Number(pageResult?.size ?? requestSize);
-
-          console.log('[LOAD] received', { totalElements, totalPages, number, size, contentLen: content.length });
 
           this.pageRows.set(content);
           this.totalElements.set(Number.isFinite(totalElements) ? totalElements : 0);
@@ -127,8 +126,9 @@ export class PropertiesListComponent {
   }
 
   clearFilters() {
-    this.filterForm.reset({ query: '', country: '' });
+    this.filterForm.reset({ query: '', status: '' });
     this.pageNumber.set(0);
+    this.load();
   }
 
   remove(row: PropertyResponse) {
@@ -175,7 +175,7 @@ export class PropertiesListComponent {
   readonly activeFiltersCount = computed(() => {
     const v = this.filterForm.value;
     const query = (v.query ?? '').trim();
-    const country = (v.country ?? '').trim();
+    const country = (v.status ?? '').trim();
     return (query ? 1 : 0) + (country ? 1 : 0);
   });
 

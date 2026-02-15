@@ -1,11 +1,7 @@
 <div class="ui-page ui-page-fit">
 
-  <app-page-header
-    title="Propriedades"
-    subtitle="Gerencie as propriedades cadastradas e seus canais conectados."
-    [sticky]="true"
-    [top]="16"
-  >
+  <app-page-header title="Propriedades" subtitle="Gerencie as propriedades cadastradas e seus canais conectados."
+    [sticky]="true" [top]="16">
     <button class="ui-btn primary solid" type="button" (click)="goNew()">
       <span class="material-symbols-rounded">add</span>
       Nova propriedade
@@ -28,12 +24,11 @@
       </div>
 
       <div class="ui-field">
-        <label>País</label>
-        <select formControlName="country">
+        <label>Status</label>
+        <select formControlName="status">
           <option value="">Todos</option>
-          <option value="BR">Brasil</option>
-          <option value="US">Estados Unidos</option>
-          <option value="PT">Portugal</option>
+          <option value="ACTIVE">Ativas</option>
+          <option value="INACTIVE">Inativas</option>
         </select>
       </div>
     </div>
@@ -42,12 +37,8 @@
   <!-- ✅ BODY: ocupa o resto da altura -->
   <div class="ui-page-body">
 
-    <app-table-card
-      class="ui-table-card"
-      title="Propriedades cadastradas"
-      [hasRows]="rows().length > 0"
-      [loading]="loading()"
-    >
+    <app-table-card class="ui-table-card" title="Propriedades cadastradas" [hasRows]="rows().length > 0"
+      [loading]="loading()">
       <div tableContent class="ui-table-stack">
 
         <!-- ✅ HEADER FIXO -->
@@ -103,13 +94,8 @@
       </div>
 
       <div tableFooter>
-        <app-pagination
-          [vm]="paginationVm()"
-          [disabled]="loading()"
-          [sizeOptions]="[5, 10, 20]"
-          (pageChange)="onPageChange($event)"
-          (sizeChange)="onSizeChange($event)"
-        >
+        <app-pagination [vm]="paginationVm()" [disabled]="loading()" [sizeOptions]="[5, 10, 20]"
+          (pageChange)="onPageChange($event)" (sizeChange)="onSizeChange($event)">
         </app-pagination>
       </div>
 
