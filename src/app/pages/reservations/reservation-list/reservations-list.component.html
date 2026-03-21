@@ -1,92 +1,111 @@
 <div class="ui-page ui-page-fit">
+  <app-page-header
+    title="Reservas"
+    subtitle="Acompanhe as reservas sincronizadas dos canais conectados."
+    [sticky]="true"
+    [top]="16"
+  >
+  </app-page-header>
 
-    <app-page-header title="Reservas" subtitle="Acompanhe as reservas sincronizadas dos canais conectados."
-        [sticky]="true" [top]="16">
-        <!-- Por enquanto sem botão "Nova reserva" (normalmente vem do sync) -->
-    </app-page-header>
-
-    <app-filter-panel title="Filtros" [defaultOpen]="false" [activeCount]="activeFiltersCount()">
-        <div filterActions>
-            <button class="ui-btn ghost mini" type="button" (click)="clearFilters()">
-                Limpar
-            </button>
-        </div>
-
-        <div class="ui-filters" [formGroup]="filterForm">
-            <div class="ui-field grow">
-                <label>Buscar</label>
-                <input formControlName="query" placeholder="Resumo, UID..." />
-            </div>
-
-            <div class="ui-field">
-                <label>Status</label>
-                <select formControlName="status">
-                    <option value="">Todos</option>
-                    <option value="CONFIRMED">Confirmada</option>
-                    <option value="CANCELLED">Cancelada</option>
-                    <option value="BLOCKED">Bloqueio</option>
-                </select>
-            </div>
-        </div>
-    </app-filter-panel>
-
-    <div class="ui-page-body">
-        <app-table-card class="ui-table-card" title="Reservas" [hasRows]="rows().length > 0" [loading]="loading()"
-            [showFooter]="true">
-            <div tableContent class="ui-table-stack">
-
-                <table class="ui-table ui-table-head">
-                    <thead>
-                        <tr>
-                            <th>Período</th>
-                            <th>Propriedade</th>
-                            <th>Canal</th>
-                            <th>Status</th>
-                            <th>Criada em</th>
-                            <th class="ui-center">Ações</th>
-                        </tr>
-                    </thead>
-                </table>
-
-                <div class="ui-table-body-scroll">
-                    <table class="ui-table ui-table-body">
-                        <tbody>
-                            <tr *ngFor="let row of rows()">
-                                <td class="ui-td-muted">
-                                    {{ row.startAt | date:'dd/MM/yyyy' }} → {{ row.endAt | date:'dd/MM/yyyy' }}
-                                </td>
-
-                                <td class="ui-td-muted">{{ row.propertyName }}</td>
-
-                                <td class="ui-td-muted">{{ row.channel }}</td>
-
-                                <td>
-                                    <span class="badge" [class.success]="row.status === 'CONFIRMED'"
-                                        [class.warning]="row.status === 'BLOCKED'"
-                                        [class.danger]="row.status === 'CANCELLED'">
-                                        {{ statusLabel(row.status) }}
-                                    </span>
-                                </td>
-
-                                <td class="ui-td-muted">{{ row.createdAt | date:'dd/MM/yyyy' }}</td>
-
-                                <td class="ui-right ui-actions-cell">
-                                    <button class="ui-icon-btn" title="Editar" type="button"
-                                        (click)="edit(row.publicId)">
-                                        <span class="material-symbols-rounded">edit</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div tableFooter>
-                <app-pagination [vm]="paginationVm()" [disabled]="loading()" [sizeOptions]="[5, 10, 20]"
-                    (pageChange)="onPageChange($event)" (sizeChange)="onSizeChange($event)"></app-pagination>
-            </div>
-
-        </app-table-card>
+  <app-filter-panel title="Filtros" [defaultOpen]="false" [activeCount]="activeFiltersCount()">
+    <div filterActions>
+      <button class="ui-btn ghost mini" type="button" (click)="clearFilters()">
+        Limpar
+      </button>
     </div>
+
+    <div class="ui-filters" [formGroup]="filterForm">
+      <div class="ui-field grow">
+        <label>Buscar</label>
+        <input formControlName="query" placeholder="Propriedade, canal, resumo, UID..." />
+      </div>
+
+      <div class="ui-field">
+        <label>Status</label>
+        <select formControlName="status">
+          <option value="">Todos</option>
+          <option value="CONFIRMED">Confirmada</option>
+          <option value="POSSIBLY_CANCELLED">Possivelmente cancelada</option>
+          <option value="CANCELLED">Cancelada</option>
+          <option value="COMPLETED">Concluida</option>
+        </select>
+      </div>
+    </div>
+  </app-filter-panel>
+
+  <div class="ui-page-body">
+    <app-table-card class="ui-table-card" title="Reservas" [hasRows]="rows().length > 0" [loading]="loading()"
+      [showFooter]="true">
+      <div tableContent class="ui-table-stack">
+        <table class="ui-table ui-table-head">
+          <colgroup>
+            <col style="width: 25%;" />
+            <col style="width: 22%;" />
+            <col style="width: 16%;" />
+            <col style="width: 16%;" />
+            <col style="width: 13%;" />
+            <col style="width: 8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th>Propriedade</th>
+              <th>Canal</th>
+              <th>Status</th>
+              <th>Criada em</th>
+              <th class="ui-center">Acoes</th>
+            </tr>
+          </thead>
+        </table>
+
+        <div class="ui-table-body-scroll">
+          <table class="ui-table ui-table-body">
+            <colgroup>
+              <col style="width: 25%;" />
+              <col style="width: 22%;" />
+              <col style="width: 16%;" />
+              <col style="width: 16%;" />
+              <col style="width: 13%;" />
+              <col style="width: 8%;" />
+            </colgroup>
+            <tbody>
+              <tr *ngFor="let row of rows()">
+                <td class="ui-td-muted">
+                  {{ row.startAt | date:'dd/MM/yyyy' }} -> {{ row.endAt | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td class="ui-td-muted">{{ row.propertyName || '-' }}</td>
+
+                <td class="ui-td-muted">{{ row.channel || '-' }}</td>
+
+                <td>
+                  <span
+                    class="badge"
+                    [class.success]="statusBadgeClass(row.status) === 'success'"
+                    [class.warning]="statusBadgeClass(row.status) === 'warning'"
+                    [class.danger]="statusBadgeClass(row.status) === 'danger'"
+                  >
+                    {{ statusLabel(row.status) }}
+                  </span>
+                </td>
+
+                <td class="ui-td-muted">{{ row.createdAt | date:'dd/MM/yyyy' }}</td>
+
+                <td class="ui-right ui-actions-cell">
+                  <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(row.publicId)">
+                    <span class="material-symbols-rounded">edit</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div tableFooter>
+        <app-pagination [vm]="paginationVm()" [disabled]="loading()" [sizeOptions]="[5, 10, 20]"
+          (pageChange)="onPageChange($event)" (sizeChange)="onSizeChange($event)"></app-pagination>
+      </div>
+    </app-table-card>
+  </div>
 </div>

@@ -5,11 +5,10 @@ import { CalendarMonthComponent } from './pages/calendars/calendar-month.compone
 import { PropertiesComponent } from './pages/properties/properties.component';
 import { PropertiesListComponent } from './pages/properties/properties-list/properties-list.component';
 import { ReservationsListComponent } from './pages/reservations/reservation-list/reservations-list.component';
+import { ReservationEditComponent } from './pages/reservations/reservation-edit/reservation-edit.component';
 
 export const routes: Routes = [
-  // redireciona raiz para dashboard
   { path: '', redirectTo: 'app/dashboard', pathMatch: 'full' },
-
   {
     path: 'app',
     component: MainLayoutComponent,
@@ -17,10 +16,10 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'calendars', component: CalendarMonthComponent },
       { path: 'reservations', component: ReservationsListComponent },
+      { path: 'reservations/:publicId/edit', component: ReservationEditComponent },
       { path: 'properties', component: PropertiesListComponent },
       { path: 'properties/new', component: PropertiesComponent },
       { path: 'properties/:publicId/edit', component: PropertiesComponent },
-
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

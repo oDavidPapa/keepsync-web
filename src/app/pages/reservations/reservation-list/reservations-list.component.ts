@@ -9,176 +9,163 @@ import { TableCardComponent } from '../../../core/ui/table-card/table-card.compo
 import { PaginationComponent, PaginationVM } from '../../../core/ui/pagination/pagination.component';
 import { PageHeaderComponent } from '../../../core/ui/page-header/page-header.component';
 import { FilterPanelComponent } from '../../../core/ui/filter/filter-panel.component';
-
-type ReservationRow = {
-    publicId: string;
-    propertyName: string;
-    channel: string;
-    startAt: string;
-    endAt: string;
-    status: 'CONFIRMED' | 'CANCELLED' | 'BLOCKED';
-    createdAt: string;
-};
+import { ToastService } from '../../../core/ui/toast/toast.service';
+import { apiErrorMessage } from '../../../modules/properties/api/api-error.util';
+import { ReservationResponse, ReservationStatus } from '../../../modules/reservations/api/reservation.models';
+import { ReservationService } from '../../../modules/reservations/api/reservation.service';
 
 @Component({
-    selector: 'app-reservations-list',
-    standalone: true,
-    imports: [
-        CommonModule,
-        RouterModule,
-        ReactiveFormsModule,
-        TableCardComponent,
-        PaginationComponent,
-        PageHeaderComponent,
-        FilterPanelComponent,
-    ],
-    templateUrl: './reservations-list.component.html',
-    styleUrls: ['./reservations-list.component.scss'],
+  selector: 'app-reservations-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    TableCardComponent,
+    PaginationComponent,
+    PageHeaderComponent,
+    FilterPanelComponent,
+  ],
+  templateUrl: './reservations-list.component.html',
+  styleUrls: ['./reservations-list.component.scss'],
 })
 export class ReservationsListComponent {
-    readonly loading = signal(false);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
-    private readonly pageNumber = signal(0);
-    private readonly pageSize = signal(5);
+  private readonly pageNumber = signal(0);
+  private readonly pageSize = signal(5);
 
-    private readonly totalElements = signal(0);
-    private readonly totalPages = signal(1);
+  private readonly totalElements = signal(0);
+  private readonly totalPages = signal(1);
 
-    private readonly pageRows = signal<ReservationRow[]>([]);
+  private readonly pageRows = signal<ReservationResponse[]>([]);
 
-    readonly filterForm = this.fb.group({
-        query: [''],
-        status: [''],
-    });
+  readonly filterForm = this.fb.group({
+    query: [''],
+    status: [''],
+  });
 
-    readonly rows = computed(() => this.pageRows());
+  readonly rows = computed(() => this.pageRows());
 
-    readonly paginationVm = computed<PaginationVM>(() => ({
-        page: this.pageNumber(),
-        size: this.pageSize(),
-        totalElements: this.totalElements(),
-        totalPages: this.totalPages(),
-    }));
+  readonly paginationVm = computed<PaginationVM>(() => ({
+    page: this.pageNumber(),
+    size: this.pageSize(),
+    totalElements: this.totalElements(),
+    totalPages: this.totalPages(),
+  }));
 
-    constructor(
-        private readonly router: Router,
-        private readonly fb: FormBuilder,
-        private readonly destroyRef: DestroyRef
-    ) {
-        this.filterForm.valueChanges
-            .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                this.pageNumber.set(0);
-                this.load();
-            });
+  readonly activeFiltersCount = computed(() => {
+    const filterValues = this.filterForm.value;
+    const query = (filterValues.query ?? '').trim();
+    const status = (filterValues.status ?? '').trim();
+    return (query ? 1 : 0) + (status ? 1 : 0);
+  });
 
-        this.load();
-    }
-
-    load() {
-        this.loading.set(true);
-
-        // ✅ MOCK por enquanto (no próximo passo ligamos no ReservationService)
-        const mock: ReservationRow[] = [
-            {
-                publicId: '11111111-1111-1111-1111-111111111111',
-                propertyName: 'Apto Central',
-                channel: 'Airbnb',
-                startAt: '2026-02-20T12:00:00Z',
-                endAt: '2026-02-23T12:00:00Z',
-                status: 'CONFIRMED',
-                createdAt: '2026-02-01T10:00:00Z',
-            },
-            {
-                publicId: '22222222-2222-2222-2222-222222222222',
-                propertyName: 'Casa Praia',
-                channel: 'Booking',
-                startAt: '2026-03-02T12:00:00Z',
-                endAt: '2026-03-05T12:00:00Z',
-                status: 'BLOCKED',
-                createdAt: '2026-02-03T10:00:00Z',
-            },
-            {
-                publicId: '33333333-3333-3333-3333-333333333333',
-                propertyName: 'Studio Centro',
-                channel: 'VRBO',
-                startAt: '2026-02-10T12:00:00Z',
-                endAt: '2026-02-12T12:00:00Z',
-                status: 'CANCELLED',
-                createdAt: '2026-02-02T10:00:00Z',
-            },
-        ];
-
-        // Simula paginação (mock)
-        const requestPage = this.pageNumber();
-        const requestSize = this.pageSize();
-
-        const filterValues = this.filterForm.getRawValue();
-        const query = (filterValues.query ?? '').trim().toLowerCase();
-        const status = (filterValues.status ?? '').trim();
-
-        const filtered = mock.filter((item) => {
-            const matchesQuery =
-                !query ||
-                item.propertyName.toLowerCase().includes(query) ||
-                item.channel.toLowerCase().includes(query) ||
-                item.publicId.toLowerCase().includes(query);
-
-            const matchesStatus = !status || item.status === status;
-
-            return matchesQuery && matchesStatus;
-        });
-
-        const startIndex = requestPage * requestSize;
-        const pageContent = filtered.slice(startIndex, startIndex + requestSize);
-
-        this.pageRows.set(pageContent);
-        this.totalElements.set(filtered.length);
-        this.totalPages.set(Math.max(1, Math.ceil(filtered.length / requestSize)));
-
-        this.loading.set(false);
-    }
-
-    onPageChange(nextPage: number) {
-        if (nextPage === this.pageNumber()) return;
-        this.pageNumber.set(nextPage);
-        this.load();
-    }
-
-    onSizeChange(nextSize: number) {
-        if (nextSize === this.pageSize()) return;
-        this.pageSize.set(nextSize);
+  constructor(
+    private readonly router: Router,
+    private readonly fb: FormBuilder,
+    private readonly toast: ToastService,
+    private readonly reservationService: ReservationService,
+    private readonly destroyRef: DestroyRef
+  ) {
+    this.filterForm.valueChanges
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         this.pageNumber.set(0);
         this.load();
-    }
+      });
 
-    clearFilters() {
-        this.filterForm.reset({ query: '', status: '' });
-        this.pageNumber.set(0);
-        this.load();
-    }
+    this.load();
+  }
 
-    edit(publicId: string) {
-        this.router.navigate(['/app/reservations', publicId, 'edit']);
-    }
+  load() {
+    this.loading.set(true);
+    this.error.set(null);
 
-    statusLabel(status: ReservationRow['status']) {
-        switch (status) {
-            case 'CONFIRMED':
-                return 'Confirmada';
-            case 'CANCELLED':
-                return 'Cancelada';
-            case 'BLOCKED':
-                return 'Bloqueio';
-            default:
-                return status;
-        }
-    }
+    const requestPage = this.pageNumber();
+    const requestSize = this.pageSize();
 
-    readonly activeFiltersCount = computed(() => {
-        const filterValues = this.filterForm.value;
-        const query = (filterValues.query ?? '').trim();
-        const status = (filterValues.status ?? '').trim();
-        return (query ? 1 : 0) + (status ? 1 : 0);
-    });
+    const filterValues = this.filterForm.getRawValue();
+    const query = (filterValues.query ?? '').trim() || undefined;
+    const status = (filterValues.status ?? '').trim() || undefined;
+
+    this.reservationService
+      .list({ page: requestPage, size: requestSize, sort: 'createdAt,desc', query, status })
+      .subscribe({
+        next: (pageResult) => {
+          const content = pageResult?.content ?? [];
+          const totalElements = Number(pageResult?.totalElements ?? 0);
+          const totalPages = Number(pageResult?.totalPages ?? 1);
+          const number = Number(pageResult?.number ?? requestPage);
+          const size = Number(pageResult?.size ?? requestSize);
+
+          this.pageRows.set(content);
+          this.totalElements.set(Number.isFinite(totalElements) ? totalElements : 0);
+          this.totalPages.set(Math.max(1, Number.isFinite(totalPages) ? totalPages : 1));
+          this.pageNumber.set(Number.isFinite(number) ? number : requestPage);
+          this.pageSize.set(Number.isFinite(size) ? size : requestSize);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          const message = apiErrorMessage(err, 'Falha ao carregar reservas.');
+          this.error.set(message);
+          this.toast.error(message);
+          this.loading.set(false);
+          console.error(err);
+        },
+      });
+  }
+
+  onPageChange(nextPage: number) {
+    if (nextPage === this.pageNumber()) return;
+    this.pageNumber.set(nextPage);
+    this.load();
+  }
+
+  onSizeChange(nextSize: number) {
+    if (nextSize === this.pageSize()) return;
+    this.pageSize.set(nextSize);
+    this.pageNumber.set(0);
+    this.load();
+  }
+
+  clearFilters() {
+    this.filterForm.reset({ query: '', status: '' });
+    this.pageNumber.set(0);
+    this.load();
+  }
+
+  edit(publicId: string) {
+    this.router.navigate(['/app/reservations', publicId, 'edit']);
+  }
+
+  statusLabel(status: ReservationStatus) {
+    switch (status) {
+      case 'CONFIRMED':
+        return 'Confirmada';
+      case 'POSSIBLY_CANCELLED':
+        return 'Possivelmente cancelada';
+      case 'CANCELLED':
+        return 'Cancelada';
+      case 'COMPLETED':
+        return 'Concluida';
+      default:
+        return status;
+    }
+  }
+
+  statusBadgeClass(status: ReservationStatus) {
+    switch (status) {
+      case 'CONFIRMED':
+      case 'COMPLETED':
+        return 'success';
+      case 'POSSIBLY_CANCELLED':
+        return 'warning';
+      case 'CANCELLED':
+        return 'danger';
+      default:
+        return '';
+    }
+  }
 }
