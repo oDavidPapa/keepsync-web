@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './core/layout/main-layout/main-layout.compo
 import { CalendarMonthComponent } from './pages/calendars/calendar-month.component';
 import { PropertiesComponent } from './pages/properties/properties.component';
 import { PropertiesListComponent } from './pages/properties/properties-list/properties-list.component';
+import { ReservationsListComponent } from './pages/reservations/reservation-list/reservations-list.component';
 
 export const routes: Routes = [
   // redireciona raiz para dashboard
@@ -15,7 +16,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'calendars', component: CalendarMonthComponent },
-
+      { path: 'reservations', component: ReservationsListComponent },
       { path: 'properties', component: PropertiesListComponent },
       { path: 'properties/new', component: PropertiesComponent },
       { path: 'properties/:publicId/edit', component: PropertiesComponent },

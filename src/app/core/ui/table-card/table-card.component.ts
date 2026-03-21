@@ -13,5 +13,6 @@ export class TableCardComponent {
   @Input() hasRows = false;
   @Input() loading = false;
   @Input() hasFilters = false;
-
+  @Input() showFooter = false;
+  @Input() customEmpty = false;
 }

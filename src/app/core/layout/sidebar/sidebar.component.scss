@@ -24,7 +24,8 @@
   transition: width var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
 }
 
-.sidebar:hover{
+.sidebar:hover,
+.sidebar:focus-within{
   width: var(--sidebar-expanded-width);
   box-shadow: 0 1.0rem 2.0rem rgba(17, 24, 39, 0.06);
 }
@@ -105,7 +106,8 @@
 }
 
 /* mostra brand no expand */
-.sidebar:hover .brand-text{
+.sidebar:hover .brand-text,
+.sidebar:focus-within .brand-text{
   opacity: 1;
   transform: translateX(0);
 }
@@ -164,7 +166,8 @@
 }
 
 /* expand mostra labels */
-.sidebar:hover .label{
+.sidebar:hover .label,
+.sidebar:focus-within .label{
   opacity: 1;
   transform: translateX(0);
 }
@@ -175,7 +178,17 @@
   color: var(--color-dark);
 }
 
+.nav-link:focus-visible{
+  background-color: var(--sidebar-hover, rgba(17, 24, 39, 0.03));
+  color: var(--color-dark);
+}
+
 .nav-link:hover .icon{
+  background: rgba(195, 83, 0, 0.08);
+  color: var(--color-primary);
+}
+
+.nav-link:focus-visible .icon{
   background: rgba(195, 83, 0, 0.08);
   color: var(--color-primary);
 }
@@ -213,7 +226,8 @@
   transition: all var(--speed) var(--ease);
 }
 
-.sidebar:hover .message-count{
+.sidebar:hover .message-count,
+.sidebar:focus-within .message-count{
   opacity: 1;
 }
 

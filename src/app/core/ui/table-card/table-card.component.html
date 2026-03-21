@@ -25,7 +25,7 @@
   <ng-template #emptyTpl>
     <ng-content select="[tableEmpty]"></ng-content>
 
-    <div class="ui-empty-state" *ngIf="!loading">
+    <div class="ui-empty-state" *ngIf="!loading && !customEmpty">
       <span class="material-symbols-rounded ui-empty-icon">inbox</span>
       <div class="ui-empty-title">Sem dados</div>
       <div class="ui-empty-sub">Nada para exibir no momento.</div>
@@ -33,7 +33,7 @@
   </ng-template>
 
   <!-- ✅ FOOTER (ex: paginação) -->
-  <div class="ui-subcard-footer" *ngIf="!loading">
+  <div class="ui-subcard-footer" *ngIf="!loading && showFooter">
     <ng-content select="[tableFooter]"></ng-content>
   </div>
 </div>

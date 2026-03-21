@@ -370,7 +370,7 @@
 
   /* IMPORTANTÍSSIMO: sem scroll aqui */
   .month-viewport{
-    overflow: hidden !important;
+    overflow: auto !important;
   }
 
   /* evita scroll horizontal também */
@@ -427,7 +427,7 @@
 
   /* no mobile: sem scroll, grid precisa CABER */
   .month-viewport{
-    overflow: hidden !important;
+    overflow: auto !important;
   }
 
   /* tira min-width desktop */
