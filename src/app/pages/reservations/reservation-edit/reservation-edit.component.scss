@@ -1,12 +1,21 @@
-.reservation-edit-page {
+.reservation-edit-page,
+.reservation-edit-body,
+.finance-layout {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.reservation-edit-body {
-  display: grid;
-  grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
-  gap: 1rem;
-  align-items: start;
+.reservation-edit-page {
+  height: auto;
+  min-height: 100%;
+}
+
+.reservation-edit-page > app-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: block;
 }
 
 .card {
@@ -22,13 +31,20 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+}
+
+.info-label,
+.field label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.68);
 }
 
 .card-head h2 {
   font-size: 1.08rem;
   font-weight: 900;
-  letter-spacing: -0.1px;
 }
 
 .card-sub {
@@ -37,60 +53,120 @@
   font-weight: 600;
 }
 
-.summary-grid,.form-grid {
+.details-grid,
+.form-grid,
+.financial-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
 }
 
-.summary-item,.field {
+.info-card,
+.finance-section,
+.summary-kpi {
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.015);
+  padding: 0.95rem;
+}
+
+.info-card,
+.field,
+.summary-kpi {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
 
-.summary-item {
-  padding: 0.9rem;
-  border-radius: 16px;
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  background: rgba(17, 24, 39, 0.015);
-}
-
-.summary-label,.field label {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: rgba(17, 24, 39, 0.68);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.summary-item strong {
+.info-card strong,
+.summary-kpi strong {
   color: var(--color-dark);
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.4;
 }
 
-.field input,.field textarea {
+.info-card small,
+.summary-kpi small,
+.financial-summary-empty p {
+  color: rgba(17, 24, 39, 0.55);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.info-card-emphasis {
+  background: rgba(195, 83, 0, 0.05);
+  border-color: rgba(195, 83, 0, 0.12);
+}
+
+.info-card-emphasis strong {
+  font-size: 1.04rem;
+}
+
+.summary-kpi-primary {
+  background: rgba(195, 83, 0, 0.05);
+  border-color: rgba(195, 83, 0, 0.12);
+}
+
+.summary-kpi-primary strong {
+  font-size: 1.14rem;
+}
+
+.financial-summary-empty {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(17, 24, 39, 0.14);
+  background: rgba(17, 24, 39, 0.012);
+}
+
+.financial-summary-empty strong {
+  color: var(--color-dark);
+  font-size: 0.98rem;
+}
+
+.info-card-wide,
+.field-wide {
+  grid-column: span 2;
+}
+
+.finance-card {
+  border-color: rgba(195, 83, 0, 0.14);
+  box-shadow: 0 1rem 2rem rgba(195, 83, 0, 0.05);
+}
+
+.finance-section h3 {
+  margin-bottom: 0.85rem;
+  color: var(--color-dark);
+  font-size: 0.98rem;
+  font-weight: 850;
+}
+
+.field input,
+.field textarea,
+.static-field {
   width: 100%;
+  min-height: 42px;
   border-radius: 12px;
   border: 1px solid rgba(17, 24, 39, 0.12);
   padding: 0.85rem 0.9rem;
   background: #fff;
   color: var(--color-dark);
   font: inherit;
-  transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
 }
 
-.field input {
-  min-height: 42px;
+.static-field {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.72);
 }
 
 .field textarea {
-  resize: vertical;
   min-height: 132px;
+  resize: vertical;
 }
 
-.field input:focus,.field textarea:focus {
+.field input:focus,
+.field textarea:focus {
   border-color: rgba(195, 83, 0, 0.4);
   box-shadow: 0 0 0 4px rgba(195, 83, 0, 0.08);
   outline: none;
@@ -100,10 +176,6 @@
   color: var(--color-danger);
   font-size: 0.78rem;
   font-weight: 700;
-}
-
-.span-2 {
-  grid-column: span 2;
 }
 
 .mono {
@@ -127,18 +199,20 @@
   color: rgba(195, 83, 0, 0.7);
 }
 
-@media (max-width: 1080px) {
-  .reservation-edit-body {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 720px) {
-  .summary-grid,.form-grid {
+  .card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .details-grid,
+  .form-grid,
+  .financial-summary-grid {
     grid-template-columns: 1fr;
   }
 
-  .span-2 {
+  .info-card-wide,
+  .field-wide {
     grid-column: span 1;
   }
 }

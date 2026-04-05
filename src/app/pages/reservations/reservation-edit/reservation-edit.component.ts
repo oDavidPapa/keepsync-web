@@ -15,6 +15,13 @@ import {
 } from '../../../modules/reservations/api/reservation.models';
 import { ReservationService } from '../../../modules/reservations/api/reservation.service';
 
+type ReservationMoneyFieldName =
+  | 'guestTotal'
+  | 'hostPayoutTotal'
+  | 'totalFees'
+  | 'cleaningFee'
+  | 'adjustmentsTotal';
+
 @Component({
   selector: 'app-reservation-edit',
   standalone: true,
@@ -27,6 +34,13 @@ export class ReservationEditComponent {
   readonly saving = signal(false);
   readonly submitted = signal(false);
   readonly reservation = signal<ReservationResponse | null>(null);
+
+  private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   readonly form = this.fb.group({
     guestTotal: [''],
@@ -89,6 +103,11 @@ export class ReservationEditComponent {
 
   goBack() {
     this.router.navigate(['/app/reservations']);
+  }
+
+  onMoneyInput(fieldName: ReservationMoneyFieldName) {
+    const fieldControl = this.form.controls[fieldName];
+    fieldControl.setValue(this.maskCurrencyInput(fieldControl.value), { emitEvent: false });
   }
 
   submit() {
@@ -154,6 +173,30 @@ export class ReservationEditComponent {
     return control.invalid && (control.dirty || control.touched || this.submitted());
   }
 
+  hasFinancialHighlights() {
+    return this.readMoneyField('guestTotal') != null || this.readMoneyField('hostPayoutTotal') != null;
+  }
+
+  shouldShowAdjustmentsHighlight() {
+    const adjustmentsTotal = this.readMoneyField('adjustmentsTotal');
+    return adjustmentsTotal != null && adjustmentsTotal !== 0;
+  }
+
+  financialHighlightValue(fieldName: ReservationMoneyFieldName) {
+    return this.formatCurrency(this.readMoneyField(fieldName));
+  }
+
+  projectedHostPayoutValue() {
+    const hostPayoutTotal = this.readMoneyField('hostPayoutTotal');
+    const adjustmentsTotal = this.readMoneyField('adjustmentsTotal');
+
+    if (hostPayoutTotal == null && adjustmentsTotal == null) {
+      return '-';
+    }
+
+    return this.formatCurrency((hostPayoutTotal ?? 0) + (adjustmentsTotal ?? 0));
+  }
+
   private applyFinanceToForm(finance: ReservationFinanceResponse) {
     this.form.patchValue({
       guestTotal: this.decimalToInput(finance.guestTotal),
@@ -187,7 +230,11 @@ export class ReservationEditComponent {
   }
 
   private decimalToInput(value: number | null | undefined) {
-    return value == null ? '' : String(value);
+    return value == null ? '' : this.currencyFormatter.format(value);
+  }
+
+  private formatCurrency(value: number | null | undefined) {
+    return value == null ? '-' : this.currencyFormatter.format(value);
   }
 
   private inputToDecimal(value: string | null | undefined) {
@@ -196,8 +243,18 @@ export class ReservationEditComponent {
       return null;
     }
 
-    const parsed = Number(normalized.replace(',', '.'));
-    return Number.isFinite(parsed) ? parsed : null;
+    const isNegative = normalized.includes('-');
+    const digitsOnly = normalized.replace(/\D/g, '');
+    if (!digitsOnly) {
+      return null;
+    }
+
+    const parsed = Number(digitsOnly) / 100;
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return isNegative ? parsed * -1 : parsed;
   }
 
   private isoToDatetimeLocal(value: string | null | undefined) {
@@ -222,5 +279,30 @@ export class ReservationEditComponent {
 
     const date = new Date(normalized);
     return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
+  private maskCurrencyInput(value: string | null | undefined) {
+    const normalized = value?.trim();
+    if (!normalized) {
+      return '';
+    }
+
+    const isNegative = normalized.includes('-');
+    const digitsOnly = normalized.replace(/\D/g, '');
+    if (!digitsOnly) {
+      return '';
+    }
+
+    const parsedValue = Number(digitsOnly) / 100;
+    if (!Number.isFinite(parsedValue)) {
+      return '';
+    }
+
+    const signedValue = isNegative ? parsedValue * -1 : parsedValue;
+    return this.currencyFormatter.format(signedValue);
+  }
+
+  private readMoneyField(fieldName: ReservationMoneyFieldName) {
+    return this.inputToDecimal(this.form.controls[fieldName].value);
   }
 }

@@ -12,6 +12,7 @@ npm-debug.log
 yarn-error.log
 AI_CONTEXT.md
 
+/contexto-backend
 # IDEs and editors
 .idea/
 .project
