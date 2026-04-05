@@ -1,0 +1,38 @@
+.reservation-period-cell {
+  white-space: normal !important;
+}
+
+.reservation-period {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.reservation-period-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.reservation-period-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(17, 24, 39, 0.55);
+}
+
+.reservation-period-item strong {
+  color: var(--color-dark);
+  font-size: 0.94rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+@media (max-width: 860px) {
+  .reservation-period {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+}

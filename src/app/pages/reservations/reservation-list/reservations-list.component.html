@@ -39,16 +39,16 @@
       <div tableContent class="ui-table-stack">
         <table class="ui-table ui-table-head">
           <colgroup>
-            <col style="width: 25%;" />
-            <col style="width: 22%;" />
+            <col style="width: 28%;" />
+            <col style="width: 21%;" />
+            <col style="width: 15%;" />
             <col style="width: 16%;" />
-            <col style="width: 16%;" />
-            <col style="width: 13%;" />
+            <col style="width: 12%;" />
             <col style="width: 8%;" />
           </colgroup>
           <thead>
             <tr>
-              <th>Periodo</th>
+              <th>Estadia</th>
               <th>Propriedade</th>
               <th>Canal</th>
               <th>Status</th>
@@ -61,17 +61,27 @@
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <colgroup>
-              <col style="width: 25%;" />
-              <col style="width: 22%;" />
+              <col style="width: 28%;" />
+              <col style="width: 21%;" />
+              <col style="width: 15%;" />
               <col style="width: 16%;" />
-              <col style="width: 16%;" />
-              <col style="width: 13%;" />
+              <col style="width: 12%;" />
               <col style="width: 8%;" />
             </colgroup>
             <tbody>
               <tr *ngFor="let row of rows()">
-                <td class="ui-td-muted">
-                  {{ row.startAt | date:'dd/MM/yyyy' }} -> {{ row.endAt | date:'dd/MM/yyyy' }}
+                <td class="reservation-period-cell">
+                  <div class="reservation-period">
+                    <div class="reservation-period-item">
+                      <span class="reservation-period-label">Check-in</span>
+                      <strong>{{ row.startAt | date:'dd/MM/yyyy' }}</strong>
+                    </div>
+
+                    <div class="reservation-period-item">
+                      <span class="reservation-period-label">Check-out</span>
+                      <strong>{{ row.endAt | date:'dd/MM/yyyy' }}</strong>
+                    </div>
+                  </div>
                 </td>
 
                 <td class="ui-td-muted">{{ row.propertyName || '-' }}</td>
