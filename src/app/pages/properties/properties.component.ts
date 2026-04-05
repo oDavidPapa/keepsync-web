@@ -23,13 +23,13 @@ import {
   CalendarSourceResponse,
   CreateCalendarSourceRequest
 } from '../../modules/calendar-source/api/calendar-source.model';
+import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
 
 type ChannelId = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
 
 type PropertyBasicInfoForm = FormGroup<{
   name: FormControl<string>;
-  timezone: FormControl<string>;
   addressLine1: FormControl<string>;
   addressLine2: FormControl<string>;
   city: FormControl<string>;
@@ -58,11 +58,13 @@ type NewSourceForm = FormGroup<{
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TableCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, PageHeaderComponent, TableCardComponent],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.scss',
 })
 export class PropertiesComponent {
+  private static readonly DEFAULT_PROPERTY_TIMEZONE = 'America/Sao_Paulo';
+
   @ViewChild('newChannelEl') newChannelEl?: ElementRef<HTMLSelectElement>;
 
   readonly countries = [
@@ -90,7 +92,6 @@ export class PropertiesComponent {
   readonly form: PropertiesForm = this.fb.group({
     basicInfo: this.fb.group({
       name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
-      timezone: this.fb.nonNullable.control('America/Sao_Paulo', [Validators.required, Validators.maxLength(60)]),
       addressLine1: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
       addressLine2: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
       city: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
@@ -183,7 +184,7 @@ export class PropertiesComponent {
 
     return {
       name: basicInfoValue.name,
-      timezone: basicInfoValue.timezone,
+      timezone: PropertiesComponent.DEFAULT_PROPERTY_TIMEZONE,
       addressLine1: this.normalizeOptionalText(basicInfoValue.addressLine1),
       addressLine2: this.normalizeOptionalText(basicInfoValue.addressLine2),
       city: this.normalizeOptionalText(basicInfoValue.city),
@@ -251,7 +252,6 @@ export class PropertiesComponent {
 
     this.form.controls.basicInfo.reset({
       name: '',
-      timezone: 'America/Sao_Paulo',
       addressLine1: '',
       addressLine2: '',
       city: '',
@@ -327,7 +327,6 @@ export class PropertiesComponent {
 
     this.form.controls.basicInfo.patchValue({
       name: property.name ?? '',
-      timezone: property.timezone ?? 'America/Sao_Paulo',
       addressLine1: property.addressLine1 ?? '',
       addressLine2: property.addressLine2 ?? '',
       city: property.city ?? '',

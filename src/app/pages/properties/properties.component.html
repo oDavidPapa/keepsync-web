@@ -1,26 +1,21 @@
-<form class="page" [formGroup]="form" (ngSubmit)="submit()">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="title">
-      <h1>{{ isEditMode() ? 'Editar propriedade' : 'Cadastro de propriedades' }}</h1>
-      <p class="muted">Cadastre a base da propriedade e conecte os canais de reserva.</p>
-    </div>
+<form class="ui-page ui-page-fit properties-page" [formGroup]="form" (ngSubmit)="submit()">
+  <app-page-header
+    [title]="isEditMode() ? 'Detalhes da Propriedade' : 'Cadastro de Propriedade'"
+    subtitle="Cadastre a base da propriedade e conecte os canais de reserva."
+    [sticky]="false"
+    [top]="0"
+  >
+    <button class="ui-btn ghost" type="button" [disabled]="saving()" (click)="cancel()">
+      Cancelar
+    </button>
 
-    <div class="actions">
-      <button class="btn ghost" type="button" [disabled]="saving()" (click)="cancel()">
-        Cancelar
-      </button>
+    <button class="ui-btn primary solid" type="submit" [disabled]="saving()">
+      <span class="material-symbols-rounded">save</span>
+      {{ saving() ? 'Salvando...' : (isEditMode() ? 'Salvar alteracoes' : 'Salvar propriedade') }}
+    </button>
+  </app-page-header>
 
-      <button class="btn primary solid" type="submit" [disabled]="saving()">
-        <span class="material-symbols-rounded">save</span>
-        {{ saving() ? 'Salvando...' : (isEditMode() ? 'Salvar alterações' : 'Salvar propriedade') }}
-      </button>
-    </div>
-  </div>
-
-  <!-- Tabs / Stepper -->
   <div class="steps">
-    <!-- STEP 1 -->
     <button
       class="step"
       type="button"
@@ -30,17 +25,16 @@
     >
       <span class="step-index">1</span>
 
-      <div class="step-body">
-        <div class="step-title">Dados da propriedade</div>
-        <div class="step-sub">Nome e endereço</div>
-      </div>
+      <span class="step-body">
+        <strong class="step-title">Dados da propriedade</strong>
+        <small class="step-sub">Nome e localizacao</small>
+      </span>
 
       <span class="step-mark" *ngIf="currentStep > 1">
         <span class="material-symbols-rounded">check_circle</span>
       </span>
     </button>
 
-    <!-- STEP 2 -->
     <button
       class="step"
       type="button"
@@ -50,10 +44,10 @@
     >
       <span class="step-index">2</span>
 
-      <div class="step-body">
-        <div class="step-title">Canais e iCal</div>
-        <div class="step-sub">Fontes por canal</div>
-      </div>
+      <span class="step-body">
+        <strong class="step-title">Canais e iCal</strong>
+        <small class="step-sub">Fontes conectadas por canal</small>
+      </span>
 
       <span class="step-mark" *ngIf="sourcesArray.length > 0">
         <span class="material-symbols-rounded">check_circle</span>
@@ -61,173 +55,208 @@
     </button>
   </div>
 
-  <!-- Content -->
-  <div class="grid" [ngSwitch]="currentStep">
-    <!-- ===================== STEP 1 ===================== -->
-    <section class="card" *ngSwitchCase="1">
+  <div class="properties-content" [ngSwitch]="currentStep">
+    <section class="card properties-card" *ngSwitchCase="1">
       <div class="card-head">
-        <div class="card-title">
+        <div>
           <h2>Dados da propriedade</h2>
+          <p class="card-sub">Preencha as informacoes principais da propriedade para iniciar a configuracao.</p>
         </div>
       </div>
 
-      <!-- ✅ Subgrupo basicInfo -->
-      <div class="form-grid" formGroupName="basicInfo">
-        <div class="field span-2">
-          <label for="name">Nome da propriedade</label>
-          <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
-          <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome (até 120 caracteres).</span>
+      <div class="section-panel" formGroupName="basicInfo">
+        <div class="section-panel-head">
+          <div>
+            <h3>Informacoes principais</h3>
+            <p>Os dados abaixo ajudam a identificar e organizar a propriedade no sistema.</p>
+          </div>
         </div>
 
-        <div class="field span-2">
-          <label for="addressLine1">Endereço</label>
-          <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="Rua, número" />
+        <div class="form-grid">
+          <div class="field span-2">
+            <label for="name">Nome da propriedade</label>
+            <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
+            <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome com ate 120 caracteres.</span>
+          </div>
+
+          <div class="field">
+            <label for="country">Pais</label>
+            <select id="country" formControlName="country">
+              <option value="" disabled>Selecione</option>
+              <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-panel" formGroupName="basicInfo">
+        <div class="section-panel-head">
+          <div>
+            <h3>Endereco</h3>
+            <p>Esses dados facilitam a identificacao da localizacao da propriedade.</p>
+          </div>
         </div>
 
-        <div class="field span-2">
-          <label for="addressLine2">Complemento</label>
-          <input
-            id="addressLine2"
-            type="text"
-            formControlName="addressLine2"
-            placeholder="Apto, bloco, referência"
-          />
-        </div>
+        <div class="form-grid">
+          <div class="field span-2">
+            <label for="addressLine1">Endereco</label>
+            <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="Rua, numero" />
+          </div>
 
-        <div class="field">
-          <label for="city">Cidade</label>
-          <input id="city" type="text" formControlName="city" placeholder="Ex: Florianópolis" />
-        </div>
+          <div class="field span-2">
+            <label for="addressLine2">Complemento</label>
+            <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referencia" />
+          </div>
 
-        <div class="field">
-          <label for="state">Estado</label>
-          <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
-        </div>
+          <div class="field">
+            <label for="city">Cidade</label>
+            <input id="city" type="text" formControlName="city" placeholder="Ex: Florianopolis" />
+          </div>
 
-        <div class="field">
-          <label for="country">País</label>
-          <select id="country" formControlName="country">
-            <option value="" disabled>Selecione</option>
-            <option *ngFor="let c of countries" [value]="c.code">{{ c.name }}</option>
-          </select>
-        </div>
+          <div class="field">
+            <label for="state">Estado</label>
+            <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
+          </div>
 
-        <div class="field">
-          <label for="postalCode">CEP</label>
-          <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+          <div class="field">
+            <label for="postalCode">CEP</label>
+            <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+          </div>
         </div>
       </div>
 
       <div class="card-foot">
-        <button class="btn ghost" type="button" (click)="cancel()">
+        <button class="ui-btn ghost" type="button" (click)="cancel()">
           Cancelar
         </button>
 
-        <button class="btn primary" type="button" (click)="nextStep()">
+        <button class="ui-btn primary" type="button" (click)="nextStep()">
           Continuar
           <span class="material-symbols-rounded">arrow_forward</span>
         </button>
       </div>
     </section>
 
-    <!-- ===================== STEP 2 ===================== -->
-    <section class="card step2" *ngSwitchCase="2">
-      <div class="card-head split">
-        <div class="card-title">
+    <section class="card properties-card step-channels" *ngSwitchCase="2">
+      <div class="card-head">
+        <div>
           <h2>Canais e iCal</h2>
+          <p class="card-sub">Conecte os canais que alimentam as reservas desta propriedade.</p>
         </div>
       </div>
 
-      <!-- Novo canal -->
-      <div class="subcard">
-        <div class="subcard-head">
-          <div class="sub-title">Novo canal</div>
+      <section class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <h3>Novo canal</h3>
+            <p>Adicione uma nova fonte de sincronizacao para a propriedade.</p>
+          </div>
         </div>
 
         <div class="new-row" [formGroup]="newSourceForm">
           <div class="field">
-            <label>Canal</label>
-            <select #newChannelEl formControlName="channel">
+            <label for="newChannel">Canal</label>
+            <select id="newChannel" #newChannelEl formControlName="channel">
               <option value="" disabled>Selecione</option>
-              <option *ngFor="let c of channels" [value]="c.id">{{ c.name }}</option>
+              <option *ngFor="let channel of channels" [value]="channel.id">{{ channel.name }}</option>
             </select>
             <span class="error" *ngIf="newSourceError('channel')">Selecione o canal.</span>
           </div>
 
           <div class="field grow">
-            <label>Link iCal</label>
-            <input type="url" formControlName="icalUrl" placeholder="https://..." />
+            <label for="newIcalUrl">Link iCal</label>
+            <input id="newIcalUrl" type="url" formControlName="icalUrl" placeholder="https://..." />
             <span class="error" *ngIf="newSourceError('icalUrl')">Informe o link iCal.</span>
           </div>
 
-          <button class="btn primary" type="button" (click)="addSourceFromDraft()">
+          <button class="ui-btn primary" type="button" (click)="addSourceFromDraft()">
             Adicionar
           </button>
         </div>
-      </div>
+      </section>
 
       <app-table-card
+        class="ui-table-card"
         title="Canais cadastrados"
         [hasRows]="sourcesArray.length > 0"
         [loading]="loading()"
         [hasFilters]="false"
       >
-        <div tableContent>
-          <table class="ui-table">
+        <div tableContent class="ui-table-stack">
+          <table class="ui-table ui-table-head">
+            <colgroup>
+              <col style="width: 18%;" />
+              <col style="width: 56%;" />
+              <col style="width: 14%;" />
+              <col style="width: 12%;" />
+            </colgroup>
             <thead>
               <tr>
-                <th style="width: 160px;">Canal</th>
+                <th>Canal</th>
                 <th>Link iCal</th>
-                <th style="width: 120px;">Status</th>
-                <th class="ui-right" style="width: 80px;">Ações</th>
+                <th class="ui-center">Status</th>
+                <th class="ui-center">Acoes</th>
               </tr>
             </thead>
-
-            <tbody formArrayName="sources">
-              <tr
-                *ngFor="let source of sourcesArray.controls; let i = index"
-                [formGroupName]="i"
-                [class.ui-row-inactive]="!source.get('active')?.value"
-              >
-                <td class="ui-td-strong">
-                  {{ source.get('provider')?.value }}
-                </td>
-
-                <td class="ui-td-muted">
-                  <span class="truncate" [title]="source.get('icalUrl')?.value">
-                    {{ source.get('icalUrl')?.value }}
-                  </span>
-                </td>
-
-                <td>
-                  <span
-                    class="badge"
-                    [class.success]="source.get('active')?.value"
-                    [class.warning]="!source.get('active')?.value"
-                  >
-                    {{ source.get('active')?.value ? 'Ativo' : 'Inativo' }}
-                  </span>
-                </td>
-
-                <td class="ui-right ui-actions-cell">
-                  <button
-                    class="ui-icon-btn danger"
-                    type="button"
-                    title="Remover"
-                    (click)="removeSource(i)"
-                  >
-                    <span class="material-symbols-rounded">delete</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
           </table>
+
+          <div class="ui-table-body-scroll">
+            <table class="ui-table ui-table-body">
+              <colgroup>
+                <col style="width: 18%;" />
+                <col style="width: 56%;" />
+                <col style="width: 14%;" />
+                <col style="width: 12%;" />
+              </colgroup>
+              <tbody formArrayName="sources">
+                <tr
+                  *ngFor="let source of sourcesArray.controls; let index = index"
+                  [formGroupName]="index"
+                  [class.ui-row-inactive]="!source.get('active')?.value"
+                >
+                  <td class="ui-td-strong">
+                    {{ source.get('provider')?.value }}
+                  </td>
+
+                  <td class="ui-td-muted">
+                    <span class="truncate" [title]="source.get('icalUrl')?.value">
+                      {{ source.get('icalUrl')?.value }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="sources-status-cell">
+                      <span
+                        class="badge"
+                        [class.success]="source.get('active')?.value"
+                        [class.warning]="!source.get('active')?.value"
+                      >
+                        {{ source.get('active')?.value ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="sources-actions-cell">
+                      <button
+                        class="ui-icon-btn danger"
+                        type="button"
+                        title="Remover"
+                        (click)="removeSource(index)"
+                      >
+                        <span class="material-symbols-rounded">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </app-table-card>
 
-      <!-- Footer -->
       <div class="sticky-foot">
-        <button class="btn ghost" type="button" (click)="prevStep()">
+        <button class="ui-btn ghost" type="button" (click)="prevStep()">
           <span class="material-symbols-rounded">arrow_back</span>
           Voltar
         </button>
