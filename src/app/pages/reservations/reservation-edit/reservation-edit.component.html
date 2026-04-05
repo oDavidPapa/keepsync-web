@@ -1,0 +1,136 @@
+<div class="ui-page ui-page-fit reservation-edit-page">
+  <app-page-header
+    title="Editar reserva"
+    [subtitle]="pageSubtitle()"
+    [sticky]="true"
+    [top]="16"
+  >
+    <button class="ui-btn ghost" type="button" (click)="goBack()" [disabled]="loading() || saving()">
+      Voltar
+    </button>
+
+    <button class="ui-btn primary solid" type="button" (click)="submit()" [disabled]="loading() || saving()">
+      <span class="material-symbols-rounded">save</span>
+      {{ saving() ? 'Salvando...' : 'Salvar alteracoes' }}
+    </button>
+  </app-page-header>
+
+  <div class="reservation-edit-body" *ngIf="reservation() as reservation; else loadingTpl">
+    <section class="card summary-card">
+      <div class="card-head">
+        <div>
+          <h2>Resumo da reserva</h2>
+          <p class="card-sub">Dados sincronizados do back-end para referencia durante a edicao.</p>
+        </div>
+
+        <span
+          class="badge"
+          [class.success]="statusBadgeClass(reservation.status) === 'success'"
+          [class.warning]="statusBadgeClass(reservation.status) === 'warning'"
+          [class.danger]="statusBadgeClass(reservation.status) === 'danger'"
+        >
+          {{ statusLabel(reservation.status) }}
+        </span>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">Propriedade</span>
+          <strong>{{ reservation.propertyName || '-' }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Canal</span>
+          <strong>{{ reservation.channel || '-' }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Periodo</span>
+          <strong>{{ reservation.startAt | date:'dd/MM/yyyy' }} -> {{ reservation.endAt | date:'dd/MM/yyyy' }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Criada em</span>
+          <strong>{{ reservation.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+
+        <div class="summary-item span-2">
+          <span class="summary-label">Resumo</span>
+          <strong>{{ reservation.summary || '-' }}</strong>
+        </div>
+
+        <div class="summary-item span-2">
+          <span class="summary-label">UID externo</span>
+          <strong class="mono">{{ reservation.externalUid || '-' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="card form-card">
+      <div class="card-head">
+        <div>
+          <h2>Financeiro da reserva</h2>
+          <p class="card-sub">Preencha os valores persistidos na tabela <code>reservation_finance</code>.</p>
+        </div>
+      </div>
+
+      <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field">
+          <label for="guestTotal">Total do hospede</label>
+          <input id="guestTotal" type="number" step="0.01" formControlName="guestTotal" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="hostPayoutTotal">Repasse ao anfitriao</label>
+          <input id="hostPayoutTotal" type="number" step="0.01" formControlName="hostPayoutTotal" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="totalFees">Taxas totais</label>
+          <input id="totalFees" type="number" step="0.01" formControlName="totalFees" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="cleaningFee">Taxa de limpeza</label>
+          <input id="cleaningFee" type="number" step="0.01" formControlName="cleaningFee" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="adjustmentsTotal">Ajustes</label>
+          <input id="adjustmentsTotal" type="number" step="0.01" formControlName="adjustmentsTotal" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="currency">Moeda</label>
+          <input id="currency" type="text" maxlength="3" formControlName="currency" placeholder="BRL" />
+          <span class="error" *ngIf="hasError('currency')">Informe a moeda com ate 3 caracteres.</span>
+        </div>
+
+        <div class="field span-2">
+          <label for="payoutDate">Data do repasse</label>
+          <input id="payoutDate" type="datetime-local" formControlName="payoutDate" />
+        </div>
+
+        <div class="field span-2">
+          <label for="notes">Observacoes</label>
+          <textarea
+            id="notes"
+            rows="5"
+            maxlength="500"
+            formControlName="notes"
+            placeholder="Observacoes internas sobre a reserva"
+          ></textarea>
+          <span class="error" *ngIf="hasError('notes')">As observacoes podem ter no maximo 500 caracteres.</span>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <ng-template #loadingTpl>
+    <section class="card loading-card">
+      <span class="material-symbols-rounded">progress_activity</span>
+      <strong>Carregando reserva...</strong>
+      <p>Aguarde enquanto buscamos os dados reais no back-end.</p>
+    </section>
+  </ng-template>
+</div>
