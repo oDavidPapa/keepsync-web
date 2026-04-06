@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 export interface NavItem {
   label: string;
   route: string;
-  icon: string; // usando Material Symbols / ou qualquer fonte de ícone
+  icon: string;
   badge?: number;
 }
 
@@ -22,10 +22,10 @@ export class SidebarComponent {
   nav: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'dashboard' },
     { label: 'Reservas', route: '/app/reservations', icon: 'event_available' },
-    { label: 'Calendários', route: '/app/calendars', icon: 'calendar_month' },
+    { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
     { label: 'Propriedades', route: '/app/properties', icon: 'home_work' },
-    { label: 'Notificações', route: '/app/notifications', icon: 'notifications', badge: 3 },
-    { label: 'Settings', route: '/app/settings', icon: 'settings' },
+    { label: 'Notificacoes', route: '/app/notifications', icon: 'notifications', badge: 3 },
+    { label: 'Configuracoes', route: '/app/settings', icon: 'settings' },
   ];
 
   trackByRoute(_: number, item: NavItem) {

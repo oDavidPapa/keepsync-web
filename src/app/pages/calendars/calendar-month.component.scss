@@ -17,7 +17,7 @@
 .channel-dot,.dot-mini{border-radius:999px;display:inline-block}
 .channel-dot{width:.6rem;height:.6rem}
 .dot-mini{width:.45rem;height:.45rem}
-.conflict-dot{width:.6rem;height:.6rem;border-radius:999px;display:inline-block;background:var(--color-danger)}
+.conflict-dot{width:.6rem;height:.6rem;border-radius:999px;display:block;background:var(--color-danger)}
 
 :is(.channel-dot,.dot-mini)[data-channel='AIRBNB']{background:var(--src-airbnb)}
 :is(.channel-dot,.dot-mini)[data-channel='BOOKING']{background:var(--src-booking)}
@@ -40,7 +40,7 @@
 
 .cell{position:relative;min-height:96px;padding:.65rem .75rem;border-right:1px solid rgba(17,24,39,.08);background:var(--color-white)}
 .cell:nth-child(7n){border-right:none}
-.cell.conflict{background:linear-gradient(to bottom,rgba(255,59,107,.07),rgba(255,59,107,.02))}
+.cell.conflict{background:repeating-linear-gradient(135deg,rgba(255,59,107,.06) 0 10px,rgba(255,59,107,.02) 10px 20px)}
 .cell.conflict .num{box-shadow:0 0 0 2px rgba(255,59,107,.14);color:var(--color-danger)}
 .cell-head{display:flex;justify-content:flex-end}
 

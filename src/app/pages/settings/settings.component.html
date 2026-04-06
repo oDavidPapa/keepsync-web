@@ -1,1 +1,215 @@
-<p>settings works!</p>
+<div class="ui-page ui-page-fit settings-page">
+  <app-page-header
+    title="Configuracoes"
+    subtitle="Atualize seus dados, preferencias de notificacao e seguranca da conta."
+    [sticky]="false"
+    [top]="0"
+  ></app-page-header>
+
+  <div class="settings-grid">
+    <section class="card settings-card">
+      <div class="card-head">
+        <div>
+          <h2>Dados da conta</h2>
+          <p class="card-sub">Mantenha suas informacoes principais atualizadas.</p>
+        </div>
+      </div>
+
+      <div class="section-panel" [formGroup]="profileForm">
+        <div class="section-panel-head">
+          <div>
+            <h3>Perfil</h3>
+            <p>Esses dados identificam o responsavel pelo plano e pela operacao.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="cpf">CPF</label>
+            <input id="cpf" type="text" formControlName="cpf" placeholder="000.000.000-00" (input)="onCpfInput()" />
+            <span class="error" *ngIf="hasProfileError('cpf')">Informe um CPF valido.</span>
+          </div>
+
+          <div class="field span-2">
+            <label for="fullName">Nome</label>
+            <input id="fullName" type="text" formControlName="fullName" placeholder="Ex: Maria Oliveira" />
+            <span class="error" *ngIf="hasProfileError('fullName')">Informe o nome com ate 120 caracteres.</span>
+          </div>
+
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" formControlName="email" placeholder="voce@empresa.com" />
+            <span class="error" *ngIf="hasProfileError('email')">Informe um e-mail valido.</span>
+          </div>
+
+          <div class="field">
+            <label for="phoneNumber">Telefone</label>
+            <input
+              id="phoneNumber"
+              type="text"
+              formControlName="phoneNumber"
+              placeholder="(11) 99999-9999"
+              (input)="onPhoneInput()"
+            />
+            <span class="error" *ngIf="hasProfileError('phoneNumber')">Informe um telefone valido.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <button class="ui-btn primary solid" type="button" [disabled]="loading() || profileSaving()" (click)="saveProfile()">
+          <span class="material-symbols-rounded">save</span>
+          {{ profileSaving() ? 'Salvando...' : 'Salvar dados' }}
+        </button>
+      </div>
+    </section>
+
+    <aside class="card settings-card plan-card">
+      <div class="card-head">
+        <div>
+          <h2>Plano atual</h2>
+          <p class="card-sub">Acompanhe o status atual da sua assinatura.</p>
+        </div>
+      </div>
+
+      <div class="plan-highlight">
+        <span class="plan-badge">{{ planLabel() }}</span>
+        <strong>{{ planLabel() }}</strong>
+        <span>{{ subscriptionDescription() }}</span>
+      </div>
+
+      <div class="plan-meta" *ngIf="currentUser() as user">
+        <div class="meta-item">
+          <span class="meta-label">E-mail</span>
+          <strong>{{ user.email }}</strong>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">Conta criada em</span>
+          <strong>{{ user.createdAt | date:'dd/MM/yyyy' }}</strong>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">Ultima atualizacao</span>
+          <strong>{{ user.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card settings-card">
+    <div class="card-head">
+      <div>
+        <h2>Preferencias de notificacao</h2>
+        <p class="card-sub">Escolha os avisos e os canais que quer manter ativos.</p>
+      </div>
+    </div>
+
+    <div class="section-panel" [formGroup]="notificationForm">
+      <div class="notification-list">
+        <div class="notification-item" *ngFor="let setting of notificationSettings">
+          <div class="notification-copy">
+            <strong>{{ setting.title }}</strong>
+            <span>{{ setting.description }}</span>
+          </div>
+
+          <div class="notification-channels">
+            <label class="channel-toggle" [for]="setting.emailControlName">
+              <span>E-mail</span>
+              <input
+                type="checkbox"
+                [id]="setting.emailControlName"
+                [formControlName]="setting.emailControlName"
+              />
+            </label>
+
+            <label class="channel-toggle" [for]="setting.whatsappControlName">
+              <span>WhatsApp</span>
+              <input
+                type="checkbox"
+                [id]="setting.whatsappControlName"
+                [formControlName]="setting.whatsappControlName"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-foot">
+      <button class="ui-btn primary solid" type="button" [disabled]="loading() || notificationsSaving()" (click)="saveNotificationPreferences()">
+        <span class="material-symbols-rounded">notifications</span>
+        {{ notificationsSaving() ? 'Salvando...' : 'Salvar preferencias' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="card settings-card">
+    <div class="card-head">
+      <div>
+        <h2>Seguranca</h2>
+        <p class="card-sub">Troque sua senha atual ou solicite uma nova por e-mail.</p>
+      </div>
+    </div>
+
+    <div class="security-grid">
+      <div class="section-panel" [formGroup]="passwordForm">
+        <div class="section-panel-head">
+          <div>
+            <h3>Alterar senha</h3>
+            <p>Use essa opcao quando voce souber a senha atual.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="currentPassword">Senha atual</label>
+            <input id="currentPassword" type="password" formControlName="currentPassword" />
+            <span class="error" *ngIf="hasPasswordError('currentPassword')">Informe a senha atual.</span>
+          </div>
+
+          <div class="field">
+            <label for="newPassword">Nova senha</label>
+            <input id="newPassword" type="password" formControlName="newPassword" />
+            <span class="error" *ngIf="hasPasswordError('newPassword')">A nova senha deve ter pelo menos 8 caracteres.</span>
+          </div>
+
+          <div class="field span-2">
+            <label for="confirmPassword">Confirmar nova senha</label>
+            <input id="confirmPassword" type="password" formControlName="confirmPassword" />
+            <span class="error" *ngIf="hasPasswordError('confirmPassword') || (passwordSubmitted() && !passwordConfirmationMatches())">
+              Confirme a nova senha corretamente.
+            </span>
+          </div>
+        </div>
+
+        <div class="card-foot inline password-actions">
+          <button class="ui-btn primary solid" type="button" [disabled]="loading() || passwordSaving()" (click)="changePassword()">
+            <span class="material-symbols-rounded">lock</span>
+            {{ passwordSaving() ? 'Salvando...' : 'Alterar senha' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="section-panel reset-panel">
+        <div class="section-panel-head">
+          <div>
+            <h3>Esqueci minha senha</h3>
+            <p>Envie uma senha temporaria para o e-mail atual da conta.</p>
+          </div>
+        </div>
+
+        <p class="reset-copy">
+          Use essa acao quando voce nao lembrar a senha antiga. Depois de receber a nova senha por e-mail, faca o login e volte aqui para definir uma senha definitiva.
+        </p>
+
+        <div class="card-foot inline reset-actions">
+          <button class="ui-btn ghost" type="button" [disabled]="loading() || passwordResetSending()" (click)="sendPasswordReset()">
+            <span class="material-symbols-rounded">mark_email_read</span>
+            {{ passwordResetSending() ? 'Enviando...' : 'Enviar nova senha por e-mail' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
