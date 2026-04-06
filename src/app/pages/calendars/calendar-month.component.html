@@ -35,6 +35,17 @@
           <span class="channel-dot" [attr.data-channel]="channel.id"></span>
           {{ channel.label }}
         </button>
+
+        <button
+          class="channel-chip conflict-filter"
+          type="button"
+          [class.active]="showOnlyConflicts()"
+          [attr.aria-pressed]="showOnlyConflicts()"
+          (click)="toggleConflictFilter()"
+        >
+          <span class="conflict-dot"></span>
+          Somente conflitos
+        </button>
       </div>
 
       <div class="ui-field property-filter">
@@ -63,7 +74,7 @@
     </div>
 
     <div class="calendar-feedback" *ngIf="!error() && !loading() && visibleMonthReservations().length === 0">
-      Nenhuma reserva encontrada para os filtros selecionados neste mes.
+      {{ emptyStateMessage() }}
     </div>
 
     <div class="dow-row">
@@ -86,6 +97,7 @@
               [class.out]="!day.inMonth"
               [class.today]="day.isToday"
               [class.has-booking]="day.bookings.length > 0"
+              [class.conflict]="day.hasConflict"
               [class.mini-cell]="isMobile()"
             >
               <div class="cell-head">
@@ -114,6 +126,7 @@
                   [style.gridColumn]="(segment.startCol + 1) + ' / ' + (segment.endCol + 2)"
                   [class.start]="segment.isStart"
                   [class.end]="segment.isEnd"
+                  [class.conflict]="conflictingReservationIds().has(segment.reservation.id)"
                   [title]="reservationTooltip(segment.reservation)"
                 >
                   <span class="bar-text">{{ reservationBarLabel(segment.reservation) }}</span>

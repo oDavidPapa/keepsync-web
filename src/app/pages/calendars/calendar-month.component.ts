@@ -37,6 +37,7 @@ interface DayCell {
   inMonth: boolean;
   isToday: boolean;
   bookings: CalendarReservation[];
+  hasConflict: boolean;
 }
 
 interface Week {
@@ -89,6 +90,7 @@ export class CalendarMonthComponent {
     OTHER: true,
   });
 
+  readonly showOnlyConflicts = signal(false);
   readonly selectedPropertyId = signal<string>(CalendarMonthComponent.PROPERTY_FILTER_ALL);
 
   private readonly propertyOptions = signal<CalendarPropertyOption[]>([]);
@@ -96,7 +98,7 @@ export class CalendarMonthComponent {
 
   private readonly calendarReservations = signal<CalendarReservation[]>([]);
 
-  readonly filteredReservations = computed(() => {
+  readonly reservationsMatchingBaseFilters = computed(() => {
     const activeChannelFilters = this.channelFilters();
     const selectedPropertyId = this.selectedPropertyId();
 
@@ -109,6 +111,56 @@ export class CalendarMonthComponent {
 
       return matchesChannel && matchesProperty;
     });
+  });
+
+  readonly conflictingReservationIds = computed(() => {
+    const conflictingReservationIds = new Set<string>();
+    const reservationsByProperty = new Map<string, CalendarReservation[]>();
+
+    this.reservationsMatchingBaseFilters().forEach((reservation) => {
+      const propertyReservations = reservationsByProperty.get(reservation.propertyId) ?? [];
+      propertyReservations.push(reservation);
+      reservationsByProperty.set(reservation.propertyId, propertyReservations);
+    });
+
+    reservationsByProperty.forEach((propertyReservations) => {
+      const sortedReservations = [...propertyReservations].sort((leftReservation, rightReservation) => {
+        if (leftReservation.startDate !== rightReservation.startDate) {
+          return leftReservation.startDate.localeCompare(rightReservation.startDate);
+        }
+
+        return leftReservation.endDate.localeCompare(rightReservation.endDate);
+      });
+
+      const activeReservations: CalendarReservation[] = [];
+
+      sortedReservations.forEach((reservation) => {
+        const overlappingReservations = activeReservations.filter(
+          (activeReservation) => activeReservation.endDate > reservation.startDate
+        );
+
+        overlappingReservations.forEach((overlappingReservation) => {
+          conflictingReservationIds.add(overlappingReservation.id);
+          conflictingReservationIds.add(reservation.id);
+        });
+
+        activeReservations.length = 0;
+        activeReservations.push(...overlappingReservations, reservation);
+      });
+    });
+
+    return conflictingReservationIds;
+  });
+
+  readonly filteredReservations = computed(() => {
+    const reservations = this.reservationsMatchingBaseFilters();
+
+    if (!this.showOnlyConflicts()) {
+      return reservations;
+    }
+
+    const conflictingReservationIds = this.conflictingReservationIds();
+    return reservations.filter((reservation) => conflictingReservationIds.has(reservation.id));
   });
 
   readonly visibleMonthReservations = computed(() => {
@@ -126,6 +178,12 @@ export class CalendarMonthComponent {
     this.month().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   );
 
+  readonly emptyStateMessage = computed(() =>
+    this.showOnlyConflicts()
+      ? 'Nenhum conflito encontrado para os filtros selecionados neste mes.'
+      : 'Nenhuma reserva encontrada para os filtros selecionados neste mes.'
+  );
+
   readonly days = computed<DayCell[]>(() => {
     const monthStart = this.month();
     const gridStartDate = this.startOfWeek(this.startOfMonth(monthStart));
@@ -141,15 +199,16 @@ export class CalendarMonthComponent {
       const isoDate = this.toISO(cellDate);
       const bookings = reservations.filter((reservation) => this.intersectsDay(reservation, isoDate));
 
-      dayCells.push({
-        date: cellDate,
-        iso: isoDate,
-        day: cellDate.getDate(),
-        inMonth: cellDate.getMonth() === monthStart.getMonth(),
-        isToday: isoDate === todayIso,
-        bookings,
-      });
-    }
+        dayCells.push({
+          date: cellDate,
+          iso: isoDate,
+          day: cellDate.getDate(),
+          inMonth: cellDate.getMonth() === monthStart.getMonth(),
+          isToday: isoDate === todayIso,
+          bookings,
+          hasConflict: this.hasConflictOnDay(bookings),
+        });
+      }
 
     return dayCells;
   });
@@ -217,6 +276,10 @@ export class CalendarMonthComponent {
       ...filters,
       [channel]: !filters[channel],
     }));
+  }
+
+  toggleConflictFilter() {
+    this.showOnlyConflicts.update((currentValue) => !currentValue);
   }
 
   channelLabel(channel: CalendarChannel): string {
@@ -417,6 +480,16 @@ export class CalendarMonthComponent {
 
   private intersectsDay(reservation: CalendarReservation, isoDay: string): boolean {
     return reservation.startDate <= isoDay && isoDay < reservation.endDate;
+  }
+
+  private hasConflictOnDay(bookings: CalendarReservation[]): boolean {
+    const bookingsPerProperty = new Map<string, number>();
+
+    bookings.forEach((booking) => {
+      bookingsPerProperty.set(booking.propertyId, (bookingsPerProperty.get(booking.propertyId) ?? 0) + 1);
+    });
+
+    return Array.from(bookingsPerProperty.values()).some((count) => count > 1);
   }
 
   private segmentForWeek(
