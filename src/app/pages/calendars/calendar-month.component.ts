@@ -1,17 +1,33 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, DestroyRef, computed, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-type Source = 'airbnb' | 'booking' | 'manual' | 'site';
+import { Page } from '../../core/api/api.models';
+import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
+import { ToastService } from '../../core/ui/toast/toast.service';
+import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
+import { PropertyResponse } from '../../modules/properties/api/property.models';
+import { PropertyService } from '../../modules/properties/api/property.service';
+import { ReservationResponse, ReservationStatus } from '../../modules/reservations/api/reservation.models';
+import { ReservationService } from '../../modules/reservations/api/reservation.service';
 
-interface Reservation {
+type CalendarChannel = 'AIRBNB' | 'BOOKING' | 'VRBO' | 'OTHER';
+
+interface CalendarPropertyOption {
+  id: string;
+  name: string;
+}
+
+interface CalendarReservation {
   id: string;
   propertyId: string;
   propertyName: string;
-  guest: string;
-  source: Source;
-  start: string; // yyyy-mm-dd (check-in)
-  end: string;   // yyyy-mm-dd (check-out) [start, end)
+  channel: CalendarChannel;
+  startDate: string;
+  endDate: string;
+  status: ReservationStatus;
 }
 
 interface DayCell {
@@ -20,8 +36,7 @@ interface DayCell {
   day: number;
   inMonth: boolean;
   isToday: boolean;
-  bookings: Reservation[];
-  hasConflict: boolean;
+  bookings: CalendarReservation[];
 }
 
 interface Week {
@@ -31,9 +46,9 @@ interface Week {
 }
 
 interface Segment {
-  reservation: Reservation;
-  startCol: number; // 0..6
-  endCol: number;   // 0..6 (inclusive)
+  reservation: CalendarReservation;
+  startCol: number;
+  endCol: number;
   isStart: boolean;
   isEnd: boolean;
 }
@@ -43,245 +58,465 @@ type SegmentLane = Segment[];
 @Component({
   selector: 'app-calendar-month',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   templateUrl: './calendar-month.component.html',
   styleUrl: './calendar-month.component.scss',
 })
 export class CalendarMonthComponent {
-  private readonly _month = signal(this.startOfMonth(new Date(2026, 1, 1)));
-  month = computed(() => this._month());
+  private static readonly PROPERTY_FILTER_ALL = 'all';
+  private static readonly PAGE_SIZE = 200;
 
-  private readonly _isMobile = signal<boolean>(false);
-  isMobile = computed(() => this._isMobile());
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
-  filters = signal<Record<Source, boolean>>({
-    airbnb: true,
-    booking: true,
-    manual: true,
-    site: true,
+  private readonly currentMonth = signal(this.startOfMonth(new Date()));
+  readonly month = computed(() => this.currentMonth());
+
+  private readonly mobileViewport = signal(false);
+  readonly isMobile = computed(() => this.mobileViewport());
+
+  readonly availableChannels: ReadonlyArray<{ id: CalendarChannel; label: string }> = [
+    { id: 'AIRBNB', label: 'AIRBNB' },
+    { id: 'BOOKING', label: 'BOOKING' },
+    { id: 'VRBO', label: 'VRBO' },
+    { id: 'OTHER', label: 'OUTRO' },
+  ];
+
+  readonly channelFilters = signal<Record<CalendarChannel, boolean>>({
+    AIRBNB: true,
+    BOOKING: true,
+    VRBO: true,
+    OTHER: true,
   });
 
-  selectedPropertyId = signal<string>('all');
+  readonly selectedPropertyId = signal<string>(CalendarMonthComponent.PROPERTY_FILTER_ALL);
 
-  properties = signal<{ id: string; name: string }[]>([
-    { id: 'p1', name: 'Apto Centro (101)' },
-    { id: 'p2', name: 'Casa Praia (B)' },
-    { id: 'p3', name: 'Studio Vila (3A)' },
-    { id: 'p4', name: 'Loft Garden (7)' },
-  ]);
+  private readonly propertyOptions = signal<CalendarPropertyOption[]>([]);
+  readonly properties = computed(() => this.propertyOptions());
 
-  reservations = signal<Reservation[]>([
-    { id: 'r1', propertyId: 'p1', propertyName: 'Apto Centro (101)', guest: 'Marina', source: 'airbnb', start: '2026-02-03', end: '2026-02-07' },
-    { id: 'r2', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Pedro', source: 'booking', start: '2026-02-06', end: '2026-02-09' },
-    { id: 'r3', propertyId: 'p3', propertyName: 'Studio Vila (3A)', guest: 'Ana', source: 'manual', start: '2026-02-09', end: '2026-02-10' },
-    { id: 'r4', propertyId: 'p1', propertyName: 'Apto Centro (101)', guest: 'Bruna', source: 'airbnb', start: '2026-02-12', end: '2026-02-15' },
-    { id: 'r5', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Diego', source: 'booking', start: '2026-02-18', end: '2026-02-22' },
-    { id: 'r6', propertyId: 'p4', propertyName: 'Loft Garden (7)', guest: 'Carlos', source: 'site', start: '2026-02-25', end: '2026-02-28' },
-    { id: 'r7', propertyId: 'p2', propertyName: 'Casa Praia (B)', guest: 'Long Stay', source: 'booking', start: '2026-02-20', end: '2026-03-05' },
-  ]);
+  private readonly calendarReservations = signal<CalendarReservation[]>([]);
 
-  constructor() {
-    const mql = window.matchMedia('(max-width: 860px)');
-    const apply = () => this._isMobile.set(mql.matches);
-    apply();
-    if (mql.addEventListener) mql.addEventListener('change', apply);
-    else (mql as any).addListener(apply);
-  }
+  readonly filteredReservations = computed(() => {
+    const activeChannelFilters = this.channelFilters();
+    const selectedPropertyId = this.selectedPropertyId();
 
-  monthLabel = computed(() => {
-    const d = this.month();
-    return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    return this.calendarReservations().filter((reservation) => {
+      const matchesChannel = activeChannelFilters[reservation.channel];
+      const matchesProperty =
+        selectedPropertyId === CalendarMonthComponent.PROPERTY_FILTER_ALL
+          ? true
+          : reservation.propertyId === selectedPropertyId;
+
+      return matchesChannel && matchesProperty;
+    });
   });
 
-  days = computed<DayCell[]>(() => {
+  readonly visibleMonthReservations = computed(() => {
     const monthStart = this.month();
-    const gridStart = this.startOfWeek(this.startOfMonth(monthStart));
+    const monthStartIso = this.toISO(monthStart);
+    const monthEndIso = this.toISO(new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0));
+
+    return this.filteredReservations().filter((reservation) => {
+      const occupiedEndDate = this.addDaysISO(reservation.endDate, -1);
+      return !(occupiedEndDate < monthStartIso || reservation.startDate > monthEndIso);
+    });
+  });
+
+  readonly monthLabel = computed(() =>
+    this.month().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  );
+
+  readonly days = computed<DayCell[]>(() => {
+    const monthStart = this.month();
+    const gridStartDate = this.startOfWeek(this.startOfMonth(monthStart));
     const todayIso = this.toISO(new Date());
+    const reservations = this.filteredReservations();
 
-    const srcFiltered = this.reservations().filter(r => this.filters()[r.source]);
-    const propFiltered =
-      this.selectedPropertyId() === 'all'
-        ? srcFiltered
-        : srcFiltered.filter(r => r.propertyId === this.selectedPropertyId());
+    const dayCells: DayCell[] = [];
 
-    const out: DayCell[] = [];
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(gridStart);
-      d.setDate(d.getDate() + i);
+    for (let dayIndex = 0; dayIndex < 42; dayIndex++) {
+      const cellDate = new Date(gridStartDate);
+      cellDate.setDate(cellDate.getDate() + dayIndex);
 
-      const iso = this.toISO(d);
-      const bookings = propFiltered.filter(ev => this.intersectsDay(ev, iso));
+      const isoDate = this.toISO(cellDate);
+      const bookings = reservations.filter((reservation) => this.intersectsDay(reservation, isoDate));
 
-      const counts = new Map<string, number>();
-      for (const b of bookings) {
-        counts.set(b.propertyId, (counts.get(b.propertyId) ?? 0) + 1);
-      }
-      const hasConflict = Array.from(counts.values()).some(v => v >= 2);
-
-      out.push({
-        date: d,
-        iso,
-        day: d.getDate(),
-        inMonth: d.getMonth() === monthStart.getMonth(),
-        isToday: iso === todayIso,
+      dayCells.push({
+        date: cellDate,
+        iso: isoDate,
+        day: cellDate.getDate(),
+        inMonth: cellDate.getMonth() === monthStart.getMonth(),
+        isToday: isoDate === todayIso,
         bookings,
-        hasConflict,
       });
     }
-    return out;
+
+    return dayCells;
   });
 
-  weeks = computed<Week[]>(() => {
-    const allDays = this.days();
+  readonly weeks = computed<Week[]>(() => {
+    const dayCells = this.days();
+    const reservations = this.filteredReservations();
 
-    const srcFiltered = this.reservations().filter(r => this.filters()[r.source]);
-    const propFiltered =
-      this.selectedPropertyId() === 'all'
-        ? srcFiltered
-        : srcFiltered.filter(r => r.propertyId === this.selectedPropertyId());
-
-    const weeks: Week[] = [];
-    for (let w = 0; w < 6; w++) {
-      const weekDays = allDays.slice(w * 7, w * 7 + 7);
+    return Array.from({ length: 6 }, (_, weekIndex) => {
+      const weekDays = dayCells.slice(weekIndex * 7, weekIndex * 7 + 7);
       const weekStart = new Date(weekDays[0].date);
       const weekEnd = new Date(weekDays[6].date);
 
-      const segments: Segment[] = [];
-      for (const r of propFiltered) {
-        const seg = this.segmentForWeek(r, weekStart, weekEnd);
-        if (seg) segments.push(seg);
-      }
+      const reservationSegments = reservations
+        .map((reservation) => this.segmentForWeek(reservation, weekStart, weekEnd))
+        .filter((segment): segment is Segment => segment !== null)
+        .sort((leftSegment, rightSegment) => {
+          if (leftSegment.startCol !== rightSegment.startCol) {
+            return leftSegment.startCol - rightSegment.startCol;
+          }
 
-      segments.sort((a, b) => {
-        if (a.startCol !== b.startCol) return a.startCol - b.startCol;
-        return (b.endCol - b.startCol) - (a.endCol - a.startCol);
-      });
+          return (
+            rightSegment.endCol -
+            rightSegment.startCol -
+            (leftSegment.endCol - leftSegment.startCol)
+          );
+        });
 
-      const lanes = this.packIntoLanes(segments);
-
-      weeks.push({ weekStart, days: weekDays, lanes });
-    }
-
-    return weeks;
+      return {
+        weekStart,
+        days: weekDays,
+        lanes: this.packIntoLanes(reservationSegments),
+      };
+    });
   });
 
+  constructor(
+    private readonly reservationService: ReservationService,
+    private readonly propertyService: PropertyService,
+    private readonly toast: ToastService,
+    private readonly destroyRef: DestroyRef
+  ) {
+    this.initializeViewportMode();
+    this.loadCalendarData();
+  }
+
   prevMonth() {
-    const d = new Date(this.month());
-    d.setMonth(d.getMonth() - 1);
-    this._month.set(this.startOfMonth(d));
+    const previousMonth = new Date(this.month());
+    previousMonth.setMonth(previousMonth.getMonth() - 1);
+    this.currentMonth.set(this.startOfMonth(previousMonth));
   }
 
   nextMonth() {
-    const d = new Date(this.month());
-    d.setMonth(d.getMonth() + 1);
-    this._month.set(this.startOfMonth(d));
+    const nextMonth = new Date(this.month());
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    this.currentMonth.set(this.startOfMonth(nextMonth));
   }
 
   goToday() {
-    this._month.set(this.startOfMonth(new Date()));
+    this.currentMonth.set(this.startOfMonth(new Date()));
   }
 
-  toggle(source: Source) {
-    this.filters.update(f => ({ ...f, [source]: !f[source] }));
+  toggleChannel(channel: CalendarChannel) {
+    this.channelFilters.update((filters) => ({
+      ...filters,
+      [channel]: !filters[channel],
+    }));
   }
 
-  createManual(day: DayCell) {
-    console.log('Criar reserva manual em:', day.iso);
-    alert(`Nova reserva manual em ${day.iso}`);
+  channelLabel(channel: CalendarChannel): string {
+    return this.availableChannels.find((availableChannel) => availableChannel.id === channel)?.label ?? channel;
   }
 
-  showCheckinIcon(r: Reservation, isoDay: string): boolean {
-    return r.start === isoDay;
+  reservationBarLabel(reservation: CalendarReservation): string {
+    return this.selectedPropertyId() === CalendarMonthComponent.PROPERTY_FILTER_ALL
+      ? reservation.propertyName
+      : this.channelLabel(reservation.channel);
   }
 
-  showCheckoutIcon(r: Reservation, isoDay: string): boolean {
-    return this.addDaysISO(r.end, -1) === isoDay;
-  }
-
-  sourceLetter(src: Source): string {
-    return src === 'airbnb' ? 'A' : src === 'booking' ? 'B' : src === 'manual' ? 'M' : 'S';
-  }
-
-  private intersectsDay(ev: Reservation, isoDay: string): boolean {
-    return ev.start <= isoDay && isoDay < ev.end;
-  }
-
-  private segmentForWeek(r: Reservation, weekStart: Date, weekEnd: Date): Segment | null {
-    const wsIso = this.toISO(weekStart);
-    const weIso = this.toISO(weekEnd);
-
-    const rEndOccupied = this.addDaysISO(r.end, -1);
-    if (rEndOccupied < wsIso || r.start > weIso) return null;
-
-    const startIso = r.start < wsIso ? wsIso : r.start;
-    const endIso = rEndOccupied > weIso ? weIso : rEndOccupied;
-
-    const startCol = this.diffDays(weekStart, this.fromISO(startIso));
-    const endCol = this.diffDays(weekStart, this.fromISO(endIso));
-
-    const isStart = r.start >= wsIso && r.start <= weIso;
-    const isEnd = rEndOccupied >= wsIso && rEndOccupied <= weIso;
-
-    return { reservation: r, startCol, endCol, isStart, isEnd };
-  }
-
-  private packIntoLanes(segs: Segment[]): SegmentLane[] {
-    const lanes: SegmentLane[] = [];
-    for (const seg of segs) {
-      let placed = false;
-      for (const lane of lanes) {
-        if (!this.collidesAny(seg, lane)) {
-          lane.push(seg);
-          placed = true;
-          break;
-        }
-      }
-      if (!placed) lanes.push([seg]);
-    }
-    for (const lane of lanes) lane.sort((a, b) => a.startCol - b.startCol);
-    return lanes;
-  }
-
-  private collidesAny(seg: Segment, lane: SegmentLane): boolean {
-    return lane.some(s => !(seg.endCol < s.startCol || seg.startCol > s.endCol));
-  }
-
-  private toISO(date: Date): string {
-    const y = date.getFullYear();
-    const m = `${date.getMonth() + 1}`.padStart(2, '0');
-    const d = `${date.getDate()}`.padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  private fromISO(iso: string): Date {
-    const [y, m, d] = iso.split('-').map(n => Number(n));
-    return new Date(y, m - 1, d);
-  }
-
-  private addDaysISO(iso: string, delta: number): string {
-    const d = this.fromISO(iso);
-    d.setDate(d.getDate() + delta);
-    return this.toISO(d);
-  }
-
-  private diffDays(a: Date, b: Date): number {
-    const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
-    const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
-    return Math.round((bb - aa) / 86400000);
-  }
-
-  private startOfMonth(d: Date): Date {
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-  }
-
-  private startOfWeek(d: Date): Date {
-    const date = new Date(d);
-    const day = (date.getDay() + 6) % 7;
-    date.setDate(date.getDate() - day);
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  reservationTooltip(reservation: CalendarReservation): string {
+    const checkInDate = this.formatDate(reservation.startDate);
+    const checkOutDate = this.formatDate(reservation.endDate);
+    return `${reservation.propertyName} | ${this.channelLabel(reservation.channel)} | ${checkInDate} a ${checkOutDate}`;
   }
 
   laneRows(count: number): string {
-    return `repeat(${Math.max(1, count)}, 22px)`;
+    return `repeat(${Math.max(1, count)}, 24px)`;
+  }
+
+  private loadCalendarData() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    forkJoin({
+      reservations: this.loadAllReservations(),
+      properties: this.loadAllProperties().pipe(catchError(() => of([] as PropertyResponse[]))),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ reservations, properties }) => {
+          const mappedReservations = reservations
+            .filter((reservation) => reservation.status !== 'CANCELLED')
+            .map((reservation) => this.mapReservationToCalendarReservation(reservation))
+            .filter((reservation): reservation is CalendarReservation => this.isValidCalendarReservation(reservation));
+
+          this.calendarReservations.set(mappedReservations);
+          this.propertyOptions.set(this.buildPropertyOptions(properties, mappedReservations));
+
+          const selectedPropertyId = this.selectedPropertyId();
+          const hasSelectedProperty = this.propertyOptions().some((property) => property.id === selectedPropertyId);
+          if (
+            selectedPropertyId !== CalendarMonthComponent.PROPERTY_FILTER_ALL &&
+            !hasSelectedProperty
+          ) {
+            this.selectedPropertyId.set(CalendarMonthComponent.PROPERTY_FILTER_ALL);
+          }
+
+          this.loading.set(false);
+        },
+        error: (error) => {
+          const message = apiErrorMessage(error, 'Nao foi possivel carregar o calendario.');
+          this.error.set(message);
+          this.toast.error(message);
+          this.loading.set(false);
+        },
+      });
+  }
+
+  private loadAllReservations(): Observable<ReservationResponse[]> {
+    return this.collectAllPages((pageNumber) =>
+      this.reservationService.list({
+        page: pageNumber,
+        size: CalendarMonthComponent.PAGE_SIZE,
+        sort: 'startAt,asc',
+      })
+    );
+  }
+
+  private loadAllProperties(): Observable<PropertyResponse[]> {
+    return this.collectAllPages((pageNumber) =>
+      this.propertyService.list({
+        page: pageNumber,
+        size: CalendarMonthComponent.PAGE_SIZE,
+        sort: 'name,asc',
+      })
+    );
+  }
+
+  private collectAllPages<T>(loadPage: (pageNumber: number) => Observable<Page<T>>): Observable<T[]> {
+    return loadPage(0).pipe(
+      switchMap((firstPage) => {
+        const totalPages = Math.max(1, Number(firstPage?.totalPages ?? 1));
+        if (totalPages === 1) {
+          return of(firstPage?.content ?? []);
+        }
+
+        const remainingRequests = Array.from({ length: totalPages - 1 }, (_, pageIndex) =>
+          loadPage(pageIndex + 1)
+        );
+
+        return forkJoin(remainingRequests).pipe(
+          map((remainingPages) => [firstPage, ...remainingPages].flatMap((page) => page?.content ?? []))
+        );
+      })
+    );
+  }
+
+  private buildPropertyOptions(
+    properties: PropertyResponse[],
+    reservations: CalendarReservation[]
+  ): CalendarPropertyOption[] {
+    const propertyMap = new Map<string, string>();
+
+    properties.forEach((property) => {
+      const propertyId = String(property.publicId ?? '').trim();
+      const propertyName = String(property.name ?? '').trim();
+      if (propertyId && propertyName) {
+        propertyMap.set(propertyId, propertyName);
+      }
+    });
+
+    reservations.forEach((reservation) => {
+      if (!propertyMap.has(reservation.propertyId)) {
+        propertyMap.set(reservation.propertyId, reservation.propertyName);
+      }
+    });
+
+    return Array.from(propertyMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((leftProperty, rightProperty) => leftProperty.name.localeCompare(rightProperty.name, 'pt-BR'));
+  }
+
+  private mapReservationToCalendarReservation(reservation: ReservationResponse): CalendarReservation {
+    return {
+      id: reservation.publicId,
+      propertyId: this.normalizePropertyId(reservation.propertyPublicId),
+      propertyName: String(reservation.propertyName ?? '').trim() || 'Reserva sem propriedade',
+      channel: this.normalizeChannel(reservation.channel),
+      startDate: this.extractDatePart(reservation.startAt),
+      endDate: this.extractDatePart(reservation.endAt),
+      status: reservation.status,
+    };
+  }
+
+  private isValidCalendarReservation(reservation: CalendarReservation): boolean {
+    return Boolean(
+      reservation.id &&
+      reservation.propertyId &&
+      reservation.propertyName &&
+      reservation.startDate &&
+      reservation.endDate &&
+      reservation.startDate < reservation.endDate
+    );
+  }
+
+  private normalizePropertyId(propertyPublicId: string | null | undefined): string {
+    return String(propertyPublicId ?? '').trim() || 'UNKNOWN_PROPERTY';
+  }
+
+  private normalizeChannel(channel: string | null | undefined): CalendarChannel {
+    const normalizedChannel = String(channel ?? '').trim().toUpperCase();
+
+    if (
+      normalizedChannel === 'AIRBNB' ||
+      normalizedChannel === 'BOOKING' ||
+      normalizedChannel === 'VRBO'
+    ) {
+      return normalizedChannel;
+    }
+
+    return 'OTHER';
+  }
+
+  private extractDatePart(dateTime: string): string {
+    const normalizedValue = String(dateTime ?? '').trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(normalizedValue)) {
+      return normalizedValue.slice(0, 10);
+    }
+
+    const parsedDate = new Date(normalizedValue);
+    return Number.isNaN(parsedDate.getTime()) ? '' : this.toISO(parsedDate);
+  }
+
+  private formatDate(isoDate: string): string {
+    const [year, month, day] = isoDate.split('-').map((value) => Number(value));
+    return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+  }
+
+  private initializeViewportMode() {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const mobileQueryList = window.matchMedia('(max-width: 860px)');
+    const updateViewportMode = () => this.mobileViewport.set(mobileQueryList.matches);
+
+    updateViewportMode();
+
+    if (mobileQueryList.addEventListener) {
+      mobileQueryList.addEventListener('change', updateViewportMode);
+    } else {
+      mobileQueryList.addListener(updateViewportMode);
+    }
+  }
+
+  private intersectsDay(reservation: CalendarReservation, isoDay: string): boolean {
+    return reservation.startDate <= isoDay && isoDay < reservation.endDate;
+  }
+
+  private segmentForWeek(
+    reservation: CalendarReservation,
+    weekStart: Date,
+    weekEnd: Date
+  ): Segment | null {
+    const weekStartIso = this.toISO(weekStart);
+    const weekEndIso = this.toISO(weekEnd);
+
+    const occupiedEndDate = this.addDaysISO(reservation.endDate, -1);
+    if (occupiedEndDate < weekStartIso || reservation.startDate > weekEndIso) {
+      return null;
+    }
+
+    const segmentStartIso = reservation.startDate < weekStartIso ? weekStartIso : reservation.startDate;
+    const segmentEndIso = occupiedEndDate > weekEndIso ? weekEndIso : occupiedEndDate;
+
+    const startCol = this.diffDays(weekStart, this.fromISO(segmentStartIso));
+    const endCol = this.diffDays(weekStart, this.fromISO(segmentEndIso));
+
+    return {
+      reservation,
+      startCol,
+      endCol,
+      isStart: reservation.startDate >= weekStartIso && reservation.startDate <= weekEndIso,
+      isEnd: occupiedEndDate >= weekStartIso && occupiedEndDate <= weekEndIso,
+    };
+  }
+
+  private packIntoLanes(segments: Segment[]): SegmentLane[] {
+    const lanes: SegmentLane[] = [];
+
+    for (const segment of segments) {
+      const availableLane = lanes.find((lane) => !this.collidesAny(segment, lane));
+
+      if (availableLane) {
+        availableLane.push(segment);
+      } else {
+        lanes.push([segment]);
+      }
+    }
+
+    lanes.forEach((lane) => lane.sort((leftSegment, rightSegment) => leftSegment.startCol - rightSegment.startCol));
+
+    return lanes;
+  }
+
+  private collidesAny(segment: Segment, lane: SegmentLane): boolean {
+    return lane.some(
+      (laneSegment) => !(segment.endCol < laneSegment.startCol || segment.startCol > laneSegment.endCol)
+    );
+  }
+
+  private toISO(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private fromISO(isoDate: string): Date {
+    const [year, month, day] = isoDate.split('-').map((value) => Number(value));
+    return new Date(year, month - 1, day);
+  }
+
+  private addDaysISO(isoDate: string, delta: number): string {
+    const updatedDate = this.fromISO(isoDate);
+    updatedDate.setDate(updatedDate.getDate() + delta);
+    return this.toISO(updatedDate);
+  }
+
+  private diffDays(startDate: Date, endDate: Date): number {
+    const normalizedStartDate = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate()
+    ).getTime();
+
+    const normalizedEndDate = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate()
+    ).getTime();
+
+    return Math.round((normalizedEndDate - normalizedStartDate) / 86400000);
+  }
+
+  private startOfMonth(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
+  private startOfWeek(date: Date): Date {
+    const normalizedDate = new Date(date);
+    const weekday = (normalizedDate.getDay() + 6) % 7;
+    normalizedDate.setDate(normalizedDate.getDate() - weekday);
+    return new Date(
+      normalizedDate.getFullYear(),
+      normalizedDate.getMonth(),
+      normalizedDate.getDate()
+    );
   }
 }

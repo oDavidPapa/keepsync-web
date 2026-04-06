@@ -1,155 +1,128 @@
-<div class="cal">
-  <!-- Top -->
-  <div class="cal-top">
-    <div class="left">
-      <h1>Calendário</h1>
-      <div class="sub">Exibição mensal • ocupação por canal</div>
-    </div>
-
-    <div class="right">
-      <button class="btn ghost" type="button" (click)="prevMonth()">
+<div class="ui-page ui-page-fit calendar-page">
+  <app-page-header
+    title="Calendario"
+    subtitle="Visao mensal das reservas por propriedade e canal."
+    [sticky]="false"
+    [top]="0"
+  >
+    <div class="calendar-header-actions">
+      <button class="ui-btn ghost" type="button" (click)="prevMonth()" [disabled]="loading()">
         <span class="material-symbols-rounded">chevron_left</span>
       </button>
 
-      <div class="month">{{ monthLabel() }}</div>
+      <div class="calendar-month-label">{{ monthLabel() }}</div>
 
-      <button class="btn ghost" type="button" (click)="nextMonth()">
+      <button class="ui-btn ghost" type="button" (click)="nextMonth()" [disabled]="loading()">
         <span class="material-symbols-rounded">chevron_right</span>
       </button>
 
-      <button class="btn" type="button" (click)="goToday()">Hoje</button>
-    </div>
-  </div>
-
-  <!-- Filters row -->
-  <div class="filters-row">
-    <div class="cal-filters">
-      <button class="chip" type="button" [class.off]="!filters().airbnb" (click)="toggle('airbnb')">
-        <span class="dot airbnb"></span> Airbnb
-      </button>
-
-      <button class="chip" type="button" [class.off]="!filters().booking" (click)="toggle('booking')">
-        <span class="dot booking"></span> Booking
-      </button>
-
-      <button class="chip" type="button" [class.off]="!filters().manual" (click)="toggle('manual')">
-        <span class="dot manual"></span> Manual
-      </button>
-
-      <button class="chip" type="button" [class.off]="!filters().site" (click)="toggle('site')">
-        <span class="dot site"></span> Site
+      <button class="ui-btn primary" type="button" (click)="goToday()" [disabled]="loading()">
+        Hoje
       </button>
     </div>
+  </app-page-header>
 
-    <div class="prop-filter">
-      <span class="label">Propriedade</span>
-      <select class="select" [ngModel]="selectedPropertyId()" (ngModelChange)="selectedPropertyId.set($event)">
-        <option value="all">Todas</option>
-        <option *ngFor="let p of properties()" [value]="p.id">{{ p.name }}</option>
-      </select>
+  <section class="calendar-toolbar">
+    <div class="calendar-toolbar-row">
+      <div class="channel-filters">
+        <button
+          class="channel-chip"
+          *ngFor="let channel of availableChannels"
+          type="button"
+          [class.off]="!channelFilters()[channel.id]"
+          (click)="toggleChannel(channel.id)"
+        >
+          <span class="channel-dot" [attr.data-channel]="channel.id"></span>
+          {{ channel.label }}
+        </button>
+      </div>
+
+      <div class="ui-field property-filter">
+        <label for="calendarProperty">Propriedade</label>
+        <select
+          id="calendarProperty"
+          [ngModel]="selectedPropertyId()"
+          (ngModelChange)="selectedPropertyId.set($event)"
+        >
+          <option value="all">Todas</option>
+          <option *ngFor="let property of properties()" [value]="property.id">
+            {{ property.name }}
+          </option>
+        </select>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Month Card -->
-  <div class="month-card" [class.mobile]="isMobile()">
+  <section class="month-card" [class.mobile]="isMobile()">
+    <div class="calendar-feedback error" *ngIf="error()">
+      {{ error() }}
+    </div>
+
+    <div class="calendar-feedback" *ngIf="!error() && loading()">
+      Carregando reservas...
+    </div>
+
+    <div class="calendar-feedback" *ngIf="!error() && !loading() && visibleMonthReservations().length === 0">
+      Nenhuma reserva encontrada para os filtros selecionados neste mes.
+    </div>
+
     <div class="dow-row">
       <div class="dow">Seg</div>
       <div class="dow">Ter</div>
       <div class="dow">Qua</div>
       <div class="dow">Qui</div>
       <div class="dow">Sex</div>
-      <div class="dow">Sáb</div>
+      <div class="dow">Sab</div>
       <div class="dow">Dom</div>
     </div>
 
-    <!-- Desktop: rola se precisar / Mobile: SEM scroll -->
     <div class="month-viewport" [class.no-scroll]="isMobile()">
       <div class="month-grid" [class.mini]="isMobile()">
         <div class="weeks">
-          <div class="week" *ngFor="let w of weeks()">
-
-            <!-- cells -->
+          <div class="week" *ngFor="let week of weeks()">
             <div
               class="cell"
-              *ngFor="let d of w.days"
-              [class.out]="!d.inMonth"
-              [class.today]="d.isToday"
-              [class.has-booking]="d.bookings.length > 0"
-              [class.empty]="d.bookings.length === 0"
-              [class.conflict]="d.hasConflict"
+              *ngFor="let day of week.days"
+              [class.out]="!day.inMonth"
+              [class.today]="day.isToday"
+              [class.has-booking]="day.bookings.length > 0"
               [class.mini-cell]="isMobile()"
             >
               <div class="cell-head">
-                <span class="num">{{ d.day }}</span>
+                <span class="num">{{ day.day }}</span>
               </div>
 
-              <!-- DESKTOP: ícones checkin/checkout -->
-              <div class="cell-status" *ngIf="!isMobile() && d.bookings.length > 0">
-                <ng-container *ngFor="let r of d.bookings">
-                  <span class="cs checkin" *ngIf="showCheckinIcon(r, d.iso)" title="Check-in">
-                    <span class="material-symbols-rounded">check_circle</span>
-                  </span>
-
-                  <span class="cs checkout" *ngIf="showCheckoutIcon(r, d.iso)" title="Checkout">
-                    <span class="material-symbols-rounded">mop</span>
-                  </span>
-                </ng-container>
-              </div>
-
-              <!-- MOBILE: dots por canal -->
-              <div class="mini-dots" *ngIf="isMobile() && d.bookings.length > 0">
+              <div class="mini-dots" *ngIf="isMobile() && day.bookings.length > 0">
                 <span
                   class="dot-mini"
-                  *ngFor="let r of d.bookings | slice:0:3"
-                  [attr.data-src]="r.source"
+                  *ngFor="let reservation of day.bookings | slice:0:3"
+                  [attr.data-channel]="reservation.channel"
                 ></span>
-                <span class="more-mini" *ngIf="d.bookings.length > 3">+{{ d.bookings.length - 3 }}</span>
+                <span class="more-mini" *ngIf="day.bookings.length > 3">
+                  +{{ day.bookings.length - 3 }}
+                </span>
               </div>
-
-              <!-- conflito -->
-              <span class="conflict-flag" *ngIf="!isMobile() && d.hasConflict" title="Conflito (overbooking)">
-                <span class="material-symbols-rounded">error</span>
-              </span>
-
-              <!-- add -->
-              <button
-                class="add"
-                type="button"
-                title="Nova reserva manual"
-                (click)="createManual(d)"
-                *ngIf="!isMobile() && d.bookings.length === 0"
-              >
-                <span class="material-symbols-rounded">add</span>
-              </button>
             </div>
 
-            <!-- DESKTOP: barras -->
-            <div class="lanes" *ngIf="!isMobile()" [style.gridTemplateRows]="laneRows(w.lanes.length)">
-              <ng-container *ngFor="let lane of w.lanes; let row = index">
+            <div class="lanes" *ngIf="!isMobile()" [style.gridTemplateRows]="laneRows(week.lanes.length)">
+              <ng-container *ngFor="let lane of week.lanes; let rowIndex = index">
                 <div
                   class="bar"
-                  *ngFor="let seg of lane"
-                  [attr.data-src]="seg.reservation.source"
-                  [style.gridRow]="row + 1"
-                  [style.gridColumn]="(seg.startCol + 1) + ' / ' + (seg.endCol + 2)"
-                  [class.start]="seg.isStart"
-                  [class.end]="seg.isEnd"
-                  [class.mid]="!seg.isStart && !seg.isEnd"
+                  *ngFor="let segment of lane"
+                  [attr.data-channel]="segment.reservation.channel"
+                  [style.gridRow]="rowIndex + 1"
+                  [style.gridColumn]="(segment.startCol + 1) + ' / ' + (segment.endCol + 2)"
+                  [class.start]="segment.isStart"
+                  [class.end]="segment.isEnd"
+                  [title]="reservationTooltip(segment.reservation)"
                 >
-                  <span class="src-badge" [attr.data-src]="seg.reservation.source">
-                    {{ sourceLetter(seg.reservation.source) }}
-                  </span>
-
-                  <span class="bar-text">
-                    {{ seg.reservation.propertyName }} • {{ seg.reservation.guest }}
-                  </span>
+                  <span class="bar-text">{{ reservationBarLabel(segment.reservation) }}</span>
                 </div>
               </ng-container>
             </div>
-
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>
