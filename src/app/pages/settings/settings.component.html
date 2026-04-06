@@ -72,7 +72,7 @@
         </div>
       </div>
 
-      <div class="plan-highlight">
+      <div class="plan-highlight" [class.free]="planToneClass() === 'free'" [class.essential]="planToneClass() === 'essential'" [class.pro]="planToneClass() === 'pro'">
         <span class="plan-badge">{{ planLabel() }}</span>
         <strong>{{ planLabel() }}</strong>
         <span>{{ subscriptionDescription() }}</span>

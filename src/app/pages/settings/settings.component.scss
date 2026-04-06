@@ -100,6 +100,21 @@
   border: 1px solid rgba(195, 83, 0, 0.16);
 }
 
+.plan-highlight.free {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.12), rgba(107, 114, 128, 0.04));
+  border-color: rgba(107, 114, 128, 0.18);
+}
+
+.plan-highlight.essential {
+  background: linear-gradient(135deg, rgba(195, 83, 0, 0.08), rgba(195, 83, 0, 0.02));
+  border-color: rgba(195, 83, 0, 0.16);
+}
+
+.plan-highlight.pro {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.04));
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
 .plan-highlight strong { font-size: 1.6rem; color: rgba(17, 24, 39, 0.92); }
 
 .plan-badge {
@@ -111,6 +126,16 @@
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.plan-highlight.free .plan-badge {
+  background: rgba(107, 114, 128, 0.14);
+  color: #4b5563;
+}
+
+.plan-highlight.pro .plan-badge {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
 }
 
 .plan-meta,

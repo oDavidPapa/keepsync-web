@@ -106,14 +106,35 @@ export class SettingsComponent {
     return currentUser ? this.mapPlanLabel(currentUser.planCode) : '-';
   });
 
+  readonly planToneClass = computed(() => {
+    const currentUser = this.currentUser();
+    if (!currentUser) {
+      return 'essential';
+    }
+
+    switch (currentUser.planCode) {
+      case 'FREE':
+        return 'free';
+      case 'PRO':
+        return 'pro';
+      case 'ESSENCIAL':
+      default:
+        return 'essential';
+    }
+  });
+
   readonly subscriptionDescription = computed(() => {
     const currentUser = this.currentUser();
     if (!currentUser) {
       return 'Carregando plano...';
     }
 
+    if (currentUser.planCode === 'FREE') {
+      return 'Plano gratuito sem expiracao.';
+    }
+
     if (!currentUser.subscriptionExpiresAt) {
-      return currentUser.planCode === 'FREE' ? 'Sem expiracao ativa.' : 'Assinatura sem expiracao informada.';
+      return 'Assinatura sem expiracao informada.';
     }
 
     return `Expira em ${this.formatDate(currentUser.subscriptionExpiresAt)}.`;
