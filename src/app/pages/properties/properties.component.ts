@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild, computed, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -9,22 +9,23 @@ import {
   Validators
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
-import { PropertyService } from '../../modules/properties/api/property.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
-import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
-import {
-  CreatePropertyRequest,
-  UpdatePropertyRequest,
-  PropertyResponse
-} from '../../modules/properties/api/property.models';
-import { CalendarSourceService } from '../../modules/calendar-source/api/calendar-source.service';
+import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
+import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
 import {
   CalendarSourceResponse,
   CreateCalendarSourceRequest
 } from '../../modules/calendar-source/api/calendar-source.model';
-import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
-import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
+import { CalendarSourceService } from '../../modules/calendar-source/api/calendar-source.service';
+import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
+import {
+  CreatePropertyRequest,
+  PropertyResponse,
+  UpdatePropertyRequest
+} from '../../modules/properties/api/property.models';
+import { PropertyService } from '../../modules/properties/api/property.service';
 
 type ChannelId = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
 
@@ -34,7 +35,6 @@ type PropertyBasicInfoForm = FormGroup<{
   addressLine2: FormControl<string>;
   city: FormControl<string>;
   state: FormControl<string>;
-  country: FormControl<string>;
   postalCode: FormControl<string>;
 }>;
 
@@ -65,14 +65,6 @@ type NewSourceForm = FormGroup<{
 export class PropertiesComponent {
   private static readonly DEFAULT_PROPERTY_TIMEZONE = 'America/Sao_Paulo';
 
-  @ViewChild('newChannelEl') newChannelEl?: ElementRef<HTMLSelectElement>;
-
-  readonly countries = [
-    { code: 'BR', name: 'Brasil' },
-    { code: 'US', name: 'Estados Unidos' },
-    { code: 'PT', name: 'Portugal' },
-  ];
-
   readonly channels: Array<{ id: ChannelId; name: string }> = [
     { id: 'AIRBNB', name: 'AIRBNB' },
     { id: 'VRBO', name: 'VRBO' },
@@ -84,10 +76,9 @@ export class PropertiesComponent {
   readonly submitted = signal(false);
   readonly loading = signal(false);
 
-  currentStep: 1 | 2 = 1;
-
   private readonly propertyPublicId = signal<string | null>(null);
   readonly isEditMode = computed(() => !!this.propertyPublicId());
+  readonly isCreateMode = computed(() => !this.propertyPublicId());
 
   readonly form: PropertiesForm = this.fb.group({
     basicInfo: this.fb.group({
@@ -96,7 +87,6 @@ export class PropertiesComponent {
       addressLine2: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
       city: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
       state: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
-      country: this.fb.nonNullable.control('BR', [Validators.maxLength(2)]),
       postalCode: this.fb.nonNullable.control('', [Validators.maxLength(20)]),
     }),
     sources: this.fb.array<SourceForm>([]),
@@ -104,7 +94,7 @@ export class PropertiesComponent {
 
   readonly newSourceForm: NewSourceForm = this.fb.group({
     channel: this.fb.nonNullable.control<ChannelId>('OTHER', [Validators.required]),
-    icalUrl: this.fb.nonNullable.control<string>('', [Validators.required, Validators.maxLength(300)]),
+    icalUrl: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(300)]),
   });
 
   constructor(
@@ -115,9 +105,6 @@ export class PropertiesComponent {
     private readonly calendarSourceService: CalendarSourceService,
     private readonly toast: ToastService
   ) {
-    const navigationStep = (history.state?.step as 1 | 2 | undefined);
-    if (navigationStep) this.currentStep = navigationStep;
-
     this.route.paramMap.subscribe((params) => {
       const routePublicId = params.get('publicId');
 
@@ -137,21 +124,146 @@ export class PropertiesComponent {
     return this.form.controls.sources;
   }
 
-  channelLabel(channelId: ChannelId | null | undefined) {
-    if (!channelId) return '-';
-    return this.channels.find(channel => channel.id === channelId)?.name ?? channelId;
+  channelLabel(channelId: ChannelId | null | undefined): string {
+    if (!channelId) {
+      return '-';
+    }
+
+    return this.channels.find((channel) => channel.id === channelId)?.name ?? channelId;
+  }
+
+  sourceStatusLabel(sourceFormGroup: SourceForm): string {
+    if (!sourceFormGroup.controls.publicId.value) {
+      return 'Pendente';
+    }
+
+    return sourceFormGroup.controls.active.value ? 'Ativo' : 'Inativo';
+  }
+
+  sourceStatusClass(sourceFormGroup: SourceForm): string {
+    if (!sourceFormGroup.controls.publicId.value) {
+      return 'warning';
+    }
+
+    return sourceFormGroup.controls.active.value ? 'success' : 'warning';
+  }
+
+  submit() {
+    this.submitted.set(true);
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.saving.set(true);
+
+    const propertyPayload = this.mapFormToPropertyPayload();
+    const currentPropertyPublicId = this.propertyPublicId();
+
+    if (!currentPropertyPublicId) {
+      this.createPropertyWithSources(propertyPayload);
+      return;
+    }
+
+    this.updateProperty(currentPropertyPublicId, propertyPayload);
+  }
+
+  cancel() {
+    this.router.navigate(['/app/properties']);
+  }
+
+  addSourceFromDraft() {
+    this.newSourceForm.markAllAsTouched();
+    if (this.newSourceForm.invalid) {
+      return;
+    }
+
+    const sourceRequest = this.mapNewSourceFormToRequest();
+    const currentPropertyPublicId = this.propertyPublicId();
+
+    if (!currentPropertyPublicId) {
+      this.sourcesArray.push(this.createDraftSourceGroup(sourceRequest));
+      this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+      this.toast.success('Canal adicionado e sera salvo junto com a propriedade.');
+      return;
+    }
+
+    this.calendarSourceService.create(currentPropertyPublicId, sourceRequest).subscribe({
+      next: (createdSource) => {
+        this.sourcesArray.push(this.createSourceGroup(createdSource));
+        this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+        this.toast.success('Canal adicionado.');
+      },
+      error: (error) => {
+        this.toast.error('Erro ao adicionar canal.');
+        console.error(error);
+      }
+    });
+  }
+
+  removeSource(index: number) {
+    const sourceFormGroup = this.sourcesArray.at(index);
+    const sourcePublicId = sourceFormGroup.controls.publicId.value;
+
+    if (!sourcePublicId) {
+      this.sourcesArray.removeAt(index);
+      this.toast.success('Canal removido.');
+      return;
+    }
+
+    this.calendarSourceService.delete(sourcePublicId).subscribe({
+      next: () => {
+        this.sourcesArray.removeAt(index);
+        this.toast.success('Canal removido.');
+      },
+      error: (error) => {
+        this.toast.error('Erro ao remover canal.');
+        console.error(error);
+      }
+    });
+  }
+
+  hasError(path: string): boolean {
+    const control = this.form.get(path);
+    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
+  }
+
+  newSourceError(controlName: 'channel' | 'icalUrl'): boolean {
+    const control = this.newSourceForm.controls[controlName];
+    return control.invalid && (control.dirty || control.touched);
+  }
+
+  private resetFormForCreate() {
+    this.submitted.set(false);
+
+    this.form.controls.basicInfo.reset({
+      name: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      postalCode: '',
+    });
+
+    this.sourcesArray.clear();
+    this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   private normalizeProvider(value: unknown): ChannelId {
     const provider = String(value ?? '').toUpperCase();
+
     if (provider === 'AIRBNB' || provider === 'VRBO' || provider === 'BOOKING' || provider === 'OTHER') {
       return provider;
     }
+
     return 'OTHER';
   }
 
   private createSourceGroup(source: CalendarSourceResponse): SourceForm {
-    const normalizedProvider = this.normalizeProvider((source as any).provider);
+    const normalizedProvider = this.normalizeProvider((source as { provider?: unknown }).provider);
 
     return this.fb.group({
       publicId: this.fb.nonNullable.control(source.publicId),
@@ -161,15 +273,24 @@ export class PropertiesComponent {
     });
   }
 
+  private createDraftSourceGroup(sourceRequest: CreateCalendarSourceRequest): SourceForm {
+    return this.fb.group({
+      publicId: this.fb.nonNullable.control(''),
+      provider: this.fb.nonNullable.control(sourceRequest.provider),
+      icalUrl: this.fb.nonNullable.control(sourceRequest.icalUrl),
+      active: this.fb.nonNullable.control(false),
+    });
+  }
+
   private loadSources(propertyPublicId: string) {
     this.calendarSourceService.listByProperty(propertyPublicId).subscribe({
       next: (sources) => {
         this.sourcesArray.clear();
         sources.forEach((source) => this.sourcesArray.push(this.createSourceGroup(source)));
       },
-      error: (err) => {
-        this.toast.error('Erro ao carregar canais/iCal');
-        console.error(err);
+      error: (error) => {
+        this.toast.error('Erro ao carregar canais e iCal.');
+        console.error(error);
       }
     });
   }
@@ -189,118 +310,85 @@ export class PropertiesComponent {
       addressLine2: this.normalizeOptionalText(basicInfoValue.addressLine2),
       city: this.normalizeOptionalText(basicInfoValue.city),
       state: this.normalizeOptionalText(basicInfoValue.state),
-      country: this.normalizeOptionalText(basicInfoValue.country),
+      country: 'BR',
       postalCode: this.normalizeOptionalText(basicInfoValue.postalCode),
     };
   }
 
-  nextStep() {
-    this.markStepOneTouched();
-    if (this.stepOneInvalid()) return;
-
-    const existingPublicId = this.propertyPublicId();
-    if (existingPublicId) {
-      this.currentStep = 2;
-      return;
-    }
-
-    this.saving.set(true);
-
-    const createRequest: CreatePropertyRequest = this.mapFormToPropertyPayload();
-
-    this.propertyService.create(createRequest).subscribe({
-      next: (created: PropertyResponse) => {
-        this.propertyPublicId.set(created.publicId);
-        this.currentStep = 2;
-
-        this.router.navigate(
-          ['/app/properties', created.publicId, 'edit'],
-          { replaceUrl: true, state: { step: 2 } }
-        );
-
-        this.toast.success('Propriedade criada. Agora adicione os canais.');
-        this.saving.set(false);
-        this.loadSources(created.publicId);
-      },
-      error: (err) => {
-        this.toast.error(apiErrorMessage(err, 'Não foi possível criar a propriedade.'));
-        this.saving.set(false);
-        console.error(err);
-      }
-    });
-  }
-
-  prevStep() {
-    this.currentStep = 1;
-  }
-
-  goToStep(step: 1 | 2) {
-    if (step === 2) {
-      this.nextStep();
-      return;
-    }
-    this.currentStep = 1;
-  }
-
-  cancel() {
-    this.router.navigate(['/app/properties']);
-  }
-
-  private resetFormForCreate() {
-    this.currentStep = 1;
-    this.submitted.set(false);
-
-    this.form.controls.basicInfo.reset({
-      name: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      country: 'BR',
-      postalCode: '',
-    });
-
-    this.sourcesArray.clear();
-    this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
-
-    this.form.markAsPristine();
-    this.form.markAsUntouched();
-  }
-
-  addSourceFromDraft() {
-    this.newSourceForm.markAllAsTouched();
-    if (this.newSourceForm.invalid || !this.propertyPublicId()) return;
-
-    const request: CreateCalendarSourceRequest = {
+  private mapNewSourceFormToRequest(): CreateCalendarSourceRequest {
+    return {
       provider: this.newSourceForm.controls.channel.value,
       icalUrl: this.newSourceForm.controls.icalUrl.value,
     };
+  }
 
-    this.calendarSourceService.create(this.propertyPublicId()!, request).subscribe({
-      next: (created) => {
-        this.sourcesArray.push(this.createSourceGroup(created));
-        this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
-        this.toast.success('Canal adicionado.');
+  private collectQueuedSourceRequests(): CreateCalendarSourceRequest[] {
+    return this.sourcesArray.controls
+      .filter((sourceFormGroup) => !sourceFormGroup.controls.publicId.value)
+      .map((sourceFormGroup) => ({
+        provider: sourceFormGroup.controls.provider.value,
+        icalUrl: sourceFormGroup.controls.icalUrl.value,
+      }));
+  }
+
+  private createPropertyWithSources(propertyPayload: CreatePropertyRequest) {
+    const queuedSourceRequests = this.collectQueuedSourceRequests();
+
+    this.propertyService.create(propertyPayload).subscribe({
+      next: (createdProperty: PropertyResponse) => {
+        this.propertyPublicId.set(createdProperty.publicId);
+
+        if (queuedSourceRequests.length === 0) {
+          this.toast.success('Propriedade cadastrada com sucesso.');
+          this.saving.set(false);
+          this.router.navigate(['/app/properties']);
+          return;
+        }
+
+        this.persistQueuedSources(createdProperty.publicId, queuedSourceRequests);
       },
-      error: (err) => {
-        this.toast.error('Erro ao adicionar canal.');
-        console.error(err);
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel salvar a propriedade.'));
+        this.saving.set(false);
+        console.error(error);
       }
     });
   }
 
-  removeSource(index: number) {
-    const sourceFormGroup = this.sourcesArray.at(index);
-    const sourcePublicId = sourceFormGroup.controls.publicId.value;
-
-    this.calendarSourceService.delete(sourcePublicId).subscribe({
+  private persistQueuedSources(
+    propertyPublicId: string,
+    queuedSourceRequests: CreateCalendarSourceRequest[]
+  ) {
+    forkJoin(
+      queuedSourceRequests.map((queuedSourceRequest) =>
+        this.calendarSourceService.create(propertyPublicId, queuedSourceRequest)
+      )
+    ).subscribe({
       next: () => {
-        this.sourcesArray.removeAt(index);
-        this.toast.success('Canal removido.');
+        this.toast.success('Propriedade cadastrada com sucesso.');
+        this.saving.set(false);
+        this.router.navigate(['/app/properties']);
       },
-      error: (err) => {
-        this.toast.error('Erro ao remover canal.');
-        console.error(err);
+      error: (error) => {
+        this.toast.error('A propriedade foi criada, mas nao foi possivel salvar um ou mais canais.');
+        this.saving.set(false);
+        this.router.navigate(['/app/properties', propertyPublicId, 'edit']);
+        console.error(error);
+      }
+    });
+  }
+
+  private updateProperty(propertyPublicId: string, propertyPayload: UpdatePropertyRequest) {
+    this.propertyService.update(propertyPublicId, propertyPayload).subscribe({
+      next: () => {
+        this.toast.success('Propriedade atualizada com sucesso.');
+        this.saving.set(false);
+        this.router.navigate(['/app/properties']);
+      },
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel atualizar a propriedade.'));
+        this.saving.set(false);
+        console.error(error);
       }
     });
   }
@@ -314,8 +402,8 @@ export class PropertiesComponent {
         this.loading.set(false);
         this.loadSources(propertyPublicId);
       },
-      error: (err) => {
-        this.toast.error(apiErrorMessage(err, 'Não foi possível carregar a propriedade.'));
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel carregar a propriedade.'));
         this.loading.set(false);
         this.router.navigate(['/app/properties']);
       }
@@ -331,75 +419,10 @@ export class PropertiesComponent {
       addressLine2: property.addressLine2 ?? '',
       city: property.city ?? '',
       state: property.state ?? '',
-      country: property.country ?? 'BR',
       postalCode: property.postalCode ?? '',
     });
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
-  }
-
-  submit() {
-    this.submitted.set(true);
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.saving.set(true);
-
-    const propertyPayload = this.mapFormToPropertyPayload();
-    const existingPublicId = this.propertyPublicId();
-
-    if (!existingPublicId) {
-      this.propertyService.create(propertyPayload).subscribe({
-        next: () => {
-          this.toast.success('Propriedade cadastrada com sucesso.');
-          this.saving.set(false);
-          this.router.navigate(['/app/properties']);
-        },
-        error: (err) => {
-          this.toast.error(apiErrorMessage(err, 'Não foi possível salvar a propriedade.'));
-          this.saving.set(false);
-          console.error(err);
-        }
-      });
-
-      return;
-    }
-
-    const updateRequest: UpdatePropertyRequest = propertyPayload;
-
-    this.propertyService.update(existingPublicId, updateRequest).subscribe({
-      next: () => {
-        this.toast.success('Propriedade atualizada com sucesso.');
-        this.saving.set(false);
-        this.router.navigate(['/app/properties']);
-      },
-      error: (err) => {
-        this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar a propriedade.'));
-        this.saving.set(false);
-        console.error(err);
-      }
-    });
-  }
-
-  hasError(path: string) {
-    const control = this.form.get(path);
-    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
-  }
-
-  newSourceError(controlName: 'channel' | 'icalUrl') {
-    const control = this.newSourceForm.controls[controlName];
-    return control.invalid && (control.dirty || control.touched);
-  }
-
-  private stepOneInvalid() {
-    return this.form.controls.basicInfo.invalid;
-  }
-
-  private markStepOneTouched() {
-    this.form.controls.basicInfo.markAllAsTouched();
   }
 }
