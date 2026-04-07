@@ -584,7 +584,7 @@ export class CalendarMonthComponent {
 
   private startOfWeek(date: Date): Date {
     const normalizedDate = new Date(date);
-    const weekday = (normalizedDate.getDay() + 6) % 7;
+    const weekday = normalizedDate.getDay();
     normalizedDate.setDate(normalizedDate.getDate() - weekday);
     return new Date(
       normalizedDate.getFullYear(),
