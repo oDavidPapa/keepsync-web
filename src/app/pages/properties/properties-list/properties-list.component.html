@@ -77,6 +77,18 @@
                     <span class="material-symbols-rounded">edit</span>
                   </button>
 
+                  <button
+                    class="ui-icon-btn"
+                    title="Sincronizar agora"
+                    type="button"
+                    [disabled]="!row.active || syncingPropertyPublicId() === row.publicId"
+                    (click)="syncProperty(row)"
+                  >
+                    <span class="material-symbols-rounded">
+                      {{ syncingPropertyPublicId() === row.publicId ? 'progress_activity' : 'sync' }}
+                    </span>
+                  </button>
+
                   <button class="ui-icon-btn warning" title="Ativar/Inativar" type="button" (click)="toggleActive(row)">
                     <span class="material-symbols-rounded">
                       {{ row.active ? 'pause_circle' : 'play_circle' }}

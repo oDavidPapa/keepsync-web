@@ -43,6 +43,8 @@ type SourceForm = FormGroup<{
   provider: FormControl<ChannelId>;
   icalUrl: FormControl<string>;
   active: FormControl<boolean>;
+  lastSyncAt: FormControl<string | null>;
+  lastSyncStatus: FormControl<CalendarSourceResponse['lastSyncStatus']>;
 }>;
 
 type PropertiesForm = FormGroup<{
@@ -149,6 +151,57 @@ export class PropertiesComponent {
     return sourceFormGroup.controls.active.value ? 'success' : 'warning';
   }
 
+  sourceSyncStatusLabel(sourceFormGroup: SourceForm): string {
+    if (!sourceFormGroup.controls.publicId.value) {
+      return 'Pendente';
+    }
+
+    const lastSyncStatus = sourceFormGroup.controls.lastSyncStatus.value;
+
+    switch (lastSyncStatus) {
+      case 'SUCCESS':
+        return 'Sucesso';
+      case 'FAILED':
+        return 'Falha';
+      case 'PENDING':
+      default:
+        return 'Pendente';
+    }
+  }
+
+  sourceSyncStatusClass(sourceFormGroup: SourceForm): string {
+    const lastSyncStatus = sourceFormGroup.controls.lastSyncStatus.value;
+
+    switch (lastSyncStatus) {
+      case 'SUCCESS':
+        return 'success';
+      case 'FAILED':
+        return 'danger';
+      case 'PENDING':
+      default:
+        return 'warning';
+    }
+  }
+
+  sourceLastSyncLabel(sourceFormGroup: SourceForm): string {
+    if (!sourceFormGroup.controls.publicId.value) {
+      return 'Aguardando salvamento';
+    }
+
+    const lastSyncAt = sourceFormGroup.controls.lastSyncAt.value;
+    if (!lastSyncAt) {
+      return 'Ainda nao sincronizado';
+    }
+
+    return new Date(lastSyncAt).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   sourceToggleIcon(sourceFormGroup: SourceForm): string {
     return sourceFormGroup.controls.active.value ? 'pause_circle' : 'play_circle';
   }
@@ -247,6 +300,8 @@ export class PropertiesComponent {
       next: (updatedSource) => {
         sourceFormGroup.patchValue({
           active: !!updatedSource.active,
+          lastSyncAt: updatedSource.lastSyncAt,
+          lastSyncStatus: updatedSource.lastSyncStatus,
         });
         this.toast.success(updatedSource.active ? 'Canal ativado.' : 'Canal inativado.');
         this.togglingSourcePublicId.set(null);
@@ -305,6 +360,8 @@ export class PropertiesComponent {
       provider: this.fb.nonNullable.control(normalizedProvider),
       icalUrl: this.fb.nonNullable.control(source.icalUrl),
       active: this.fb.nonNullable.control(!!source.active),
+      lastSyncAt: this.fb.control(source.lastSyncAt),
+      lastSyncStatus: this.fb.control(source.lastSyncStatus),
     });
   }
 
@@ -314,6 +371,8 @@ export class PropertiesComponent {
       provider: this.fb.nonNullable.control(sourceRequest.provider),
       icalUrl: this.fb.nonNullable.control(sourceRequest.icalUrl),
       active: this.fb.nonNullable.control(false),
+      lastSyncAt: this.fb.control<string | null>(null),
+      lastSyncStatus: this.fb.control<CalendarSourceResponse['lastSyncStatus']>('PENDING'),
     });
   }
 

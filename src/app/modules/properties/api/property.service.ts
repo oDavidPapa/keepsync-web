@@ -59,4 +59,8 @@ export class PropertyService {
       `${this.baseUrl}/${publicId}/toggle-active`, null
     ).pipe(map(r => r.data));
   }
+
+  sync(publicId: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${publicId}/sync`, null);
+  }
 }

@@ -132,15 +132,19 @@
       <div tableContent class="ui-table-stack">
         <table class="ui-table ui-table-head">
           <colgroup>
-            <col style="width: 18%;" />
-            <col style="width: 56%;" />
             <col style="width: 14%;" />
+            <col style="width: 34%;" />
+            <col style="width: 18%;" />
+            <col style="width: 12%;" />
+            <col style="width: 10%;" />
             <col style="width: 12%;" />
           </colgroup>
           <thead>
             <tr>
               <th>Canal</th>
               <th>Link iCal</th>
+              <th>Ultima sincronizacao</th>
+              <th class="ui-center">Resultado</th>
               <th class="ui-center">Status</th>
               <th class="ui-center">Acoes</th>
             </tr>
@@ -150,9 +154,11 @@
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <colgroup>
-              <col style="width: 18%;" />
-              <col style="width: 56%;" />
               <col style="width: 14%;" />
+              <col style="width: 34%;" />
+              <col style="width: 18%;" />
+              <col style="width: 12%;" />
+              <col style="width: 10%;" />
               <col style="width: 12%;" />
             </colgroup>
             <tbody formArrayName="sources">
@@ -169,6 +175,18 @@
                   <span class="truncate" [title]="source.get('icalUrl')?.value">
                     {{ source.get('icalUrl')?.value }}
                   </span>
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ sourceLastSyncLabel(source) }}
+                </td>
+
+                <td>
+                  <div class="sources-status-cell">
+                    <span class="badge" [ngClass]="sourceSyncStatusClass(source)">
+                      {{ sourceSyncStatusLabel(source) }}
+                    </span>
+                  </div>
                 </td>
 
                 <td>

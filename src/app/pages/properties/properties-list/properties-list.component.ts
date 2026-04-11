@@ -25,6 +25,7 @@ import { FilterPanelComponent } from '../../../core/ui/filter/filter-panel.compo
 export class PropertiesListComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly syncingPropertyPublicId = signal<string | null>(null);
 
   private readonly pageNumber = signal(0);
   private readonly pageSize = signal(5);
@@ -167,6 +168,26 @@ export class PropertiesListComponent {
       },
       error: (err) => {
         this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar o status.'));
+        console.error(err);
+      },
+    });
+  }
+
+  syncProperty(row: PropertyResponse) {
+    if (!row.active || this.syncingPropertyPublicId()) {
+      return;
+    }
+
+    this.syncingPropertyPublicId.set(row.publicId);
+
+    this.propertyService.sync(row.publicId).subscribe({
+      next: () => {
+        this.toast.success('Sincronizacao iniciada com sucesso.');
+        this.syncingPropertyPublicId.set(null);
+      },
+      error: (err) => {
+        this.toast.error(apiErrorMessage(err, 'Nao foi possivel iniciar a sincronizacao.'));
+        this.syncingPropertyPublicId.set(null);
         console.error(err);
       },
     });

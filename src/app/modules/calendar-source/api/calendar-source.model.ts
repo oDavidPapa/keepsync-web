@@ -1,6 +1,6 @@
 export type CalendarProvider = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
 
-export type SyncStatus = 'OK' | 'ERROR' | 'RUNNING' | 'NEVER';
+export type SyncStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
 export interface CalendarSourceResponse {
   publicId: string;
