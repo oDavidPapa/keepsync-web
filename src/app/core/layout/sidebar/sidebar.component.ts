@@ -33,8 +33,8 @@ export class SidebarComponent {
     { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
     { label: 'Propriedades', route: '/app/properties', icon: 'home_work' },
     { label: 'Notificacoes', route: '/app/notifications', icon: 'notifications', badge: 3 },
-    { label: 'Usuarios', route: '/app/users', icon: 'groups' },
-    { label: 'Configuracoes', route: '/app/settings', icon: 'settings' }
+    { label: 'Usuarios', route: '/app/users', icon: 'group' },
+    { label: 'Configuracoes', route: '/app/settings', icon: 'manage_accounts' }
   ];
 
   readonly nav = signal<NavItem[]>(this.getDefaultNav());
