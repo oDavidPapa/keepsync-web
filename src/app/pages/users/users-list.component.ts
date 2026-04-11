@@ -25,7 +25,8 @@ export class UsersListComponent {
   readonly togglingUserPublicId = signal<string | null>(null);
 
   private readonly pageNumber = signal(0);
-  private readonly pageSize = signal(10);
+  private readonly pageSize = signal(5);
+
   private readonly totalElements = signal(0);
   private readonly totalPages = signal(1);
   private readonly pageRows = signal<UserListItemResponse[]>([]);
