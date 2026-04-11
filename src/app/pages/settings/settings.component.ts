@@ -109,7 +109,7 @@ export class SettingsComponent {
   readonly planToneClass = computed(() => {
     const currentUser = this.currentUser();
     if (!currentUser) {
-      return 'essential';
+      return 'basic';
     }
 
     switch (currentUser.planCode) {
@@ -117,9 +117,9 @@ export class SettingsComponent {
         return 'free';
       case 'PRO':
         return 'pro';
-      case 'ESSENCIAL':
+      case 'BASIC':
       default:
-        return 'essential';
+        return 'basic';
     }
   });
 
@@ -349,8 +349,8 @@ export class SettingsComponent {
     switch (planCode) {
       case 'FREE':
         return 'Free';
-      case 'ESSENCIAL':
-        return 'Essencial';
+      case 'BASIC':
+        return 'Basico';
       case 'PRO':
         return 'Pro';
       default:

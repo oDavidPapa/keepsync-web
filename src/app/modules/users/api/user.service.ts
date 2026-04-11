@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
-import { ApiEnvelope } from '../../../core/api/api.models';
+import { ApiEnvelope, Page } from '../../../core/api/api.models';
 import {
   ChangeCurrentUserPasswordRequest,
   CurrentUserResponse,
   ResetCurrentUserPasswordResponse,
   UpdateCurrentUserProfileRequest,
   UpdateCurrentUserProfileResponse,
+  UserListItemResponse,
 } from './user.models';
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +22,27 @@ export class UserService {
   getCurrentUser(): Observable<CurrentUserResponse> {
     return this.http
       .get<ApiEnvelope<CurrentUserResponse>>(`${this.baseUrl}/me`)
+      .pipe(map((response) => response.data));
+  }
+
+  listUsers(params: { page?: number; size?: number; sort?: string; query?: string; role?: string; status?: string; planCode?: string }): Observable<Page<UserListItemResponse>> {
+    const httpParams = new URLSearchParams();
+    if (params.page != null) httpParams.set('page', String(params.page));
+    if (params.size != null) httpParams.set('size', String(params.size));
+    if (params.sort) httpParams.set('sort', params.sort);
+    if ((params.query ?? '').trim()) httpParams.set('query', (params.query ?? '').trim());
+    if ((params.role ?? '').trim()) httpParams.set('role', (params.role ?? '').trim());
+    if ((params.status ?? '').trim()) httpParams.set('status', (params.status ?? '').trim());
+    if ((params.planCode ?? '').trim()) httpParams.set('planCode', (params.planCode ?? '').trim());
+
+    return this.http
+      .get<ApiEnvelope<Page<UserListItemResponse>>>(`${this.baseUrl}?${httpParams.toString()}`)
+      .pipe(map((response) => response.data));
+  }
+
+  toggleUserActive(publicId: string): Observable<UserListItemResponse> {
+    return this.http
+      .patch<ApiEnvelope<UserListItemResponse>>(`${this.baseUrl}/${publicId}/toggle-active`, {})
       .pipe(map((response) => response.data));
   }
 

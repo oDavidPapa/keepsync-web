@@ -1,8 +1,10 @@
-export type UserPlanCode = 'FREE' | 'ESSENCIAL' | 'PRO';
+export type UserRole = 'USER' | 'ADMIN';
+export type UserPlanCode = 'FREE' | 'BASIC' | 'PRO';
 
 export interface CurrentUserResponse {
   publicId: string;
-  role: string;
+  role: UserRole;
+  active: boolean;
   fullName?: string | null;
   email: string;
   phoneNumber?: string | null;
@@ -34,4 +36,17 @@ export interface ChangeCurrentUserPasswordRequest {
 
 export interface ResetCurrentUserPasswordResponse {
   maskedEmail: string;
+}
+
+export interface UserListItemResponse {
+  publicId: string;
+  role: UserRole;
+  active: boolean;
+  fullName?: string | null;
+  email: string;
+  phoneNumber?: string | null;
+  cpf?: string | null;
+  planCode: UserPlanCode;
+  subscriptionExpiresAt?: string | null;
+  createdAt: string;
 }

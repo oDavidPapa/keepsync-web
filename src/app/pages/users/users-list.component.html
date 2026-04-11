@@ -1,0 +1,177 @@
+<div class="ui-page ui-page-fit users-page">
+  <app-page-header
+    title="Usuarios"
+    subtitle="Gerencie os usuarios cadastrados no sistema."
+    [sticky]="true"
+    [top]="16"
+  ></app-page-header>
+
+  <app-filter-panel title="Filtros" [defaultOpen]="false" [activeCount]="activeFiltersCount()">
+    <div filterActions>
+      <button class="ui-btn ghost mini" type="button" (click)="clearFilters()">
+        Limpar
+      </button>
+    </div>
+
+    <div class="ui-filters" [formGroup]="filterForm">
+      <div class="ui-field grow">
+        <label>Buscar</label>
+        <input formControlName="query" placeholder="Nome, e-mail ou CPF..." />
+      </div>
+
+      <div class="ui-field">
+        <label>Perfil</label>
+        <select formControlName="role">
+          <option value="">Todos</option>
+          <option value="USER">Usuarios</option>
+          <option value="ADMIN">Administradores</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
+        <label>Status</label>
+        <select formControlName="status">
+          <option value="">Todos</option>
+          <option value="ACTIVE">Ativos</option>
+          <option value="INACTIVE">Inativos</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
+        <label>Plano</label>
+        <select formControlName="planCode">
+          <option value="">Todos</option>
+          <option value="FREE">Free</option>
+          <option value="BASIC">Basico</option>
+          <option value="PRO">Pro</option>
+        </select>
+      </div>
+    </div>
+  </app-filter-panel>
+
+  <div class="ui-page-body">
+    <app-table-card
+      class="ui-table-card"
+      title="Usuarios cadastrados"
+      [hasRows]="rows().length > 0"
+      [loading]="loading()"
+      [showFooter]="true"
+    >
+      <div tableContent class="ui-table-stack">
+        <table class="ui-table ui-table-head">
+          <colgroup>
+            <col style="width: 10%;" />
+            <col style="width: 18%;" />
+            <col style="width: 20%;" />
+            <col style="width: 11%;" />
+            <col style="width: 10%;" />
+            <col style="width: 11%;" />
+            <col style="width: 10%;" />
+            <col style="width: 10%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>CPF</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th class="ui-center">Perfil</th>
+              <th class="ui-center">Plano</th>
+              <th>Expiracao</th>
+              <th class="ui-center">Status</th>
+              <th class="ui-center">Acoes</th>
+            </tr>
+          </thead>
+        </table>
+
+        <div class="ui-table-body-scroll">
+          <table class="ui-table ui-table-body">
+            <colgroup>
+              <col style="width: 10%;" />
+              <col style="width: 18%;" />
+              <col style="width: 20%;" />
+              <col style="width: 11%;" />
+              <col style="width: 10%;" />
+              <col style="width: 11%;" />
+              <col style="width: 10%;" />
+              <col style="width: 10%;" />
+            </colgroup>
+            <tbody>
+              <tr *ngFor="let user of rows()" [class.ui-row-inactive]="!user.active">
+                <td class="ui-td-muted">
+                  {{ cpfLabel(user.cpf) }}
+                </td>
+
+                <td class="ui-td-strong">
+                  {{ user.fullName || '-' }}
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ user.email }}
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ phoneLabel(user.phoneNumber) }}
+                </td>
+
+                <td>
+                  <div class="user-cell-center">
+                    <span class="badge" [ngClass]="roleBadgeClass(user.role)">
+                      {{ roleLabel(user.role) }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="user-cell-center">
+                    <span class="plan-badge" [ngClass]="planBadgeClass(user.planCode)">
+                      {{ planLabel(user.planCode) }}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ subscriptionLabel(user) }}
+                </td>
+
+                <td>
+                  <div class="user-cell-center">
+                    <span class="badge" [class.success]="user.active" [class.warning]="!user.active">
+                      {{ user.active ? 'Ativo' : 'Inativo' }}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="user-actions-cell">
+                    <button
+                      class="ui-icon-btn warning"
+                      type="button"
+                      title="Ativar ou inativar usuario"
+                      [disabled]="togglingUserPublicId() === user.publicId"
+                      (click)="toggleActive(user)"
+                    >
+                      <span class="material-symbols-rounded">
+                        {{ user.active ? 'pause_circle' : 'play_circle' }}
+                      </span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div tableFooter>
+        <app-pagination
+          [vm]="paginationVm()"
+          [disabled]="loading()"
+          [sizeOptions]="[5, 10, 20]"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onSizeChange($event)"
+        ></app-pagination>
+      </div>
+    </app-table-card>
+  </div>
+</div>

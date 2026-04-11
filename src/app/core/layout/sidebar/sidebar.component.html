@@ -12,7 +12,7 @@
     </div>
 
     <div class="nav">
-      <a *ngFor="let item of nav; trackBy: trackByRoute" [routerLink]="item.route" routerLinkActive="active"
+      <a *ngFor="let item of nav(); trackBy: trackByRoute" [routerLink]="item.route" routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: false }" class="nav-link">
         <span class="material-symbols-rounded icon">{{ item.icon }}</span>
         <span class="label">{{ item.label }}</span>

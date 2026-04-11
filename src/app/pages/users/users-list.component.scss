@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.users-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-cell-center,
+.user-actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-badge {
+  min-height: 1.9rem;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.plan-badge.free {
+  background: rgba(107, 114, 128, 0.10);
+  border-color: rgba(107, 114, 128, 0.18);
+  color: #6b7280;
+}
+
+.plan-badge.basic {
+  background: rgba(195, 83, 0, 0.10);
+  border-color: rgba(195, 83, 0, 0.18);
+  color: var(--color-primary);
+}
+
+.plan-badge.pro {
+  background: rgba(27, 156, 133, 0.10);
+  border-color: rgba(27, 156, 133, 0.18);
+  color: var(--color-success);
+}
