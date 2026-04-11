@@ -101,18 +101,24 @@
             <option value="" disabled>Selecione</option>
             <option *ngFor="let channel of channels" [value]="channel.id">{{ channel.name }}</option>
           </select>
-          <span class="error" *ngIf="newSourceError('channel')">Selecione o canal.</span>
+          <span class="error field-feedback" [class.visible]="newSourceError('channel')">
+            {{ newSourceError('channel') ? 'Selecione o canal.' : '' }}
+          </span>
         </div>
 
         <div class="field grow">
           <label for="newIcalUrl">Link iCal</label>
           <input id="newIcalUrl" type="url" formControlName="icalUrl" placeholder="https://..." />
-          <span class="error" *ngIf="newSourceError('icalUrl')">Informe o link iCal.</span>
+          <span class="error field-feedback" [class.visible]="newSourceError('icalUrl')">
+            {{ newSourceError('icalUrl') ? 'Informe o link iCal.' : '' }}
+          </span>
         </div>
 
-        <button class="ui-btn primary" type="button" (click)="addSourceFromDraft()">
-          Adicionar canal
-        </button>
+        <div class="new-row-action">
+          <button class="ui-btn primary" type="button" (click)="addSourceFromDraft()">
+            Adicionar canal
+          </button>
+        </div>
       </div>
     </section>
 
@@ -175,6 +181,18 @@
 
                 <td>
                   <div class="sources-actions-cell">
+                    <button
+                      class="ui-icon-btn warning"
+                      type="button"
+                      [title]="sourceToggleTitle(source)"
+                      [disabled]="!source.get('publicId')?.value || togglingSourcePublicId() === source.get('publicId')?.value"
+                      (click)="toggleSourceActive(index)"
+                    >
+                      <span class="material-symbols-rounded">
+                        {{ sourceToggleIcon(source) }}
+                      </span>
+                    </button>
+
                     <button
                       class="ui-icon-btn danger"
                       type="button"

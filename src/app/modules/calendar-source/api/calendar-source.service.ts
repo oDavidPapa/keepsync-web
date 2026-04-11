@@ -28,6 +28,15 @@ export class CalendarSourceService {
       .pipe(map(r => r.data));
   }
 
+  toggleActive(publicId: string) {
+    return this.http
+      .patch<ApiEnvelope<CalendarSourceResponse>>(
+        `${this.baseUrl}/v1/calendar-sources/${publicId}/toggle-active`,
+        {}
+      )
+      .pipe(map(r => r.data));
+  }
+
   delete(publicId: string) {
     return this.http.delete<void>(
       `${this.baseUrl}/v1/calendar-sources/${publicId}`

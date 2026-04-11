@@ -75,6 +75,7 @@ export class PropertiesComponent {
   readonly saving = signal(false);
   readonly submitted = signal(false);
   readonly loading = signal(false);
+  readonly togglingSourcePublicId = signal<string | null>(null);
 
   private readonly propertyPublicId = signal<string | null>(null);
   readonly isEditMode = computed(() => !!this.propertyPublicId());
@@ -148,6 +149,14 @@ export class PropertiesComponent {
     return sourceFormGroup.controls.active.value ? 'success' : 'warning';
   }
 
+  sourceToggleIcon(sourceFormGroup: SourceForm): string {
+    return sourceFormGroup.controls.active.value ? 'pause_circle' : 'play_circle';
+  }
+
+  sourceToggleTitle(sourceFormGroup: SourceForm): string {
+    return sourceFormGroup.controls.active.value ? 'Inativar canal' : 'Ativar canal';
+  }
+
   submit() {
     this.submitted.set(true);
 
@@ -219,6 +228,32 @@ export class PropertiesComponent {
       },
       error: (error) => {
         this.toast.error('Erro ao remover canal.');
+        console.error(error);
+      }
+    });
+  }
+
+  toggleSourceActive(index: number) {
+    const sourceFormGroup = this.sourcesArray.at(index);
+    const sourcePublicId = sourceFormGroup.controls.publicId.value;
+
+    if (!sourcePublicId || this.togglingSourcePublicId()) {
+      return;
+    }
+
+    this.togglingSourcePublicId.set(sourcePublicId);
+
+    this.calendarSourceService.toggleActive(sourcePublicId).subscribe({
+      next: (updatedSource) => {
+        sourceFormGroup.patchValue({
+          active: !!updatedSource.active,
+        });
+        this.toast.success(updatedSource.active ? 'Canal ativado.' : 'Canal inativado.');
+        this.togglingSourcePublicId.set(null);
+      },
+      error: (error) => {
+        this.toast.error('Erro ao atualizar o status do canal.');
+        this.togglingSourcePublicId.set(null);
         console.error(error);
       }
     });
