@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/auth/admin.guard';
+import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
 import { CalendarMonthComponent } from './pages/calendars/calendar-month.component';
@@ -9,12 +10,15 @@ import { ReservationsListComponent } from './pages/reservations/reservation-list
 import { ReservationEditComponent } from './pages/reservations/reservation-edit/reservation-edit.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { UsersListComponent } from './pages/users/users-list.component';
+import { LoginComponent } from './pages/login/login.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'app/dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   {
     path: 'app',
     component: MainLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'calendars', component: CalendarMonthComponent },
@@ -28,5 +32,5 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: 'app/dashboard' },
+  { path: '**', redirectTo: 'login' },
 ];

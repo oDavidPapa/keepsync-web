@@ -1,0 +1,103 @@
+<div class="login-layout">
+  <section class="login-brand-side" aria-label="Apresentacao KeepSync">
+    <div class="brand-panel">
+      <div class="brand-panel__pattern" aria-hidden="true"></div>
+
+      <div class="brand-panel__content">
+        <div class="brand-lockup" aria-label="KeepSync">
+          <span class="brand-logo">
+            <span class="brand-logo__keep">Keep</span><span class="brand-logo__sync">Sync</span>
+          </span>
+        </div>
+
+        <div class="brand-copy">
+          <h1 class="brand-copy__title">
+            <span>Sincronize seus</span>
+            <span>calendarios</span>
+            <span>com seguranca.</span>
+          </h1>
+
+          <p class="brand-copy__description">
+            Evite conflitos de reservas, acompanhe disponibilidades e mantenha sua operacao alinhada em um so lugar.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="login-form-side">
+    <div class="auth-shell">
+      <div class="auth-mark" aria-label="KeepSync">
+        <span class="brand-logo brand-logo--warm">
+          <span class="brand-logo__keep">Keep</span><span class="brand-logo__sync">Sync</span>
+        </span>
+      </div>
+
+      <div class="auth-box">
+        <div class="auth-copy">
+          <h2>Entrar</h2>
+          <p>Acesse sua conta para gerenciar reservas, alertas e sincronizacoes do KeepSync.</p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+          <div class="field-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="voce@empresa.com"
+              autocomplete="email"
+              spellcheck="false"
+            />
+            <span class="field-error" *ngIf="hasError('email')">Informe um e-mail valido.</span>
+          </div>
+
+          <div class="field-group">
+            <label for="password">Senha</label>
+
+            <div class="password-field">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+              />
+
+              <button
+                class="password-toggle"
+                type="button"
+                [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                (click)="togglePasswordVisibility()"
+              >
+                {{ showPassword() ? 'Ocultar' : 'Mostrar' }}
+              </button>
+            </div>
+
+            <span class="field-error" *ngIf="hasError('password')">Informe uma senha valida com pelo menos 8 caracteres.</span>
+          </div>
+
+          <label class="remember-option" for="rememberMe">
+            <input id="rememberMe" type="checkbox" formControlName="rememberMe" />
+            <span>Manter-me conectado</span>
+          </label>
+
+          <div class="feedback-banner error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+          <div class="feedback-banner info" *ngIf="helperMessage()">{{ helperMessage() }}</div>
+
+          <button class="submit-button" type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Entrando...' : 'Entrar' }}
+          </button>
+        </form>
+
+        <button class="text-link" type="button" (click)="forgotPassword()">Esqueceu a senha?</button>
+
+        <div class="auth-footer">
+          <span>Ainda nao esta cadastrado?</span>
+          <button class="secondary-button" type="button" (click)="requestAccess()">Cadastrar-se</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

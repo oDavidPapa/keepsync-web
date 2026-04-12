@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../auth/auth.service';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { UserService } from '../../../modules/users/api/user.service';
 
@@ -40,6 +40,7 @@ export class SidebarComponent {
   readonly nav = signal<NavItem[]>(this.getDefaultNav());
 
   constructor(
+    private readonly authService: AuthService,
     private readonly tokenStorage: TokenStorageService,
     private readonly userService: UserService,
     private readonly router: Router,
@@ -57,6 +58,10 @@ export class SidebarComponent {
 
   trackByRoute(_: number, item: NavItem): string {
     return item.route;
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 
   private refreshMenuFromSession(): void {
@@ -79,10 +84,7 @@ export class SidebarComponent {
   }
 
   private getAccessToken(): string | null {
-    const storedToken = this.tokenStorage.get()?.trim();
-    const fallbackToken = environment.mockToken?.trim();
-
-    return storedToken || fallbackToken || null;
+    return this.tokenStorage.getValidToken();
   }
 
   private applyRoleToMenu(role: string | null | undefined): void {

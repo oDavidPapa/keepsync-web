@@ -142,6 +142,14 @@
   text-decoration: none;
 }
 
+button.nav-link{
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
 /* Ícone */
 .icon{
   font-size: 1.55rem;
