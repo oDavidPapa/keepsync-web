@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { TokenStorageService } from '../../core/auth/token-storage.service';
+import { cpfValidator } from '../../core/validators/cpf.validator';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../core/ui/toast/toast.service';
 import { NotificationPreferenceService } from '../../modules/notification-preferences/api/notification-preference.service';
@@ -81,7 +82,7 @@ export class SettingsComponent {
     fullName: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
     email: this.fb.nonNullable.control('', [Validators.required, Validators.email, Validators.maxLength(255)]),
     phoneNumber: this.fb.nonNullable.control('', [Validators.maxLength(20)]),
-    cpf: this.fb.nonNullable.control('', [Validators.maxLength(20)]),
+    cpf: this.fb.nonNullable.control('', [Validators.maxLength(20), cpfValidator()]),
   });
 
   readonly notificationForm = this.fb.group({

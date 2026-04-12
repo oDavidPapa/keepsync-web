@@ -11,10 +11,14 @@ import { ReservationEditComponent } from './pages/reservations/reservation-edit/
 import { SettingsComponent } from './pages/settings/settings.component';
 import { UsersListComponent } from './pages/users/users-list.component';
 import { LoginComponent } from './pages/login/login.component';
+import { RegisterComponent } from './pages/register/register.component';
+import { RegisterSuccessComponent } from './pages/register-success/register-success.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
+  { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
+  { path: 'register/success', component: RegisterSuccessComponent, canActivate: [guestGuard] },
   {
     path: 'app',
     component: MainLayoutComponent,

@@ -3,6 +3,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  cpf: string;
+  password: string;
+}
+
 export interface AuthResponse {
   token: string;
   publicId: string;

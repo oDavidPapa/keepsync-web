@@ -75,6 +75,18 @@
   box-shadow: 0 0 0 4px rgba(195, 83, 0, 0.08);
 }
 
+.field input.field-readonly {
+  background: rgba(17, 24, 39, 0.06);
+  color: rgba(17, 24, 39, 0.62);
+  border-color: rgba(17, 24, 39, 0.08);
+  cursor: default;
+}
+
+.field input.field-readonly:focus {
+  border-color: rgba(17, 24, 39, 0.08);
+  box-shadow: none;
+}
+
 .error {
   color: var(--color-danger);
   font-size: 0.76rem;

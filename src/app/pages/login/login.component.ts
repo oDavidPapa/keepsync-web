@@ -83,7 +83,7 @@ export class LoginComponent {
   }
 
   requestAccess(): void {
-    this.helperMessage.set(null);
+    void this.router.navigate(['/register']);
   }
 
   hasError(controlName: 'email' | 'password'): boolean {

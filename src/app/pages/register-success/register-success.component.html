@@ -1,0 +1,64 @@
+<div class="register-layout">
+  <section class="register-brand-side" aria-label="Apresentacao KeepSync">
+    <div class="brand-panel">
+      <div class="brand-panel__pattern" aria-hidden="true"></div>
+
+      <div class="brand-panel__content">
+        <div class="brand-lockup" aria-label="KeepSync">
+          <span class="brand-logo">
+            <span class="brand-logo__keep">Keep</span><span class="brand-logo__sync">Sync</span>
+          </span>
+        </div>
+
+        <div class="brand-copy">
+          <h1 class="brand-copy__title">
+            <span>Cadastro</span>
+            <span>concluido com</span>
+            <span>sucesso.</span>
+          </h1>
+
+          <p class="brand-copy__description">
+            Obrigado por criar sua conta. Seu acesso inicial esta pronto para comecar a organizar reservas, calendarios e alertas.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="register-form-side">
+    <div class="auth-shell">
+      <div class="auth-mark" aria-label="KeepSync">
+        <span class="brand-logo brand-logo--warm">
+          <span class="brand-logo__keep">Keep</span><span class="brand-logo__sync">Sync</span>
+        </span>
+      </div>
+
+      <div class="auth-box success-box">
+        <div class="auth-copy">
+          <h2>Boas-vindas!</h2>
+          <p>
+            Seu cadastro foi realizado com sucesso. Obrigado por escolher o KeepSync para apoiar a operacao das suas propriedades.
+          </p>
+        </div>
+
+        <div class="success-content">
+          <div class="success-highlight">
+            Voce ja pode entrar e comecar a usar o sistema <strong>GRATUITAMENTE</strong> agora mesmo.
+          </div>
+
+          <div class="success-actions">
+            <button class="submit-button" type="button" (click)="startUsingSystem()">
+              Comecar a utilizar o sistema
+            </button>
+
+            <button class="secondary-button plan-button" type="button" (click)="buyPlan()">
+              Escolher um plano
+            </button>
+          </div>
+
+          <div class="feedback-banner info" *ngIf="helperMessage()">{{ helperMessage() }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

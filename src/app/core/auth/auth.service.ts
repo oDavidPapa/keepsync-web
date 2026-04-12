@@ -5,7 +5,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../api/api.models';
-import { AuthResponse, LoginRequest } from './auth.models';
+import { AuthResponse, LoginRequest, RegisterRequest } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +25,12 @@ export class AuthService {
         map((response) => response.data),
         tap((response) => this.tokenStorage.set(response.token))
       );
+  }
+
+  register(payload: RegisterRequest): Observable<AuthResponse> {
+    return this.http
+      .post<ApiEnvelope<AuthResponse>>(`${this.baseUrl}/register`, payload)
+      .pipe(map((response) => response.data));
   }
 
   logout(redirectTo = '/login'): void {

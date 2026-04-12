@@ -1,0 +1,31 @@
+.success-box {
+  gap: 1rem;
+}
+
+.success-content {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.success-highlight {
+  color: rgba(17, 24, 39, 0.58);
+  font-weight: 400;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.success-highlight strong {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+}
+
+.success-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.plan-button {
+  width: 100%;
+}
