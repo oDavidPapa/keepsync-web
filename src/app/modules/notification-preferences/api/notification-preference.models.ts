@@ -14,11 +14,9 @@ export interface NotificationPreferenceItem {
 }
 
 export interface NotificationPreferenceResponse {
-  propertyPublicId?: string | null;
   preferences: NotificationPreferenceItem[];
 }
 
 export interface NotificationPreferenceRequest {
-  propertyPublicId?: string | null;
   preferences: NotificationPreferenceItem[];
 }

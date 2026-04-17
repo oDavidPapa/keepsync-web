@@ -223,7 +223,6 @@ export class SettingsComponent {
     ]);
 
     this.notificationPreferenceService.updatePreferences({
-      propertyPublicId: null,
       preferences: notificationPreferences,
     }).subscribe({
       next: () => {
@@ -327,12 +326,12 @@ export class SettingsComponent {
 
     this.notificationForm.patchValue({
       conflictOpenedEmail: preferencesByKey.get('CONFLICT_OPENED_EMAIL') ?? true,
-      conflictOpenedWhatsapp: preferencesByKey.get('CONFLICT_OPENED_WHATSAPP') ?? false,
-      conflictResolvedEmail: preferencesByKey.get('CONFLICT_RESOLVED_EMAIL') ?? true,
+      conflictOpenedWhatsapp: preferencesByKey.get('CONFLICT_OPENED_WHATSAPP') ?? true,
+      conflictResolvedEmail: preferencesByKey.get('CONFLICT_RESOLVED_EMAIL') ?? false,
       conflictResolvedWhatsapp: preferencesByKey.get('CONFLICT_RESOLVED_WHATSAPP') ?? false,
       reservationConfirmedEmail: preferencesByKey.get('RESERVATION_CONFIRMED_EMAIL') ?? true,
-      reservationConfirmedWhatsapp: preferencesByKey.get('RESERVATION_CONFIRMED_WHATSAPP') ?? false,
-      reservationCanceledEmail: preferencesByKey.get('RESERVATION_CANCELED_EMAIL') ?? true,
+      reservationConfirmedWhatsapp: preferencesByKey.get('RESERVATION_CONFIRMED_WHATSAPP') ?? true,
+      reservationCanceledEmail: preferencesByKey.get('RESERVATION_CANCELED_EMAIL') ?? false,
       reservationCanceledWhatsapp: preferencesByKey.get('RESERVATION_CANCELED_WHATSAPP') ?? false,
     });
   }
