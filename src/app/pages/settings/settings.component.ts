@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { TokenStorageService } from '../../core/auth/token-storage.service';
-import { cpfValidator } from '../../core/validators/cpf.validator';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../core/ui/toast/toast.service';
 import { NotificationPreferenceService } from '../../modules/notification-preferences/api/notification-preference.service';
@@ -82,7 +81,6 @@ export class SettingsComponent {
     fullName: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
     email: this.fb.nonNullable.control('', [Validators.required, Validators.email, Validators.maxLength(255)]),
     phoneNumber: this.fb.nonNullable.control('', [Validators.maxLength(20)]),
-    cpf: this.fb.nonNullable.control('', [Validators.maxLength(20), cpfValidator()]),
   });
 
   readonly notificationForm = this.fb.group({
@@ -186,7 +184,6 @@ export class SettingsComponent {
         fullName: this.profileForm.controls.fullName.value.trim(),
         email: this.profileForm.controls.email.value.trim(),
         phoneNumber: this.normalizeDigits(this.profileForm.controls.phoneNumber.value),
-        cpf: this.normalizeDigits(this.profileForm.controls.cpf.value),
       })
       .subscribe({
         next: (response) => {
@@ -296,11 +293,6 @@ export class SettingsComponent {
     phoneControl.setValue(this.formatPhone(phoneControl.value), { emitEvent: false });
   }
 
-  onCpfInput() {
-    const cpfControl = this.profileForm.controls.cpf;
-    cpfControl.setValue(this.formatCpf(cpfControl.value), { emitEvent: false });
-  }
-
   hasProfileError(controlName: keyof typeof this.profileForm.controls) {
     const control = this.profileForm.controls[controlName];
     return control.invalid && (control.dirty || control.touched || this.profileSubmitted());
@@ -321,7 +313,6 @@ export class SettingsComponent {
       fullName: currentUser.fullName ?? '',
       email: currentUser.email ?? '',
       phoneNumber: this.formatPhone(currentUser.phoneNumber ?? ''),
-      cpf: this.formatCpf(currentUser.cpf ?? ''),
     });
 
     this.profileForm.markAsPristine();
@@ -384,24 +375,6 @@ export class SettingsComponent {
     }
 
     return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
-  }
-
-  private formatCpf(value: string) {
-    const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
-
-    if (digitsOnly.length <= 3) {
-      return digitsOnly;
-    }
-
-    if (digitsOnly.length <= 6) {
-      return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3)}`;
-    }
-
-    if (digitsOnly.length <= 9) {
-      return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3, 6)}.${digitsOnly.slice(6)}`;
-    }
-
-    return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3, 6)}.${digitsOnly.slice(6, 9)}-${digitsOnly.slice(9)}`;
   }
 
   private formatDate(value: string) {

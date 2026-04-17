@@ -24,12 +24,6 @@
         </div>
 
         <div class="form-grid">
-          <div class="field">
-            <label for="cpf">CPF</label>
-            <input id="cpf" class="field-readonly" type="text" formControlName="cpf" placeholder="000.000.000-00" readonly />
-            <span class="error" *ngIf="hasProfileError('cpf')">Informe um CPF valido.</span>
-          </div>
-
           <div class="field span-2">
             <label for="fullName">Nome</label>
             <input id="fullName" type="text" formControlName="fullName" placeholder="Ex: Maria Oliveira" />

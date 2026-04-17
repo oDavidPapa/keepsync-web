@@ -8,7 +8,6 @@ export interface CurrentUserResponse {
   fullName?: string | null;
   email: string;
   phoneNumber?: string | null;
-  cpf?: string | null;
   emailVerified: boolean;
   phoneVerified: boolean;
   planCode: UserPlanCode;
@@ -21,7 +20,6 @@ export interface UpdateCurrentUserProfileRequest {
   fullName: string;
   email: string;
   phoneNumber?: string | null;
-  cpf?: string | null;
 }
 
 export interface UpdateCurrentUserProfileResponse {
@@ -45,7 +43,6 @@ export interface UserListItemResponse {
   fullName?: string | null;
   email: string;
   phoneNumber?: string | null;
-  cpf?: string | null;
   planCode: UserPlanCode;
   subscriptionExpiresAt?: string | null;
   createdAt: string;

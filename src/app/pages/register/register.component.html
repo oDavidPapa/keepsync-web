@@ -41,19 +41,6 @@
 
         <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
           <div class="field-group">
-            <label for="cpf">CPF</label>
-            <input
-              id="cpf"
-              type="text"
-              formControlName="cpf"
-              placeholder="000.000.000-00"
-              autocomplete="off"
-              (input)="onCpfInput()"
-            />
-            <span class="field-error" *ngIf="hasError('cpf')">Informe um CPF valido.</span>
-          </div>
-
-          <div class="field-group">
             <label for="fullName">Nome completo</label>
             <input
               id="fullName"

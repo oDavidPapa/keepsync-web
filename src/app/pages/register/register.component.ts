@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 
 import { ApiError } from '../../core/api/api.models';
 import { AuthService } from '../../core/auth/auth.service';
-import { cpfValidator } from '../../core/validators/cpf.validator';
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 
 @Component({
@@ -30,11 +29,6 @@ export class RegisterComponent {
     phoneNumber: this.fb.nonNullable.control('', [
       Validators.required,
       Validators.maxLength(16),
-    ]),
-    cpf: this.fb.nonNullable.control('', [
-      Validators.required,
-      Validators.maxLength(14),
-      cpfValidator(),
     ]),
     password: this.fb.nonNullable.control('', [
       Validators.required,
@@ -75,7 +69,6 @@ export class RegisterComponent {
         fullName: this.form.controls.fullName.value.trim(),
         email: this.form.controls.email.value.trim(),
         phoneNumber: this.normalizeDigits(this.form.controls.phoneNumber.value),
-        cpf: this.normalizeDigits(this.form.controls.cpf.value),
         password: this.form.controls.password.value,
       })
       .subscribe({
@@ -107,12 +100,7 @@ export class RegisterComponent {
     phoneControl.setValue(this.formatPhone(phoneControl.value), { emitEvent: false });
   }
 
-  onCpfInput(): void {
-    const cpfControl = this.form.controls.cpf;
-    cpfControl.setValue(this.formatCpf(cpfControl.value), { emitEvent: false });
-  }
-
-  hasError(controlName: 'fullName' | 'email' | 'phoneNumber' | 'cpf' | 'password' | 'confirmPassword'): boolean {
+  hasError(controlName: 'fullName' | 'email' | 'phoneNumber' | 'password' | 'confirmPassword'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && this.submitted();
   }
@@ -131,10 +119,6 @@ export class RegisterComponent {
 
     if (apiError?.error === 'EMAIL_ALREADY_REGISTERED') {
       return 'Ja existe uma conta com este e-mail.';
-    }
-
-    if (apiError?.error === 'CPF_ALREADY_REGISTERED') {
-      return 'Ja existe uma conta com este CPF.';
     }
 
     return apiErrorMessage(error, 'Nao foi possivel concluir o cadastro.');
@@ -166,21 +150,4 @@ export class RegisterComponent {
     return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
   }
 
-  private formatCpf(value: string): string {
-    const digitsOnly = this.normalizeDigits(value).slice(0, 11);
-
-    if (digitsOnly.length <= 3) {
-      return digitsOnly;
-    }
-
-    if (digitsOnly.length <= 6) {
-      return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3)}`;
-    }
-
-    if (digitsOnly.length <= 9) {
-      return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3, 6)}.${digitsOnly.slice(6)}`;
-    }
-
-    return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3, 6)}.${digitsOnly.slice(6, 9)}-${digitsOnly.slice(9)}`;
-  }
 }

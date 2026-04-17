@@ -112,16 +112,6 @@ export class UsersListComponent {
     return phoneNumber ?? '-';
   }
 
-  cpfLabel(cpf: string | null | undefined): string {
-    const digitsOnly = String(cpf ?? '').replace(/\D/g, '');
-
-    if (digitsOnly.length !== 11) {
-      return cpf || '-';
-    }
-
-    return digitsOnly.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  }
-
   subscriptionLabel(user: UserListItemResponse): string {
     if (user.planCode === 'FREE') {
       return 'Sem expiracao';

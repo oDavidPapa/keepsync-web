@@ -7,7 +7,6 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   phoneNumber: string;
-  cpf: string;
   password: string;
 }
 
