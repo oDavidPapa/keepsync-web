@@ -10,6 +10,7 @@ import { ReservationsListComponent } from './pages/reservations/reservation-list
 import { ReservationEditComponent } from './pages/reservations/reservation-edit/reservation-edit.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { UsersListComponent } from './pages/users/users-list.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { RegisterSuccessComponent } from './pages/register-success/register-success.component';
@@ -33,6 +34,7 @@ export const routes: Routes = [
       { path: 'properties/:publicId/edit', component: PropertiesComponent },
       { path: 'settings', component: SettingsComponent },
       { path: 'users', component: UsersListComponent, canActivate: [adminGuard] },
+      { path: 'notifications', component: NotificationsComponent, canActivate: [adminGuard] },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

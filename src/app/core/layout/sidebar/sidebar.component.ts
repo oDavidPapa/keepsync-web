@@ -25,7 +25,7 @@ export interface NavItem {
 export class SidebarComponent {
   @Input() mobileOpen = false;
 
-  private readonly adminRoute = '/app/users';
+  private readonly adminRoutes = new Set(['/app/users', '/app/notifications']);
 
   private readonly baseNav: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'dashboard' },
@@ -94,7 +94,7 @@ export class SidebarComponent {
   }
 
   private getDefaultNav(): NavItem[] {
-    return this.baseNav.filter((item) => item.route !== this.adminRoute);
+    return this.baseNav.filter((item) => !this.adminRoutes.has(item.route));
   }
 
   private isAdminRole(role: string | null | undefined): boolean {

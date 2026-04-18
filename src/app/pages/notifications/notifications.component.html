@@ -1,1 +1,235 @@
-<p>notifications works!</p>
+<div class="ui-page ui-page-fit notifications-page">
+  <app-page-header
+    title="Notificacoes"
+    subtitle="Acompanhe envio e status das notificacoes. Clique em uma linha para ver detalhes."
+    [sticky]="true"
+    [top]="16"
+  ></app-page-header>
+
+  <app-filter-panel title="Filtros" [defaultOpen]="false" [activeCount]="activeFiltersCount()">
+    <div filterActions>
+      <button class="ui-btn ghost mini" type="button" (click)="clearFilters()">
+        Limpar
+      </button>
+    </div>
+
+    <div class="ui-filters" [formGroup]="filterForm">
+      <div class="ui-field grow">
+        <label>Usuario</label>
+        <input formControlName="userQuery" placeholder="Nome, e-mail ou ID publico..." />
+      </div>
+
+      <div class="ui-field">
+        <label>Tipo</label>
+        <select formControlName="type">
+          <option value="">Todos</option>
+          <option value="CONFLICT_OPENED">Conflito aberto</option>
+          <option value="CONFLICT_RESOLVED">Conflito resolvido</option>
+          <option value="RESERVATION_CONFIRMED">Reserva confirmada</option>
+          <option value="RESERVATION_CANCELED">Reserva cancelada</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
+        <label>Status</label>
+        <select formControlName="status">
+          <option value="">Todos</option>
+          <option value="PENDING">Pendente</option>
+          <option value="PROCESSING">Processando</option>
+          <option value="SENT">Enviada</option>
+          <option value="FAILED">Falhou</option>
+          <option value="SKIPPED">Ignorada</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
+        <label>De</label>
+        <input type="date" formControlName="dateFrom" />
+      </div>
+
+      <div class="ui-field">
+        <label>Ate</label>
+        <input type="date" formControlName="dateTo" />
+      </div>
+    </div>
+  </app-filter-panel>
+
+  <div class="ui-page-body">
+    <app-table-card
+      class="ui-table-card"
+      title="Historico de notificacoes"
+      [hasRows]="rows().length > 0"
+      [loading]="loading()"
+      [showFooter]="true"
+    >
+      <div tableContent class="ui-table-stack">
+        <table class="ui-table ui-table-head">
+          <colgroup>
+            <col style="width: 8%;" />
+            <col style="width: 25%;" />
+            <col style="width: 21%;" />
+            <col style="width: 11%;" />
+            <col style="width: 13%;" />
+            <col style="width: 14%;" />
+            <col style="width: 8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Tipo</th>
+              <th>Canal</th>
+              <th class="ui-center">Status</th>
+              <th>Enviada em</th>
+              <th class="ui-center">Acoes</th>
+            </tr>
+          </thead>
+        </table>
+
+        <div class="ui-table-body-scroll">
+          <table class="ui-table ui-table-body">
+            <colgroup>
+              <col style="width: 8%;" />
+              <col style="width: 25%;" />
+              <col style="width: 21%;" />
+              <col style="width: 11%;" />
+              <col style="width: 13%;" />
+              <col style="width: 14%;" />
+              <col style="width: 8%;" />
+            </colgroup>
+            <tbody>
+              <tr *ngFor="let item of rows()">
+                <td class="ui-td-muted">
+                  #{{ item.id }}
+                </td>
+
+                <td>
+                  <div class="user-cell">
+                    <strong>{{ userPrimaryLabel(item) }}</strong>
+                    <span>{{ userSecondaryLabel(item) }}</span>
+                  </div>
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ typeLabel(item.type) }}
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ channelLabel(item.channel) }}
+                </td>
+
+                <td>
+                  <div class="status-cell">
+                    <span class="badge" [ngClass]="statusBadgeClass(item.status)">
+                      {{ statusLabel(item.status) }}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="ui-td-muted">
+                  {{ dateTimeLabel(item.sentAt) }}
+                </td>
+
+                <td>
+                  <div class="status-cell">
+                    <button
+                      class="ui-icon-btn"
+                      type="button"
+                      title="Ver detalhes"
+                      (click)="openDetails(item)"
+                    >
+                      <span class="material-symbols-rounded">open_in_new</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div tableFooter>
+        <app-pagination
+          [vm]="paginationVm()"
+          [disabled]="loading()"
+          [sizeOptions]="[5, 10, 20]"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onSizeChange($event)"
+        ></app-pagination>
+      </div>
+    </app-table-card>
+  </div>
+</div>
+
+<div class="details-backdrop" *ngIf="selectedNotification() as detail" (click)="closeDetails()">
+  <div class="details-dialog" (click)="$event.stopPropagation()">
+    <div class="details-head">
+      <div>
+        <h3>Detalhes da notificacao</h3>
+        <p>#{{ detail.id }} - {{ typeLabel(detail.type) }}</p>
+      </div>
+
+      <button class="ui-icon-btn" type="button" title="Fechar" (click)="closeDetails()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-item">
+        <span>Usuario</span>
+        <strong>{{ userPrimaryLabel(detail) }}</strong>
+        <small>{{ userSecondaryLabel(detail) }}</small>
+      </div>
+
+      <div class="detail-item">
+        <span>Status</span>
+        <strong>{{ statusLabel(detail.status) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Canal</span>
+        <strong>{{ channelLabel(detail.channel) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Tentativas</span>
+        <strong>{{ detail.attempts }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Criada em</span>
+        <strong>{{ dateTimeLabel(detail.createdAt) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Processada em</span>
+        <strong>{{ dateTimeLabel(detail.processingAt) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Enviada em</span>
+        <strong>{{ dateTimeLabel(detail.sentAt) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Property ID</span>
+        <strong>{{ detail.propertyId ?? '-' }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Reservation ID</span>
+        <strong>{{ detail.reservationId ?? '-' }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Conflict ID</span>
+        <strong>{{ detail.conflictId ?? '-' }}</strong>
+      </div>
+    </div>
+
+    <div class="detail-error">
+      <span>Ultimo erro</span>
+      <p>{{ detail.lastError || '-' }}</p>
+    </div>
+  </div>
+</div>
