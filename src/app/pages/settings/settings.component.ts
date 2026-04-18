@@ -34,28 +34,19 @@ export class SettingsComponent {
     description: string;
     emailControlName:
       | 'conflictOpenedEmail'
-      | 'conflictResolvedEmail'
       | 'reservationConfirmedEmail'
       | 'reservationCanceledEmail';
     whatsappControlName:
       | 'conflictOpenedWhatsapp'
-      | 'conflictResolvedWhatsapp'
       | 'reservationConfirmedWhatsapp'
       | 'reservationCanceledWhatsapp';
   }> = [
     {
       type: 'CONFLICT_OPENED',
-      title: 'Conflito aberto',
+      title: 'Conflito detectado',
       description: 'Avise quando surgir um novo conflito de reserva.',
       emailControlName: 'conflictOpenedEmail',
       whatsappControlName: 'conflictOpenedWhatsapp',
-    },
-    {
-      type: 'CONFLICT_RESOLVED',
-      title: 'Conflito resolvido',
-      description: 'Avise quando um conflito for resolvido no calendario.',
-      emailControlName: 'conflictResolvedEmail',
-      whatsappControlName: 'conflictResolvedWhatsapp',
     },
     {
       type: 'RESERVATION_CONFIRMED',
@@ -93,8 +84,6 @@ export class SettingsComponent {
   readonly notificationForm = this.fb.group({
     conflictOpenedEmail: this.fb.nonNullable.control(true),
     conflictOpenedWhatsapp: this.fb.nonNullable.control(false),
-    conflictResolvedEmail: this.fb.nonNullable.control(true),
-    conflictResolvedWhatsapp: this.fb.nonNullable.control(false),
     reservationConfirmedEmail: this.fb.nonNullable.control(true),
     reservationConfirmedWhatsapp: this.fb.nonNullable.control(false),
     reservationCanceledEmail: this.fb.nonNullable.control(true),
@@ -377,8 +366,6 @@ export class SettingsComponent {
     this.notificationForm.patchValue({
       conflictOpenedEmail: preferencesByKey.get('CONFLICT_OPENED_EMAIL') ?? true,
       conflictOpenedWhatsapp: preferencesByKey.get('CONFLICT_OPENED_WHATSAPP') ?? true,
-      conflictResolvedEmail: preferencesByKey.get('CONFLICT_RESOLVED_EMAIL') ?? false,
-      conflictResolvedWhatsapp: preferencesByKey.get('CONFLICT_RESOLVED_WHATSAPP') ?? false,
       reservationConfirmedEmail: preferencesByKey.get('RESERVATION_CONFIRMED_EMAIL') ?? true,
       reservationConfirmedWhatsapp: preferencesByKey.get('RESERVATION_CONFIRMED_WHATSAPP') ?? true,
       reservationCanceledEmail: preferencesByKey.get('RESERVATION_CANCELED_EMAIL') ?? false,
