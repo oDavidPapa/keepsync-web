@@ -17,6 +17,15 @@
         <span class="label">{{ item.label }}</span>
         <span *ngIf="item.badge" class="message-count">{{ item.badge }}</span>
       </a>
+
+      <div class="nav-admin-block" *ngIf="adminNav().length > 0">
+        <a *ngFor="let item of adminNav(); trackBy: trackByRoute" [routerLink]="item.route" routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: false }" class="nav-link">
+          <span class="material-symbols-rounded icon">{{ item.icon }}</span>
+          <span class="label">{{ item.label }}</span>
+          <span *ngIf="item.badge" class="message-count">{{ item.badge }}</span>
+        </a>
+      </div>
     </div>
 
     <!-- FOOTER do card (sempre no fundo) -->

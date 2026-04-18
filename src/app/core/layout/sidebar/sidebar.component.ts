@@ -25,19 +25,21 @@ export interface NavItem {
 export class SidebarComponent {
   @Input() mobileOpen = false;
 
-  private readonly adminRoutes = new Set(['/app/admin/users', '/app/admin/notifications']);
-
-  private readonly baseNav: NavItem[] = [
+  private readonly userNav: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'dashboard' },
     { label: 'Reservas', route: '/app/reservations', icon: 'event_available' },
     { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
     { label: 'Propriedades', route: '/app/properties', icon: 'home_work' },
-    { label: 'Notificacoes', route: '/app/admin/notifications', icon: 'notifications' },
-    { label: 'Usuarios', route: '/app/admin/users', icon: 'group' },
     { label: 'Configuracoes', route: '/app/settings', icon: 'manage_accounts' }
   ];
 
-  readonly nav = signal<NavItem[]>(this.getDefaultNav());
+  private readonly adminOnlyNav: NavItem[] = [
+    { label: 'Notificacoes', route: '/app/admin/notifications', icon: 'notifications' },
+    { label: 'Usuarios', route: '/app/admin/users', icon: 'group' }
+  ];
+
+  readonly nav = signal<NavItem[]>(this.cloneNavItems(this.userNav));
+  readonly adminNav = signal<NavItem[]>([]);
   readonly currentUserName = signal('Usuario');
   readonly currentUserEmail = signal('');
 
@@ -97,13 +99,9 @@ export class SidebarComponent {
   }
 
   private applyRoleToMenu(role: string | null | undefined): void {
-    this.nav.set(
-      this.isAdminRole(role) ? this.baseNav : this.getDefaultNav()
-    );
-  }
-
-  private getDefaultNav(): NavItem[] {
-    return this.baseNav.filter((item) => !this.adminRoutes.has(item.route));
+    const isAdmin = this.isAdminRole(role);
+    this.nav.set(this.cloneNavItems(this.userNav));
+    this.adminNav.set(isAdmin ? this.cloneNavItems(this.adminOnlyNav) : []);
   }
 
   private isAdminRole(role: string | null | undefined): boolean {
@@ -263,5 +261,9 @@ export class SidebarComponent {
     );
 
     return atob(paddedValue);
+  }
+
+  private cloneNavItems(items: NavItem[]): NavItem[] {
+    return items.map((item) => ({ ...item }));
   }
 }

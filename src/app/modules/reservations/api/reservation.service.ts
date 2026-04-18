@@ -23,6 +23,8 @@ export class ReservationService {
     query?: string;
     status?: string;
     ownerUserPublicId?: string;
+    periodStart?: string;
+    periodEnd?: string;
   }): Observable<Page<ReservationResponse>> {
     let httpParams = new HttpParams();
 
@@ -33,10 +35,14 @@ export class ReservationService {
     const queryParam = (params.query ?? '').trim();
     const statusParam = (params.status ?? '').trim();
     const ownerUserPublicIdParam = (params.ownerUserPublicId ?? '').trim();
+    const periodStartParam = (params.periodStart ?? '').trim();
+    const periodEndParam = (params.periodEnd ?? '').trim();
 
     if (queryParam) httpParams = httpParams.set('query', queryParam);
     if (statusParam) httpParams = httpParams.set('status', statusParam);
     if (ownerUserPublicIdParam) httpParams = httpParams.set('ownerUserPublicId', ownerUserPublicIdParam);
+    if (periodStartParam) httpParams = httpParams.set('periodStart', periodStartParam);
+    if (periodEndParam) httpParams = httpParams.set('periodEnd', periodEndParam);
 
     return this.http
       .get<ApiEnvelope<Page<ReservationResponse>>>(this.baseUrl, { params: httpParams })

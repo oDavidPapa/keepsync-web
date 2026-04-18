@@ -44,6 +44,8 @@ export class ReservationsListComponent {
   readonly filterForm = this.fb.group({
     query: [''],
     status: [''],
+    periodStart: [''],
+    periodEnd: [''],
   });
 
   readonly rows = computed(() => this.pageRows());
@@ -59,7 +61,9 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.value;
     const query = (filterValues.query ?? '').trim();
     const status = (filterValues.status ?? '').trim();
-    return (query ? 1 : 0) + (status ? 1 : 0);
+    const periodStart = (filterValues.periodStart ?? '').trim();
+    const periodEnd = (filterValues.periodEnd ?? '').trim();
+    return (query ? 1 : 0) + (status ? 1 : 0) + (periodStart ? 1 : 0) + (periodEnd ? 1 : 0);
   });
 
   constructor(
@@ -89,9 +93,19 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.getRawValue();
     const query = (filterValues.query ?? '').trim() || undefined;
     const status = (filterValues.status ?? '').trim() || undefined;
+    const periodStart = (filterValues.periodStart ?? '').trim() || undefined;
+    const periodEnd = (filterValues.periodEnd ?? '').trim() || undefined;
+
+    if (this.isInvalidPeriodRange(periodStart, periodEnd)) {
+      const message = 'Periodo invalido. A data final deve ser igual ou maior que a data inicial.';
+      this.error.set(message);
+      this.toast.error(message);
+      this.loading.set(false);
+      return;
+    }
 
     this.reservationService
-      .list({ page: requestPage, size: requestSize, sort: 'createdAt,desc', query, status })
+      .list({ page: requestPage, size: requestSize, sort: 'createdAt,desc', query, status, periodStart, periodEnd })
       .subscribe({
         next: (pageResult) => {
           const content = pageResult?.content ?? [];
@@ -131,7 +145,7 @@ export class ReservationsListComponent {
   }
 
   clearFilters() {
-    this.filterForm.reset({ query: '', status: '' });
+    this.filterForm.reset({ query: '', status: '', periodStart: '', periodEnd: '' });
     this.pageNumber.set(0);
     this.load();
   }
@@ -167,5 +181,13 @@ export class ReservationsListComponent {
       default:
         return '';
     }
+  }
+
+  private isInvalidPeriodRange(periodStart?: string, periodEnd?: string): boolean {
+    if (!periodStart || !periodEnd) {
+      return false;
+    }
+
+    return periodEnd < periodStart;
   }
 }
