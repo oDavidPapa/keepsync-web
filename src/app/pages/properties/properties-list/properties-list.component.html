@@ -1,4 +1,4 @@
-<div class="ui-page ui-page-fit">
+﻿<div class="ui-page ui-page-fit">
 
   <app-page-header title="Propriedades" subtitle="Gerencie as propriedades cadastradas e seus canais conectados."
     [sticky]="true" [top]="16">
@@ -8,7 +8,7 @@
     </button>
   </app-page-header>
 
-  <!-- ✅ FILTRO SOLTO + TOGGLE -->
+  <!-- âœ… FILTRO SOLTO + TOGGLE -->
   <app-filter-panel title="Filtros" [defaultOpen]="false" [activeCount]="activeFiltersCount()">
 
     <div filterActions>
@@ -34,23 +34,23 @@
     </div>
   </app-filter-panel>
 
-  <!-- ✅ BODY: ocupa o resto da altura -->
+  <!-- âœ… BODY: ocupa o resto da altura -->
   <div class="ui-page-body">
 
     <app-table-card class="ui-table-card" title="Propriedades cadastradas" [hasRows]="rows().length > 0"
       [loading]="loading()" [showFooter]="true">
       <div tableContent class="ui-table-stack">
 
-        <!-- ✅ HEADER FIXO -->
+        <!-- âœ… HEADER FIXO -->
         <table class="ui-table ui-table-head">
           <thead>
             <tr>
               <th>Nome</th>
               <th>Local</th>
-              <th>País</th>
+              <th>Responsavel</th>
               <th>Status</th>
               <th>Criada em</th>
-              <th class="ui-center">Ações</th>
+              <th class="ui-center">AÃ§Ãµes</th>
             </tr>
           </thead>
         </table>
@@ -63,7 +63,12 @@
                 <td class="ui-td-muted">
                   {{ row.city }}<span *ngIf="row.state"> - {{ row.state }}</span>
                 </td>
-                <td class="ui-td-muted">{{ row.country }}</td>
+                <td class="ui-td-muted">
+                  <div class="owner-cell">
+                    <span class="owner-name">{{ row.ownerName || row.ownerDisplay || 'Minha conta' }}</span>
+                    <span *ngIf="row.ownerEmail" class="owner-email">{{ row.ownerEmail }}</span>
+                  </div>
+                </td>
                 <td>
                   <span class="badge" [class.success]="row.active" [class.warning]="!row.active">
                     {{ row.active ? 'Ativa' : 'Inativa' }}

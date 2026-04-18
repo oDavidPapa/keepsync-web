@@ -162,7 +162,16 @@ export class PropertiesListComponent {
     this.propertyService.toggleActive(row.publicId).subscribe({
       next: (updated) => {
         this.pageRows.update((current) =>
-          current.map((item) => (item.publicId === updated.publicId ? updated : item))
+          current.map((item) =>
+            item.publicId === updated.publicId
+              ? {
+                  ...updated,
+                  ownerDisplay: updated.ownerDisplay ?? item.ownerDisplay,
+                  ownerName: updated.ownerName ?? item.ownerName,
+                  ownerEmail: updated.ownerEmail ?? item.ownerEmail,
+                }
+              : item
+          )
         );
         this.toast.success(updated.active ? 'Propriedade ativada.' : 'Propriedade inativada.');
       },

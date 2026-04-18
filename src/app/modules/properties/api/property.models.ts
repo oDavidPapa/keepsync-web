@@ -11,6 +11,9 @@ export interface PropertyResponse {
   state?: string | null;
   country?: string | null;
   postalCode?: string | null;
+  ownerDisplay?: string | null;
+  ownerName?: string | null;
+  ownerEmail?: string | null;
   
   active: boolean;
 

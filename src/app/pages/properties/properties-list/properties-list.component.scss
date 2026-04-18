@@ -1,0 +1,17 @@
+.owner-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.2;
+}
+
+.owner-name {
+  color: rgba(17, 24, 39, 0.92);
+  font-weight: 600;
+}
+
+.owner-email {
+  color: rgba(100, 116, 139, 0.95);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
