@@ -38,6 +38,8 @@ export class SidebarComponent {
   ];
 
   readonly nav = signal<NavItem[]>(this.getDefaultNav());
+  readonly currentUserName = signal('Usuario');
+  readonly currentUserEmail = signal('');
 
   constructor(
     private readonly authService: AuthService,
@@ -69,16 +71,23 @@ export class SidebarComponent {
 
     if (!accessToken) {
       this.applyRoleToMenu(null);
+      this.currentUserName.set('Usuario');
+      this.currentUserEmail.set('');
       return;
     }
 
     this.userService.getCurrentUser().subscribe({
       next: (response: unknown) => {
         const apiRole = this.extractRoleFromCurrentUserResponse(response);
+        const userIdentity = this.extractUserIdentityFromCurrentUserResponse(response);
         this.applyRoleToMenu(apiRole ?? this.extractRoleFromToken(accessToken));
+        this.currentUserName.set(userIdentity.name);
+        this.currentUserEmail.set(userIdentity.email ?? '');
       },
       error: () => {
         this.applyRoleToMenu(this.extractRoleFromToken(accessToken));
+        this.currentUserName.set('Usuario');
+        this.currentUserEmail.set(this.extractEmailFromToken(accessToken) ?? '');
       }
     });
   }
@@ -145,6 +154,41 @@ export class SidebarComponent {
     return null;
   }
 
+  private extractUserIdentityFromCurrentUserResponse(response: unknown): { name: string; email: string | null } {
+    const currentUser = response as {
+      fullName?: string;
+      email?: string;
+      data?: {
+        fullName?: string;
+        email?: string;
+        user?: {
+          fullName?: string;
+          email?: string;
+        };
+      };
+      user?: {
+        fullName?: string;
+        email?: string;
+      };
+    };
+
+    const name = this.firstNonEmpty([
+      currentUser?.fullName,
+      currentUser?.data?.fullName,
+      currentUser?.user?.fullName,
+      currentUser?.data?.user?.fullName
+    ]) ?? 'Usuario';
+
+    const email = this.firstNonEmpty([
+      currentUser?.email,
+      currentUser?.data?.email,
+      currentUser?.user?.email,
+      currentUser?.data?.user?.email
+    ]);
+
+    return { name, email };
+  }
+
   private extractRoleFromToken(token: string): string | null {
     try {
       const normalizedToken = token.startsWith('Bearer ')
@@ -174,6 +218,41 @@ export class SidebarComponent {
     } catch {
       return null;
     }
+  }
+
+  private extractEmailFromToken(token: string): string | null {
+    try {
+      const normalizedToken = token.startsWith('Bearer ')
+        ? token.substring(7).trim()
+        : token;
+
+      const tokenParts = normalizedToken.split('.');
+
+      if (tokenParts.length < 2) {
+        return null;
+      }
+
+      const payload = JSON.parse(this.decodeBase64Url(tokenParts[1])) as {
+        email?: string;
+      };
+
+      return typeof payload.email === 'string' ? payload.email : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private firstNonEmpty(values: Array<string | null | undefined>): string | null {
+    for (const value of values) {
+      if (typeof value === 'string') {
+        const normalizedValue = value.trim();
+        if (normalizedValue.length > 0) {
+          return normalizedValue;
+        }
+      }
+    }
+
+    return null;
   }
 
   private decodeBase64Url(value: string): string {
