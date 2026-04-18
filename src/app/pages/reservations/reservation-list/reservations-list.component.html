@@ -14,10 +14,10 @@
       </button>
     </div>
 
-    <div class="ui-filters" [formGroup]="filterForm">
+      <div class="ui-filters" [formGroup]="filterForm">
       <div class="ui-field grow">
         <label>Buscar</label>
-        <input formControlName="query" placeholder="Propriedade, canal, resumo, UID..." />
+        <input formControlName="query" placeholder="Propriedade, dono, canal, resumo, UID..." />
       </div>
 
       <div class="ui-field">
@@ -39,9 +39,9 @@
       <div tableContent class="ui-table-stack">
         <table class="ui-table ui-table-head">
           <colgroup>
-            <col style="width: 28%;" />
-            <col style="width: 21%;" />
-            <col style="width: 15%;" />
+            <col style="width: 26%;" />
+            <col style="width: 25%;" />
+            <col style="width: 13%;" />
             <col style="width: 16%;" />
             <col style="width: 12%;" />
             <col style="width: 8%;" />
@@ -61,9 +61,9 @@
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <colgroup>
-              <col style="width: 28%;" />
-              <col style="width: 21%;" />
-              <col style="width: 15%;" />
+              <col style="width: 26%;" />
+              <col style="width: 25%;" />
+              <col style="width: 13%;" />
               <col style="width: 16%;" />
               <col style="width: 12%;" />
               <col style="width: 8%;" />
@@ -84,7 +84,13 @@
                   </div>
                 </td>
 
-                <td class="ui-td-muted">{{ row.propertyName || '-' }}</td>
+                <td class="ui-td-muted">
+                  <div class="owner-cell">
+                    <span class="property-name">{{ row.propertyName || '-' }}</span>
+                    <span class="owner-name">{{ row.ownerName || row.ownerDisplay || 'Minha conta' }}</span>
+                    <span *ngIf="row.ownerEmail" class="owner-email">{{ row.ownerEmail }}</span>
+                  </div>
+                </td>
 
                 <td class="ui-td-muted">{{ row.channel || '-' }}</td>
 

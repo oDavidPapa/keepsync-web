@@ -10,6 +10,9 @@ export interface ReservationResponse {
   publicId: string;
   propertyPublicId?: string | null;
   propertyName?: string | null;
+  ownerDisplay?: string | null;
+  ownerName?: string | null;
+  ownerEmail?: string | null;
   channel?: string | null;
   externalUid?: string | null;
   summary?: string | null;

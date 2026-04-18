@@ -30,6 +30,29 @@
   line-height: 1.2;
 }
 
+.owner-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  line-height: 1.15;
+}
+
+.property-name {
+  color: rgba(17, 24, 39, 0.92);
+  font-weight: 600;
+}
+
+.owner-name {
+  color: rgba(51, 65, 85, 0.95);
+  font-size: 0.82rem;
+}
+
+.owner-email {
+  color: rgba(100, 116, 139, 0.95);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 860px) {
   .reservation-period {
     grid-template-columns: 1fr;
