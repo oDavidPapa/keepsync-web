@@ -7,6 +7,7 @@
 .calendar-toolbar-row{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .channel-chip{height:36px;padding:0 .9rem;border:1px solid rgba(17,24,39,.1);border-radius:999px;background:rgba(17,24,39,.015);color:rgba(17,24,39,.82);font-weight:800;display:inline-flex;align-items:center;gap:.55rem;cursor:pointer}
 .channel-chip.off{opacity:.45}
+.owner-filter,.property-filter{min-width:17rem}
 .channel-chip.conflict-filter.active{border-color:rgba(255,59,107,.22);background:rgba(255,59,107,.08);color:var(--color-danger)}
 .channel-dot,.dot-mini,.conflict-dot{border-radius:999px}
 .channel-dot,.conflict-dot{width:.6rem;height:.6rem}
@@ -39,6 +40,7 @@
   .calendar-header-actions,.calendar-toolbar-row{width:100%}
   .calendar-toolbar-row{flex-direction:column;align-items:stretch}
   .calendar-month-label{flex:1 1 auto;min-width:auto}
+  .owner-filter,.property-filter{min-width:auto}
   .month-grid{min-width:0}
   .cell.mini-cell{min-height:unset;padding:.45rem;aspect-ratio:1/1}
   .dow{padding:.6rem .15rem;font-size:.68rem}

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 
 import { environment } from '../../../../environments/environment';
@@ -15,15 +15,27 @@ export class CalendarProviderService {
 
   constructor(private readonly http: HttpClient) {}
 
-  listForCurrentUser() {
+  listForCurrentUser(ownerUserPublicId?: string) {
+    let params = new HttpParams();
+    const ownerUserPublicIdParam = (ownerUserPublicId ?? '').trim();
+    if (ownerUserPublicIdParam) {
+      params = params.set('ownerUserPublicId', ownerUserPublicIdParam);
+    }
+
     return this.http
-      .get<ApiEnvelope<CalendarProviderResponse>>(`${this.baseUrl}/v1/calendar-providers`)
+      .get<ApiEnvelope<CalendarProviderResponse>>(`${this.baseUrl}/v1/calendar-providers`, { params })
       .pipe(map((response) => response.data));
   }
 
-  listEnabledForCurrentUser() {
+  listEnabledForCurrentUser(ownerUserPublicId?: string) {
+    let params = new HttpParams();
+    const ownerUserPublicIdParam = (ownerUserPublicId ?? '').trim();
+    if (ownerUserPublicIdParam) {
+      params = params.set('ownerUserPublicId', ownerUserPublicIdParam);
+    }
+
     return this.http
-      .get<ApiEnvelope<CalendarProviderResponse>>(`${this.baseUrl}/v1/calendar-providers/enabled`)
+      .get<ApiEnvelope<CalendarProviderResponse>>(`${this.baseUrl}/v1/calendar-providers/enabled`, { params })
       .pipe(map((response) => response.data));
   }
 

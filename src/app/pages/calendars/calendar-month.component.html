@@ -30,6 +30,7 @@
           *ngFor="let channel of availableChannels()"
           type="button"
           [class.off]="!channelFilters()[channel.id]"
+          [disabled]="requiresOwnerSelection()"
           (click)="toggleChannel(channel.id)"
         >
           <span class="channel-dot" [style.background]="channel.color"></span>
@@ -41,6 +42,7 @@
           type="button"
           [class.active]="showOnlyConflicts()"
           [attr.aria-pressed]="showOnlyConflicts()"
+          [disabled]="requiresOwnerSelection()"
           (click)="toggleConflictFilter()"
         >
           <span class="conflict-dot"></span>
@@ -48,11 +50,26 @@
         </button>
       </div>
 
+      <div class="ui-field owner-filter" *ngIf="isCurrentUserAdmin()">
+        <label for="calendarOwnerUser">Usuario</label>
+        <select
+          id="calendarOwnerUser"
+          [ngModel]="selectedOwnerUserPublicId()"
+          (ngModelChange)="onOwnerUserChange($event)"
+        >
+          <option value="">Selecione um usuario</option>
+          <option *ngFor="let ownerUser of calendarOwnerUsers()" [value]="ownerUser.publicId">
+            {{ ownerUser.label }}
+          </option>
+        </select>
+      </div>
+
       <div class="ui-field property-filter">
         <label for="calendarProperty">Propriedade</label>
         <select
           id="calendarProperty"
           [ngModel]="selectedPropertyId()"
+          [disabled]="requiresOwnerSelection()"
           (ngModelChange)="selectedPropertyId.set($event)"
         >
           <option value="all">Todas</option>
@@ -69,11 +86,15 @@
       {{ error() }}
     </div>
 
-    <div class="calendar-feedback" *ngIf="!error() && loading()">
+    <div class="calendar-feedback" *ngIf="!error() && requiresOwnerSelection()">
+      Selecione um usuario para visualizar a agenda.
+    </div>
+
+    <div class="calendar-feedback" *ngIf="!error() && !requiresOwnerSelection() && loading()">
       Carregando reservas...
     </div>
 
-    <div class="calendar-feedback" *ngIf="!error() && !loading() && visibleMonthReservations().length === 0">
+    <div class="calendar-feedback" *ngIf="!error() && !requiresOwnerSelection() && !loading() && visibleMonthReservations().length === 0">
       {{ emptyStateMessage() }}
     </div>
 

@@ -15,7 +15,7 @@ export class PropertyService {
 
   constructor(private readonly http: HttpClient) { }
 
-  list(params: { page?: number; size?: number; sort?: string; query?: string; status?: string }): Observable<Page<PropertyResponse>> {
+  list(params: { page?: number; size?: number; sort?: string; query?: string; status?: string; ownerUserPublicId?: string }): Observable<Page<PropertyResponse>> {
     let httpParams = new HttpParams();
     if (params.page != null) httpParams = httpParams.set('page', params.page);
     if (params.size != null) httpParams = httpParams.set('size', params.size);
@@ -23,9 +23,11 @@ export class PropertyService {
 
     const queryParam = (params.query ?? '').trim();
     const statusParam = (params.status ?? '').trim();
+    const ownerUserPublicIdParam = (params.ownerUserPublicId ?? '').trim();
 
     if (queryParam) httpParams = httpParams.set('query', queryParam);
     if (statusParam) httpParams = httpParams.set('status', statusParam);
+    if (ownerUserPublicIdParam) httpParams = httpParams.set('ownerUserPublicId', ownerUserPublicIdParam);
 
     return this.http
       .get<ApiEnvelope<Page<PropertyResponse>>>(this.baseUrl, { params: httpParams })

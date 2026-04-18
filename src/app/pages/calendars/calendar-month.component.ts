@@ -14,6 +14,8 @@ import { PropertyResponse } from '../../modules/properties/api/property.models';
 import { PropertyService } from '../../modules/properties/api/property.service';
 import { ReservationResponse, ReservationStatus } from '../../modules/reservations/api/reservation.models';
 import { ReservationService } from '../../modules/reservations/api/reservation.service';
+import { UserListItemResponse } from '../../modules/users/api/user.models';
+import { UserService } from '../../modules/users/api/user.service';
 
 type CalendarChannel = string;
 
@@ -26,6 +28,11 @@ interface CalendarChannelOption {
 interface CalendarPropertyOption {
   id: string;
   name: string;
+}
+
+interface CalendarOwnerUserOption {
+  publicId: string;
+  label: string;
 }
 
 interface CalendarReservation {
@@ -90,6 +97,9 @@ export class CalendarMonthComponent {
 
   readonly showOnlyConflicts = signal(false);
   readonly selectedPropertyId = signal<string>(CalendarMonthComponent.PROPERTY_FILTER_ALL);
+  readonly isCurrentUserAdmin = signal(false);
+  readonly selectedOwnerUserPublicId = signal('');
+  readonly calendarOwnerUsers = signal<CalendarOwnerUserOption[]>([]);
 
   private readonly propertyOptions = signal<CalendarPropertyOption[]>([]);
   readonly properties = computed(() => this.propertyOptions());
@@ -247,11 +257,12 @@ export class CalendarMonthComponent {
     private readonly reservationService: ReservationService,
     private readonly propertyService: PropertyService,
     private readonly calendarProviderService: CalendarProviderService,
+    private readonly userService: UserService,
     private readonly toast: ToastService,
     private readonly destroyRef: DestroyRef
   ) {
     this.initializeViewportMode();
-    this.loadCalendarData();
+    this.initializeCalendarContext();
   }
 
   prevMonth() {
@@ -310,15 +321,33 @@ export class CalendarMonthComponent {
     return `repeat(${Math.max(1, count)}, 24px)`;
   }
 
+  onOwnerUserChange(ownerUserPublicId: string) {
+    this.selectedOwnerUserPublicId.set((ownerUserPublicId ?? '').trim());
+    this.selectedPropertyId.set(CalendarMonthComponent.PROPERTY_FILTER_ALL);
+    this.loadCalendarData();
+  }
+
+  requiresOwnerSelection(): boolean {
+    return this.isCurrentUserAdmin() && !this.selectedOwnerUserPublicId();
+  }
+
   private loadCalendarData() {
+    if (this.requiresOwnerSelection()) {
+      this.clearCalendarData();
+      this.loading.set(false);
+      this.error.set(null);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
+    const ownerUserPublicId = this.ownerUserPublicIdFilter();
 
     forkJoin({
-      reservations: this.loadAllReservations(),
-      properties: this.loadAllProperties().pipe(catchError(() => of([] as PropertyResponse[]))),
+      reservations: this.loadAllReservations(ownerUserPublicId),
+      properties: this.loadAllProperties(ownerUserPublicId).pipe(catchError(() => of([] as PropertyResponse[]))),
       enabledProviders: this.calendarProviderService
-        .listEnabledForCurrentUser()
+        .listEnabledForCurrentUser(ownerUserPublicId)
         .pipe(
           map((response) => response.providers ?? []),
           catchError(() => of([] as CalendarProviderItem[]))
@@ -366,22 +395,76 @@ export class CalendarMonthComponent {
       });
   }
 
-  private loadAllReservations(): Observable<ReservationResponse[]> {
+  private initializeCalendarContext() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.userService.getCurrentUser()
+      .pipe(
+        switchMap((currentUser) => {
+          const currentUserIsAdmin = this.isAdminRole(currentUser.role);
+          this.isCurrentUserAdmin.set(currentUserIsAdmin);
+
+          if (!currentUserIsAdmin) {
+            this.calendarOwnerUsers.set([]);
+            this.selectedOwnerUserPublicId.set('');
+            return of([] as UserListItemResponse[]);
+          }
+
+          return this.loadAllOwnerUsers();
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (ownerUsers) => {
+          if (this.isCurrentUserAdmin()) {
+            this.calendarOwnerUsers.set(this.mapOwnerUsersToOptions(ownerUsers));
+            this.selectedOwnerUserPublicId.set('');
+            this.clearCalendarData();
+            this.loading.set(false);
+            return;
+          }
+
+          this.loadCalendarData();
+        },
+        error: (error) => {
+          const message = apiErrorMessage(error, 'Nao foi possivel carregar o contexto do calendario.');
+          this.error.set(message);
+          this.toast.error(message);
+          this.loading.set(false);
+        }
+      });
+  }
+
+  private loadAllReservations(ownerUserPublicId?: string): Observable<ReservationResponse[]> {
     return this.collectAllPages((pageNumber) =>
       this.reservationService.list({
         page: pageNumber,
         size: CalendarMonthComponent.PAGE_SIZE,
         sort: 'startAt,asc',
+        ownerUserPublicId,
       })
     );
   }
 
-  private loadAllProperties(): Observable<PropertyResponse[]> {
+  private loadAllProperties(ownerUserPublicId?: string): Observable<PropertyResponse[]> {
     return this.collectAllPages((pageNumber) =>
       this.propertyService.list({
         page: pageNumber,
         size: CalendarMonthComponent.PAGE_SIZE,
         sort: 'name,asc',
+        ownerUserPublicId,
+      })
+    );
+  }
+
+  private loadAllOwnerUsers(): Observable<UserListItemResponse[]> {
+    return this.collectAllPages((pageNumber) =>
+      this.userService.listUsers({
+        page: pageNumber,
+        size: CalendarMonthComponent.PAGE_SIZE,
+        sort: 'fullName,asc',
+        status: 'ACTIVE',
       })
     );
   }
@@ -472,6 +555,49 @@ export class CalendarMonthComponent {
 
       return nextFilters;
     });
+  }
+
+  private mapOwnerUsersToOptions(ownerUsers: UserListItemResponse[]): CalendarOwnerUserOption[] {
+    return ownerUsers
+      .map((ownerUser) => {
+        const publicId = String(ownerUser.publicId ?? '').trim();
+        const fullName = String(ownerUser.fullName ?? '').trim();
+        const email = String(ownerUser.email ?? '').trim();
+
+        if (!publicId) {
+          return null;
+        }
+
+        const label = fullName && email
+          ? `${fullName} (${email})`
+          : (fullName || email || publicId);
+
+        return { publicId, label };
+      })
+      .filter((ownerUserOption): ownerUserOption is CalendarOwnerUserOption => ownerUserOption !== null)
+      .sort((leftOption, rightOption) => leftOption.label.localeCompare(rightOption.label, 'pt-BR'));
+  }
+
+  private ownerUserPublicIdFilter(): string | undefined {
+    if (!this.isCurrentUserAdmin()) {
+      return undefined;
+    }
+
+    const selectedOwnerUserPublicId = this.selectedOwnerUserPublicId().trim();
+    return selectedOwnerUserPublicId || undefined;
+  }
+
+  private clearCalendarData() {
+    this.availableChannels.set([]);
+    this.channelFilters.set({});
+    this.propertyOptions.set([]);
+    this.calendarReservations.set([]);
+    this.selectedPropertyId.set(CalendarMonthComponent.PROPERTY_FILTER_ALL);
+  }
+
+  private isAdminRole(role: string | null | undefined): boolean {
+    const normalizedRole = String(role ?? '').trim().toUpperCase();
+    return normalizedRole === 'ADMIN' || normalizedRole === 'ROLE_ADMIN';
   }
 
   private extractDatePart(dateTime: string): string {
