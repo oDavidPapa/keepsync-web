@@ -8,7 +8,7 @@ import { NotificationListItemResponse } from './notification.models';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly baseUrl = `${environment.apiBaseUrl}/v1/notifications`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/v1/admin/notifications`;
 
   constructor(private readonly http: HttpClient) {}
 

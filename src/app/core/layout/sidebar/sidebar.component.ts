@@ -25,15 +25,15 @@ export interface NavItem {
 export class SidebarComponent {
   @Input() mobileOpen = false;
 
-  private readonly adminRoutes = new Set(['/app/users', '/app/notifications']);
+  private readonly adminRoutes = new Set(['/app/admin/users', '/app/admin/notifications']);
 
   private readonly baseNav: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'dashboard' },
     { label: 'Reservas', route: '/app/reservations', icon: 'event_available' },
     { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
     { label: 'Propriedades', route: '/app/properties', icon: 'home_work' },
-    { label: 'Notificacoes', route: '/app/notifications', icon: 'notifications', badge: 3 },
-    { label: 'Usuarios', route: '/app/users', icon: 'group' },
+    { label: 'Notificacoes', route: '/app/admin/notifications', icon: 'notifications' },
+    { label: 'Usuarios', route: '/app/admin/users', icon: 'group' },
     { label: 'Configuracoes', route: '/app/settings', icon: 'manage_accounts' }
   ];
 

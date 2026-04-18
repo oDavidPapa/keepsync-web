@@ -16,6 +16,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly baseUrl = `${environment.apiBaseUrl}/v1/users`;
+  private readonly adminBaseUrl = `${environment.apiBaseUrl}/v1/admin/users`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -36,13 +37,13 @@ export class UserService {
     if ((params.planCode ?? '').trim()) httpParams.set('planCode', (params.planCode ?? '').trim());
 
     return this.http
-      .get<ApiEnvelope<Page<UserListItemResponse>>>(`${this.baseUrl}?${httpParams.toString()}`)
+      .get<ApiEnvelope<Page<UserListItemResponse>>>(`${this.adminBaseUrl}?${httpParams.toString()}`)
       .pipe(map((response) => response.data));
   }
 
   toggleUserActive(publicId: string): Observable<UserListItemResponse> {
     return this.http
-      .patch<ApiEnvelope<UserListItemResponse>>(`${this.baseUrl}/${publicId}/toggle-active`, {})
+      .patch<ApiEnvelope<UserListItemResponse>>(`${this.adminBaseUrl}/${publicId}/toggle-active`, {})
       .pipe(map((response) => response.data));
   }
 
