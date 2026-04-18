@@ -1,10 +1,10 @@
-export type CalendarProvider = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
-
 export type SyncStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
 export interface CalendarSourceResponse {
   publicId: string;
-  provider: CalendarProvider;
+  provider: string;
+  providerDisplayName: string;
+  providerColor: string;
   icalUrl: string;
   active: boolean;
   lastSyncAt: string | null;
@@ -15,6 +15,6 @@ export interface CalendarSourceResponse {
 }
 
 export interface CreateCalendarSourceRequest {
-  provider: CalendarProvider;
+  provider: string;
   icalUrl: string;
 }

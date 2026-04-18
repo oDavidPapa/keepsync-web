@@ -11,6 +11,8 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { CalendarProviderItem } from '../../modules/calendar-providers/api/calendar-provider.models';
+import { CalendarProviderService } from '../../modules/calendar-providers/api/calendar-provider.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
@@ -27,7 +29,7 @@ import {
 } from '../../modules/properties/api/property.models';
 import { PropertyService } from '../../modules/properties/api/property.service';
 
-type ChannelId = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
+type ProviderCode = string;
 
 type PropertyBasicInfoForm = FormGroup<{
   name: FormControl<string>;
@@ -40,7 +42,9 @@ type PropertyBasicInfoForm = FormGroup<{
 
 type SourceForm = FormGroup<{
   publicId: FormControl<string>;
-  provider: FormControl<ChannelId>;
+  provider: FormControl<ProviderCode>;
+  providerDisplayName: FormControl<string>;
+  providerColor: FormControl<string>;
   icalUrl: FormControl<string>;
   active: FormControl<boolean>;
   lastSyncAt: FormControl<string | null>;
@@ -53,7 +57,7 @@ type PropertiesForm = FormGroup<{
 }>;
 
 type NewSourceForm = FormGroup<{
-  channel: FormControl<ChannelId>;
+  channel: FormControl<ProviderCode>;
   icalUrl: FormControl<string>;
 }>;
 
@@ -66,14 +70,10 @@ type NewSourceForm = FormGroup<{
 })
 export class PropertiesComponent {
   private static readonly DEFAULT_PROPERTY_TIMEZONE = 'America/Sao_Paulo';
+  private static readonly PROVIDER_COLOR_FALLBACK = '#4B708F';
 
-  readonly channels: Array<{ id: ChannelId; name: string }> = [
-    { id: 'AIRBNB', name: 'AIRBNB' },
-    { id: 'VRBO', name: 'VRBO' },
-    { id: 'BOOKING', name: 'BOOKING' },
-    { id: 'OTHER', name: 'OUTRO' },
-  ];
-
+  readonly enabledProviders = signal<CalendarProviderItem[]>([]);
+  readonly canAddSources = computed(() => this.enabledProviders().length > 0);
   readonly saving = signal(false);
   readonly submitted = signal(false);
   readonly loading = signal(false);
@@ -96,7 +96,7 @@ export class PropertiesComponent {
   });
 
   readonly newSourceForm: NewSourceForm = this.fb.group({
-    channel: this.fb.nonNullable.control<ChannelId>('OTHER', [Validators.required]),
+    channel: this.fb.nonNullable.control<ProviderCode>('', [Validators.required]),
     icalUrl: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(300)]),
   });
 
@@ -106,8 +106,11 @@ export class PropertiesComponent {
     private readonly router: Router,
     private readonly propertyService: PropertyService,
     private readonly calendarSourceService: CalendarSourceService,
+    private readonly calendarProviderService: CalendarProviderService,
     private readonly toast: ToastService
   ) {
+    this.loadEnabledProviders();
+
     this.route.paramMap.subscribe((params) => {
       const routePublicId = params.get('publicId');
 
@@ -127,12 +130,28 @@ export class PropertiesComponent {
     return this.form.controls.sources;
   }
 
-  channelLabel(channelId: ChannelId | null | undefined): string {
+  channelLabel(channelId: string | null | undefined, fallbackDisplayName?: string | null): string {
     if (!channelId) {
       return '-';
     }
 
-    return this.channels.find((channel) => channel.id === channelId)?.name ?? channelId;
+    if (fallbackDisplayName && fallbackDisplayName.trim()) {
+      return fallbackDisplayName.trim();
+    }
+
+    return this.resolveProviderDisplayName(channelId);
+  }
+
+  channelColor(channelId: string | null | undefined, fallbackColor?: string | null): string {
+    if (fallbackColor && fallbackColor.trim()) {
+      return fallbackColor.trim();
+    }
+
+    if (!channelId) {
+      return PropertiesComponent.PROVIDER_COLOR_FALLBACK;
+    }
+
+    return this.resolveProviderColor(channelId);
   }
 
   sourceStatusLabel(sourceFormGroup: SourceForm): string {
@@ -241,12 +260,23 @@ export class PropertiesComponent {
       return;
     }
 
+    if (!this.canAddSources()) {
+      this.toast.error('Nao ha providers habilitados para adicionar novos canais.');
+      return;
+    }
+
+    const selectedProviderCode = this.normalizeProviderCode(this.newSourceForm.controls.channel.value);
+    if (!this.isProviderEnabled(selectedProviderCode)) {
+      this.toast.error('Selecione um provider habilitado para adicionar o canal.');
+      return;
+    }
+
     const sourceRequest = this.mapNewSourceFormToRequest();
     const currentPropertyPublicId = this.propertyPublicId();
 
     if (!currentPropertyPublicId) {
       this.sourcesArray.push(this.createDraftSourceGroup(sourceRequest));
-      this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+      this.newSourceForm.reset({ channel: this.defaultProviderCode(), icalUrl: '' });
       this.toast.success('Canal adicionado e sera salvo junto com a propriedade.');
       return;
     }
@@ -254,7 +284,7 @@ export class PropertiesComponent {
     this.calendarSourceService.create(currentPropertyPublicId, sourceRequest).subscribe({
       next: (createdSource) => {
         this.sourcesArray.push(this.createSourceGroup(createdSource));
-        this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+        this.newSourceForm.reset({ channel: this.defaultProviderCode(), icalUrl: '' });
         this.toast.success('Canal adicionado.');
       },
       error: (error) => {
@@ -337,27 +367,25 @@ export class PropertiesComponent {
     });
 
     this.sourcesArray.clear();
-    this.newSourceForm.reset({ channel: 'OTHER', icalUrl: '' });
+    this.newSourceForm.reset({ channel: this.defaultProviderCode(), icalUrl: '' });
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
 
-  private normalizeProvider(value: unknown): ChannelId {
-    const provider = String(value ?? '').toUpperCase();
-
-    if (provider === 'AIRBNB' || provider === 'VRBO' || provider === 'BOOKING' || provider === 'OTHER') {
-      return provider;
-    }
-
-    return 'OTHER';
+  private normalizeProviderCode(value: unknown): string {
+    return String(value ?? '').trim().toUpperCase();
   }
 
   private createSourceGroup(source: CalendarSourceResponse): SourceForm {
-    const normalizedProvider = this.normalizeProvider((source as { provider?: unknown }).provider);
+    const normalizedProvider = this.normalizeProviderCode((source as { provider?: unknown }).provider);
+    const providerDisplayName = this.channelLabel(normalizedProvider, source.providerDisplayName);
+    const providerColor = this.channelColor(normalizedProvider, source.providerColor);
 
     return this.fb.group({
       publicId: this.fb.nonNullable.control(source.publicId),
       provider: this.fb.nonNullable.control(normalizedProvider),
+      providerDisplayName: this.fb.nonNullable.control(providerDisplayName),
+      providerColor: this.fb.nonNullable.control(providerColor),
       icalUrl: this.fb.nonNullable.control(source.icalUrl),
       active: this.fb.nonNullable.control(!!source.active),
       lastSyncAt: this.fb.control(source.lastSyncAt),
@@ -366,9 +394,15 @@ export class PropertiesComponent {
   }
 
   private createDraftSourceGroup(sourceRequest: CreateCalendarSourceRequest): SourceForm {
+    const normalizedProvider = this.normalizeProviderCode(sourceRequest.provider);
+    const providerDisplayName = this.resolveProviderDisplayName(normalizedProvider);
+    const providerColor = this.resolveProviderColor(normalizedProvider);
+
     return this.fb.group({
       publicId: this.fb.nonNullable.control(''),
-      provider: this.fb.nonNullable.control(sourceRequest.provider),
+      provider: this.fb.nonNullable.control(normalizedProvider),
+      providerDisplayName: this.fb.nonNullable.control(providerDisplayName),
+      providerColor: this.fb.nonNullable.control(providerColor),
       icalUrl: this.fb.nonNullable.control(sourceRequest.icalUrl),
       active: this.fb.nonNullable.control(false),
       lastSyncAt: this.fb.control<string | null>(null),
@@ -410,9 +444,11 @@ export class PropertiesComponent {
   }
 
   private mapNewSourceFormToRequest(): CreateCalendarSourceRequest {
+    const selectedProviderCode = this.normalizeProviderCode(this.newSourceForm.controls.channel.value);
+
     return {
-      provider: this.newSourceForm.controls.channel.value,
-      icalUrl: this.newSourceForm.controls.icalUrl.value,
+      provider: selectedProviderCode,
+      icalUrl: this.newSourceForm.controls.icalUrl.value.trim(),
     };
   }
 
@@ -518,5 +554,75 @@ export class PropertiesComponent {
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
+  }
+
+  private loadEnabledProviders() {
+    this.calendarProviderService.listEnabledForCurrentUser().subscribe({
+      next: (response) => {
+        this.enabledProviders.set(response.providers ?? []);
+        this.ensureNewSourceSelectedProviderIsEnabled();
+        this.refreshSourceProviderPresentation();
+      },
+      error: (error) => {
+        this.enabledProviders.set([]);
+        this.newSourceForm.controls.channel.setValue('');
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel carregar os providers habilitados.'));
+      },
+    });
+  }
+
+  private ensureNewSourceSelectedProviderIsEnabled() {
+    const selectedProviderCode = this.normalizeProviderCode(this.newSourceForm.controls.channel.value);
+    if (selectedProviderCode && this.isProviderEnabled(selectedProviderCode)) {
+      return;
+    }
+
+    this.newSourceForm.controls.channel.setValue(this.defaultProviderCode());
+  }
+
+  private defaultProviderCode(): string {
+    return this.enabledProviders()[0]?.code ?? '';
+  }
+
+  private isProviderEnabled(providerCode: string): boolean {
+    return this.enabledProviders().some((provider) => this.normalizeProviderCode(provider.code) === providerCode);
+  }
+
+  private resolveProviderDisplayName(providerCode: string): string {
+    const normalizedProviderCode = this.normalizeProviderCode(providerCode);
+    const provider = this.enabledProviders()
+      .find((enabledProvider) => this.normalizeProviderCode(enabledProvider.code) === normalizedProviderCode);
+
+    return provider?.displayName?.trim() || normalizedProviderCode || '-';
+  }
+
+  private resolveProviderColor(providerCode: string): string {
+    const normalizedProviderCode = this.normalizeProviderCode(providerCode);
+    const provider = this.enabledProviders()
+      .find((enabledProvider) => this.normalizeProviderCode(enabledProvider.code) === normalizedProviderCode);
+
+    return provider?.color?.trim() || PropertiesComponent.PROVIDER_COLOR_FALLBACK;
+  }
+
+  private refreshSourceProviderPresentation() {
+    this.sourcesArray.controls.forEach((sourceFormGroup) => {
+      const providerCode = this.normalizeProviderCode(sourceFormGroup.controls.provider.value);
+      const providerDisplayName = this.channelLabel(
+        providerCode,
+        sourceFormGroup.controls.providerDisplayName.value
+      );
+      const providerColor = this.channelColor(
+        providerCode,
+        sourceFormGroup.controls.providerColor.value
+      );
+
+      sourceFormGroup.patchValue(
+        {
+          providerDisplayName,
+          providerColor,
+        },
+        { emitEvent: false }
+      );
+    });
   }
 }

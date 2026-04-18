@@ -7,13 +7,21 @@ import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { Page } from '../../core/api/api.models';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../core/ui/toast/toast.service';
+import { CalendarProviderItem } from '../../modules/calendar-providers/api/calendar-provider.models';
+import { CalendarProviderService } from '../../modules/calendar-providers/api/calendar-provider.service';
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 import { PropertyResponse } from '../../modules/properties/api/property.models';
 import { PropertyService } from '../../modules/properties/api/property.service';
 import { ReservationResponse, ReservationStatus } from '../../modules/reservations/api/reservation.models';
 import { ReservationService } from '../../modules/reservations/api/reservation.service';
 
-type CalendarChannel = 'AIRBNB' | 'BOOKING' | 'VRBO' | 'OTHER';
+type CalendarChannel = string;
+
+interface CalendarChannelOption {
+  id: string;
+  label: string;
+  color: string;
+}
 
 interface CalendarPropertyOption {
   id: string;
@@ -66,6 +74,7 @@ type SegmentLane = Segment[];
 export class CalendarMonthComponent {
   private static readonly PROPERTY_FILTER_ALL = 'all';
   private static readonly PAGE_SIZE = 200;
+  private static readonly CHANNEL_COLOR_FALLBACK = '#4B708F';
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -76,19 +85,8 @@ export class CalendarMonthComponent {
   private readonly mobileViewport = signal(false);
   readonly isMobile = computed(() => this.mobileViewport());
 
-  readonly availableChannels: ReadonlyArray<{ id: CalendarChannel; label: string }> = [
-    { id: 'AIRBNB', label: 'AIRBNB' },
-    { id: 'BOOKING', label: 'BOOKING' },
-    { id: 'VRBO', label: 'VRBO' },
-    { id: 'OTHER', label: 'OUTRO' },
-  ];
-
-  readonly channelFilters = signal<Record<CalendarChannel, boolean>>({
-    AIRBNB: true,
-    BOOKING: true,
-    VRBO: true,
-    OTHER: true,
-  });
+  readonly availableChannels = signal<CalendarChannelOption[]>([]);
+  readonly channelFilters = signal<Record<string, boolean>>({});
 
   readonly showOnlyConflicts = signal(false);
   readonly selectedPropertyId = signal<string>(CalendarMonthComponent.PROPERTY_FILTER_ALL);
@@ -103,7 +101,7 @@ export class CalendarMonthComponent {
     const selectedPropertyId = this.selectedPropertyId();
 
     return this.calendarReservations().filter((reservation) => {
-      const matchesChannel = activeChannelFilters[reservation.channel];
+      const matchesChannel = activeChannelFilters[reservation.channel] ?? false;
       const matchesProperty =
         selectedPropertyId === CalendarMonthComponent.PROPERTY_FILTER_ALL
           ? true
@@ -248,6 +246,7 @@ export class CalendarMonthComponent {
   constructor(
     private readonly reservationService: ReservationService,
     private readonly propertyService: PropertyService,
+    private readonly calendarProviderService: CalendarProviderService,
     private readonly toast: ToastService,
     private readonly destroyRef: DestroyRef
   ) {
@@ -283,7 +282,16 @@ export class CalendarMonthComponent {
   }
 
   channelLabel(channel: CalendarChannel): string {
-    return this.availableChannels.find((availableChannel) => availableChannel.id === channel)?.label ?? channel;
+    return this.availableChannels().find((availableChannel) => availableChannel.id === channel)?.label ?? channel;
+  }
+
+  channelColor(channel: CalendarChannel): string {
+    return this.availableChannels().find((availableChannel) => availableChannel.id === channel)?.color
+      ?? CalendarMonthComponent.CHANNEL_COLOR_FALLBACK;
+  }
+
+  reservationBarBackground(channel: CalendarChannel): string {
+    return this.hexToRgba(this.channelColor(channel), 0.16);
   }
 
   reservationBarLabel(reservation: CalendarReservation): string {
@@ -309,14 +317,31 @@ export class CalendarMonthComponent {
     forkJoin({
       reservations: this.loadAllReservations(),
       properties: this.loadAllProperties().pipe(catchError(() => of([] as PropertyResponse[]))),
+      enabledProviders: this.calendarProviderService
+        .listEnabledForCurrentUser()
+        .pipe(
+          map((response) => response.providers ?? []),
+          catchError(() => of([] as CalendarProviderItem[]))
+        ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ reservations, properties }) => {
+        next: ({ reservations, properties, enabledProviders }) => {
+          const channelOptions = enabledProviders.map((provider) => ({
+            id: this.normalizeChannel(provider.code),
+            label: provider.displayName?.trim() || this.normalizeChannel(provider.code),
+            color: provider.color?.trim() || CalendarMonthComponent.CHANNEL_COLOR_FALLBACK,
+          }));
+          const enabledChannelCodes = new Set(channelOptions.map((channelOption) => channelOption.id));
+
           const mappedReservations = reservations
             .filter((reservation) => reservation.status !== 'CANCELLED')
             .map((reservation) => this.mapReservationToCalendarReservation(reservation))
-            .filter((reservation): reservation is CalendarReservation => this.isValidCalendarReservation(reservation));
+            .filter((reservation): reservation is CalendarReservation => this.isValidCalendarReservation(reservation))
+            .filter((reservation) => enabledChannelCodes.has(reservation.channel));
+
+          this.availableChannels.set(channelOptions);
+          this.syncChannelFilters(channelOptions);
 
           this.calendarReservations.set(mappedReservations);
           this.propertyOptions.set(this.buildPropertyOptions(properties, mappedReservations));
@@ -433,17 +458,20 @@ export class CalendarMonthComponent {
   }
 
   private normalizeChannel(channel: string | null | undefined): CalendarChannel {
-    const normalizedChannel = String(channel ?? '').trim().toUpperCase();
+    return String(channel ?? '').trim().toUpperCase();
+  }
 
-    if (
-      normalizedChannel === 'AIRBNB' ||
-      normalizedChannel === 'BOOKING' ||
-      normalizedChannel === 'VRBO'
-    ) {
-      return normalizedChannel;
-    }
+  private syncChannelFilters(channelOptions: CalendarChannelOption[]) {
+    this.channelFilters.update((currentFilters) => {
+      const nextFilters: Record<string, boolean> = {};
 
-    return 'OTHER';
+      channelOptions.forEach((channelOption) => {
+        const existingFilterValue = currentFilters[channelOption.id];
+        nextFilters[channelOption.id] = typeof existingFilterValue === 'boolean' ? existingFilterValue : true;
+      });
+
+      return nextFilters;
+    });
   }
 
   private extractDatePart(dateTime: string): string {
@@ -591,5 +619,21 @@ export class CalendarMonthComponent {
       normalizedDate.getMonth(),
       normalizedDate.getDate()
     );
+  }
+
+  private hexToRgba(hexColor: string, alpha: number): string {
+    const sanitizedHexColor = hexColor.replace('#', '').trim();
+    const expandedHexColor = sanitizedHexColor.length === 3
+      ? sanitizedHexColor.split('').map((char) => char + char).join('')
+      : sanitizedHexColor;
+
+    if (expandedHexColor.length !== 6 || /[^0-9a-f]/i.test(expandedHexColor)) {
+      return `rgba(75, 112, 143, ${alpha})`;
+    }
+
+    const red = Number.parseInt(expandedHexColor.slice(0, 2), 16);
+    const green = Number.parseInt(expandedHexColor.slice(2, 4), 16);
+    const blue = Number.parseInt(expandedHexColor.slice(4, 6), 16);
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
   }
 }

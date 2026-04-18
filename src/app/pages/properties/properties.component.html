@@ -99,7 +99,9 @@
           <label for="newChannel">Canal</label>
           <select id="newChannel" formControlName="channel">
             <option value="" disabled>Selecione</option>
-            <option *ngFor="let channel of channels" [value]="channel.id">{{ channel.name }}</option>
+            <option *ngFor="let provider of enabledProviders()" [value]="provider.code">
+              {{ provider.displayName }}
+            </option>
           </select>
           <span class="error field-feedback" [class.visible]="newSourceError('channel')">
             {{ newSourceError('channel') ? 'Selecione o canal.' : '' }}
@@ -115,11 +117,15 @@
         </div>
 
         <div class="new-row-action">
-          <button class="ui-btn primary" type="button" (click)="addSourceFromDraft()">
+          <button class="ui-btn primary" type="button" [disabled]="!canAddSources()" (click)="addSourceFromDraft()">
             Adicionar canal
           </button>
         </div>
       </div>
+
+      <p class="providers-warning" *ngIf="!canAddSources()">
+        Nenhum provider habilitado. Ative ao menos um em Configuracoes para adicionar canais de iCal.
+      </p>
     </section>
 
     <app-table-card
@@ -168,7 +174,13 @@
                 [class.ui-row-inactive]="source.get('publicId')?.value && !source.get('active')?.value"
               >
                 <td class="ui-td-strong">
-                  {{ channelLabel(source.get('provider')?.value) }}
+                  <span class="provider-tag">
+                    <span
+                      class="provider-dot"
+                      [style.background]="channelColor(source.get('provider')?.value, source.get('providerColor')?.value)"
+                    ></span>
+                    {{ channelLabel(source.get('provider')?.value, source.get('providerDisplayName')?.value) }}
+                  </span>
                 </td>
 
                 <td class="ui-td-muted">

@@ -157,6 +157,12 @@
   gap: 0.75rem;
 }
 
+.provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .meta-item,
 .notification-item {
   display: flex;
@@ -170,6 +176,55 @@
 
 .meta-item strong,
 .notification-item strong { color: rgba(17, 24, 39, 0.9); }
+
+.provider-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.015);
+}
+
+.provider-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.provider-color {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.provider-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.provider-meta strong {
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.provider-meta span {
+  margin-top: 0.15rem;
+  color: rgba(100, 116, 139, 0.92);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.empty-state-message {
+  margin: 0;
+  color: rgba(100, 116, 139, 0.95);
+  font-weight: 650;
+}
 
 .notification-item {
   align-items: center;
@@ -250,6 +305,11 @@
   .notification-item {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .provider-item {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .notification-channels {

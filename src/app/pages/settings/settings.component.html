@@ -94,6 +94,51 @@
   <section class="card settings-card">
     <div class="card-head">
       <div>
+        <h2>Canais dos Calendarios</h2>
+        <p class="card-sub">Ative somente os canais que fazem sentido para sua operacao.</p>
+      </div>
+    </div>
+
+    <div class="section-panel">
+      <div class="provider-list" *ngIf="calendarProviders().length > 0; else emptyProvidersState">
+        <div class="provider-item" *ngFor="let provider of calendarProviders()">
+          <div class="provider-copy">
+            <span class="provider-color" [style.background]="provider.color"></span>
+            <div class="provider-meta">
+              <strong>{{ provider.displayName }}</strong>
+              <span>{{ provider.code }}</span>
+            </div>
+          </div>
+
+          <label class="channel-toggle" [for]="'provider_' + provider.code">
+            <span>{{ provider.enabled ? 'Habilitado' : 'Desabilitado' }}</span>
+            <input
+              type="checkbox"
+              [id]="'provider_' + provider.code"
+              [checked]="provider.enabled"
+              [disabled]="!provider.active || loading() || providersSaving()"
+              (change)="toggleCalendarProvider(provider.code)"
+            />
+          </label>
+        </div>
+      </div>
+
+      <ng-template #emptyProvidersState>
+        <p class="empty-state-message">Nenhum provider vinculado a sua conta no momento.</p>
+      </ng-template>
+    </div>
+
+    <div class="card-foot">
+      <button class="ui-btn primary solid" type="button" [disabled]="loading() || providersSaving()" (click)="saveCalendarProviders()">
+        <span class="material-symbols-rounded">calendar_month</span>
+        {{ providersSaving() ? 'Salvando...' : 'Salvar providers' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="card settings-card">
+    <div class="card-head">
+      <div>
         <h2>Preferencias de notificacao</h2>
         <p class="card-sub">Escolha os avisos e os canais que quer manter ativos.</p>
       </div>

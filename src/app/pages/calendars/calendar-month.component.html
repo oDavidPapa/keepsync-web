@@ -27,12 +27,12 @@
       <div class="channel-filters">
         <button
           class="channel-chip"
-          *ngFor="let channel of availableChannels"
+          *ngFor="let channel of availableChannels()"
           type="button"
           [class.off]="!channelFilters()[channel.id]"
           (click)="toggleChannel(channel.id)"
         >
-          <span class="channel-dot" [attr.data-channel]="channel.id"></span>
+          <span class="channel-dot" [style.background]="channel.color"></span>
           {{ channel.label }}
         </button>
 
@@ -108,7 +108,7 @@
                 <span
                   class="dot-mini"
                   *ngFor="let reservation of day.bookings | slice:0:3"
-                  [attr.data-channel]="reservation.channel"
+                  [style.background]="channelColor(reservation.channel)"
                 ></span>
                 <span class="more-mini" *ngIf="day.bookings.length > 3">
                   +{{ day.bookings.length - 3 }}
@@ -121,7 +121,7 @@
                 <div
                   class="bar"
                   *ngFor="let segment of lane"
-                  [attr.data-channel]="segment.reservation.channel"
+                  [style.background]="reservationBarBackground(segment.reservation.channel)"
                   [style.gridRow]="rowIndex + 1"
                   [style.gridColumn]="(segment.startCol + 1) + ' / ' + (segment.endCol + 2)"
                   [class.start]="segment.isStart"

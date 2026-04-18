@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
+import {
+  CalendarProviderItem,
+  UpdateUserCalendarProvidersRequest,
+} from '../../modules/calendar-providers/api/calendar-provider.models';
+import { CalendarProviderService } from '../../modules/calendar-providers/api/calendar-provider.service';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../core/ui/toast/toast.service';
@@ -71,11 +76,13 @@ export class SettingsComponent {
   readonly loading = signal(false);
   readonly profileSaving = signal(false);
   readonly notificationsSaving = signal(false);
+  readonly providersSaving = signal(false);
   readonly passwordSaving = signal(false);
   readonly passwordResetSending = signal(false);
   readonly profileSubmitted = signal(false);
   readonly passwordSubmitted = signal(false);
   readonly currentUser = signal<CurrentUserResponse | null>(null);
+  readonly calendarProviders = signal<CalendarProviderItem[]>([]);
 
   readonly profileForm = this.fb.group({
     fullName: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
@@ -144,7 +151,8 @@ export class SettingsComponent {
     private readonly toast: ToastService,
     private readonly userService: UserService,
     private readonly tokenStorage: TokenStorageService,
-    private readonly notificationPreferenceService: NotificationPreferenceService
+    private readonly notificationPreferenceService: NotificationPreferenceService,
+    private readonly calendarProviderService: CalendarProviderService
   ) {
     this.loadSettings();
   }
@@ -155,11 +163,15 @@ export class SettingsComponent {
     forkJoin({
       currentUser: this.userService.getCurrentUser(),
       notificationPreferences: this.notificationPreferenceService.getGlobalPreferences(),
+      calendarProviders: this.calendarProviderService
+        .listForCurrentUser()
+        .pipe(catchError(() => of({ providers: [] }))),
     }).subscribe({
-      next: ({ currentUser, notificationPreferences }) => {
+      next: ({ currentUser, notificationPreferences, calendarProviders }) => {
         this.currentUser.set(currentUser);
         this.applyCurrentUserToForm(currentUser);
         this.applyNotificationPreferencesToForm(notificationPreferences.preferences);
+        this.calendarProviders.set(calendarProviders.providers ?? []);
         this.loading.set(false);
       },
       error: (error) => {
@@ -232,6 +244,44 @@ export class SettingsComponent {
       error: (error) => {
         this.notificationsSaving.set(false);
         this.toast.error(apiErrorMessage(error, 'Nao foi possivel salvar as preferencias de notificacao.'));
+      },
+    });
+  }
+
+  toggleCalendarProvider(providerCode: string) {
+    this.calendarProviders.update((providers) =>
+      providers.map((provider) => {
+        if (provider.code !== providerCode) {
+          return provider;
+        }
+
+        if (!provider.active) {
+          return { ...provider, enabled: false };
+        }
+
+        return { ...provider, enabled: !provider.enabled };
+      })
+    );
+  }
+
+  saveCalendarProviders() {
+    this.providersSaving.set(true);
+
+    const request: UpdateUserCalendarProvidersRequest = {
+      providers: this.calendarProviders().map((provider) => ({
+        code: provider.code,
+        enabled: provider.enabled,
+      })),
+    };
+
+    this.calendarProviderService.updateCurrentUserProviders(request).subscribe({
+      next: () => {
+        this.providersSaving.set(false);
+        this.toast.success('Providers atualizados com sucesso.');
+      },
+      error: (error) => {
+        this.providersSaving.set(false);
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel atualizar os providers.'));
       },
     });
   }
