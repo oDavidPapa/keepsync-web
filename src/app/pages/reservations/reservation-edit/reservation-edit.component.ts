@@ -21,7 +21,8 @@ type ReservationMoneyFieldName =
   | 'hostPayoutTotal'
   | 'totalFees'
   | 'cleaningFee'
-  | 'adjustmentsTotal';
+  | 'adjustmentsTotal'
+  | 'accommodationTotal';
 
 @Component({
   selector: 'app-reservation-edit',
@@ -35,6 +36,7 @@ export class ReservationEditComponent {
   readonly saving = signal(false);
   readonly submitted = signal(false);
   readonly reservation = signal<ReservationResponse | null>(null);
+  readonly showCalculationDetails = signal(false);
 
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -47,6 +49,7 @@ export class ReservationEditComponent {
     guestTotal: [''],
     hostPayoutTotal: [''],
     totalFees: [''],
+    accommodationTotal: [''],
     cleaningFee: [''],
     adjustmentsTotal: [''],
     currency: ['BRL', [Validators.required, Validators.maxLength(3)]],
@@ -83,6 +86,7 @@ export class ReservationEditComponent {
 
   load(publicId: string) {
     this.loading.set(true);
+    this.showCalculationDetails.set(false);
 
     const financeRequest = this.reservationService.getFinance(publicId).pipe(
       catchError((error: unknown) => {
@@ -188,28 +192,35 @@ export class ReservationEditComponent {
     return this.readMoneyField('guestTotal') != null
       || this.readMoneyField('hostPayoutTotal') != null
       || this.readMoneyField('totalFees') != null
+      || this.readMoneyField('accommodationTotal') != null
       || this.readMoneyField('cleaningFee') != null
-      || this.readMoneyField('adjustmentsTotal') != null;
-  }
-
-  shouldShowAdjustmentsHighlight() {
-    const adjustmentsTotal = this.readMoneyField('adjustmentsTotal');
-    return adjustmentsTotal != null && adjustmentsTotal !== 0;
+      || this.readMoneyField('adjustmentsTotal') != null
+      || (this.form.controls.payoutDate.value ?? '').trim().length > 0;
   }
 
   financialHighlightValue(fieldName: ReservationMoneyFieldName) {
     return this.formatCurrency(this.readMoneyField(fieldName));
   }
 
-  projectedHostPayoutValue() {
-    const hostPayoutTotal = this.readMoneyField('hostPayoutTotal');
-    const adjustmentsTotal = this.readMoneyField('adjustmentsTotal');
-
-    if (hostPayoutTotal == null && adjustmentsTotal == null) {
+  payoutDateSummaryLabel(): string {
+    const payoutDateValue = (this.form.controls.payoutDate.value ?? '').trim();
+    if (!payoutDateValue) {
       return '-';
     }
 
-    return this.formatCurrency((hostPayoutTotal ?? 0) + (adjustmentsTotal ?? 0));
+    const dateParts = payoutDateValue.split('-');
+    if (dateParts.length === 3) {
+      const [year, month, day] = dateParts;
+      if (year && month && day) {
+        return `${day}/${month}/${year}`;
+      }
+    }
+
+    return payoutDateValue;
+  }
+
+  toggleCalculationDetails() {
+    this.showCalculationDetails.update((currentValue) => !currentValue);
   }
 
   private applyFinanceToForm(finance: ReservationFinanceResponse) {
@@ -217,10 +228,11 @@ export class ReservationEditComponent {
       guestTotal: this.decimalToInput(finance.guestTotal),
       hostPayoutTotal: this.decimalToInput(finance.hostPayoutTotal),
       totalFees: this.decimalToInput(finance.totalFees),
+      accommodationTotal: this.decimalToInput(finance.accommodationTotal),
       cleaningFee: this.decimalToInput(finance.cleaningFee),
       adjustmentsTotal: this.decimalToInput(finance.adjustmentsTotal),
       currency: (finance.currency ?? 'BRL').toUpperCase(),
-      payoutDate: this.isoToDatetimeLocal(finance.payoutDate),
+      payoutDate: this.isoToDateInput(finance.payoutDate),
       notes: finance.notes ?? '',
     });
 
@@ -236,10 +248,11 @@ export class ReservationEditComponent {
       guestTotal: this.inputToDecimal(raw.guestTotal),
       hostPayoutTotal: this.inputToDecimal(raw.hostPayoutTotal),
       totalFees: this.inputToDecimal(raw.totalFees),
+      accommodationTotal: this.inputToDecimal(raw.accommodationTotal),
       cleaningFee: this.inputToDecimal(raw.cleaningFee),
       adjustmentsTotal: this.inputToDecimal(raw.adjustmentsTotal),
       currency: raw.currency?.trim().toUpperCase() || 'BRL',
-      payoutDate: this.datetimeLocalToIso(raw.payoutDate),
+      payoutDate: this.dateInputToIso(raw.payoutDate),
       notes: raw.notes?.trim() || null,
     };
   }
@@ -272,28 +285,37 @@ export class ReservationEditComponent {
     return isNegative ? parsed * -1 : parsed;
   }
 
-  private isoToDatetimeLocal(value: string | null | undefined) {
+  private isoToDateInput(value: string | null | undefined) {
     if (!value) {
       return '';
     }
 
-    const date = new Date(value);
+    const normalizedValue = String(value).trim();
+    const isoDatePrefix = normalizedValue.match(/^\d{4}-\d{2}-\d{2}/);
+    if (isoDatePrefix) {
+      return isoDatePrefix[0];
+    }
+
+    const date = new Date(normalizedValue);
     if (Number.isNaN(date.getTime())) {
       return '';
     }
 
     const pad = (input: number) => String(input).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
   }
 
-  private datetimeLocalToIso(value: string | null | undefined) {
+  private dateInputToIso(value: string | null | undefined) {
     const normalized = value?.trim();
     if (!normalized) {
       return null;
     }
 
-    const date = new Date(normalized);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      return null;
+    }
+
+    return `${normalized}T00:00:00Z`;
   }
 
   private maskCurrencyInput(value: string | null | undefined) {

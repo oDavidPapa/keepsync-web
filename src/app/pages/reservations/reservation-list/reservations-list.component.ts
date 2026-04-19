@@ -33,6 +33,13 @@ export class ReservationsListComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
+  private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
   private readonly pageNumber = signal(0);
   private readonly pageSize = signal(5);
 
@@ -181,6 +188,14 @@ export class ReservationsListComponent {
       default:
         return '';
     }
+  }
+
+  displayAmountLabel(amount: number | null | undefined): string {
+    if (amount == null) {
+      return '-';
+    }
+
+    return this.currencyFormatter.format(amount);
   }
 
   private isInvalidPeriodRange(periodStart?: string, periodEnd?: string): boolean {

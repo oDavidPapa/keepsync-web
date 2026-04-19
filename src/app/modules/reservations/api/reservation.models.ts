@@ -18,6 +18,8 @@ export interface ReservationResponse {
   summary?: string | null;
   startAt: string;
   endAt: string;
+  hostPayoutTotal?: number | null;
+  displayAmount?: number | null;
   status: ReservationStatus;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +34,8 @@ export interface ReservationFinanceResponse {
   totalFees?: number | null;
   cleaningFee?: number | null;
   adjustmentsTotal?: number | null;
+  accommodationTotal?: number | null;
+  displayAmount?: number | null;
   currency?: string | null;
   payoutDate?: string | null;
   notes?: string | null;
@@ -45,6 +49,7 @@ export interface UpsertReservationFinanceRequest {
   totalFees?: number | null;
   cleaningFee?: number | null;
   adjustmentsTotal?: number | null;
+  accommodationTotal?: number | null;
   currency?: string | null;
   payoutDate?: string | null;
   notes?: string | null;

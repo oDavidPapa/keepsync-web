@@ -61,36 +61,26 @@
         <div class="card-head">
           <div>
             <h2>Resumo financeiro</h2>
-            <p class="card-sub">Uma visao rapida dos valores mais importantes cadastrados para esta reserva.</p>
+            <p class="card-sub">Foco no valor final que o anfitriao vai receber.</p>
           </div>
         </div>
 
-        <div class="financial-summary-grid">
+        <div class="financial-summary-grid financial-summary-grid-main">
           <article class="summary-kpi summary-kpi-primary">
-            <span class="info-label">Repasse ao anfitriao</span>
+            <span class="info-label">Valor a receber</span>
             <strong>{{ financialHighlightValue('hostPayoutTotal') }}</strong>
-            <small>Valor principal para acompanhamento</small>
+            <small>Campo principal para acompanhamento</small>
           </article>
 
           <article class="summary-kpi">
-            <span class="info-label">Valor total da reserva</span>
+            <span class="info-label">Total pago pelo hospede</span>
             <strong>{{ financialHighlightValue('guestTotal') }}</strong>
           </article>
 
-          <article class="summary-kpi">
-            <span class="info-label">Taxas</span>
-            <strong>{{ financialHighlightValue('totalFees') }}</strong>
-          </article>
-
-          <article class="summary-kpi">
-            <span class="info-label">Repasse final previsto</span>
-            <strong>{{ projectedHostPayoutValue() }}</strong>
-            <small>Repasse com ajustes aplicados</small>
-          </article>
-
-          <article class="summary-kpi" *ngIf="shouldShowAdjustmentsHighlight()">
-            <span class="info-label">Ajustes</span>
-            <strong>{{ financialHighlightValue('adjustmentsTotal') }}</strong>
+          <article class="summary-kpi summary-kpi-optional">
+            <span class="info-label">Data do repasse</span>
+            <strong>{{ payoutDateSummaryLabel() }}</strong>
+            <small>Opcional</small>
           </article>
         </div>
       </section>
@@ -107,17 +97,18 @@
       <div class="card-head finance-card-head">
         <div>
           <h2>Financeiro da reserva</h2>
-          <p class="card-sub">Use este bloco para registrar valores financeiros da reserva quando fizer sentido no seu processo.</p>
+          <p class="card-sub">Voce pode preencher apenas os campos principais e salvar.</p>
         </div>
       </div>
 
       <form class="finance-layout" [formGroup]="form" (ngSubmit)="submit()">
-        <section class="finance-section">
-          <h3>Valores principais</h3>
+        <section class="finance-section finance-section-main">
+          <h3>Principal</h3>
+          <p class="section-help">Preencha os tres campos principais para registrar o essencial.</p>
 
-          <div class="form-grid">
+          <div class="form-grid form-grid-principal">
             <div class="field">
-              <label for="guestTotal">Total Pago Pelo Hóspede</label>
+              <label for="guestTotal">Total pago pelo hospede</label>
               <input
                 id="guestTotal"
                 type="text"
@@ -128,8 +119,8 @@
               />
             </div>
 
-            <div class="field">
-              <label for="hostPayoutTotal">Total Recebido Pelo Anfitrião</label>
+            <div class="field field-primary">
+              <label for="hostPayoutTotal">Valor a receber</label>
               <input
                 id="hostPayoutTotal"
                 type="text"
@@ -141,23 +132,45 @@
             </div>
 
             <div class="field">
-              <label for="totalFees">Taxas totais</label>
+              <label for="payoutDate">Data do repasse (opcional)</label>
               <input
-                id="totalFees"
-                type="text"
-                inputmode="decimal"
-                formControlName="totalFees"
-                placeholder="R$ 0,00"
-                (input)="onMoneyInput('totalFees')"
+                id="payoutDate"
+                type="date"
+                formControlName="payoutDate"
               />
             </div>
           </div>
         </section>
 
-        <section class="finance-section">
-          <h3>Repasse e ajustes</h3>
+        <section class="finance-section finance-section-optional finance-section-collapsible" [class.expanded]="showCalculationDetails()">
+          <button
+            class="details-collapsible-trigger"
+            type="button"
+            (click)="toggleCalculationDetails()"
+            [attr.aria-expanded]="showCalculationDetails()"
+          >
+            <div class="details-collapsible-text">
+              <h3>Detalhamento do calculo (opcional)</h3>
+              <p class="section-help">Use este bloco somente se quiser explicar como chegou no valor a receber.</p>
+            </div>
+            <span class="material-symbols-rounded">
+              {{ showCalculationDetails() ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
 
-          <div class="form-grid">
+          <div class="form-grid details-collapsible-content" *ngIf="showCalculationDetails()">
+            <div class="field">
+              <label for="accommodationTotal">Valor base da acomodacao</label>
+              <input
+                id="accommodationTotal"
+                type="text"
+                inputmode="decimal"
+                formControlName="accommodationTotal"
+                placeholder="R$ 0,00"
+                (input)="onMoneyInput('accommodationTotal')"
+              />
+            </div>
+
             <div class="field">
               <label for="cleaningFee">Taxa de limpeza</label>
               <input
@@ -171,7 +184,7 @@
             </div>
 
             <div class="field">
-              <label for="adjustmentsTotal">Ajustes</label>
+              <label for="adjustmentsTotal">Ajustes (+/-)</label>
               <input
                 id="adjustmentsTotal"
                 type="text"
@@ -181,15 +194,28 @@
                 (input)="onMoneyInput('adjustmentsTotal')"
               />
             </div>
+
+            <div class="field">
+              <label for="totalFees">Taxas</label>
+              <input
+                id="totalFees"
+                type="text"
+                inputmode="decimal"
+                formControlName="totalFees"
+                placeholder="R$ 0,00"
+                (input)="onMoneyInput('totalFees')"
+              />
+            </div>
+
           </div>
         </section>
 
         <section class="finance-section">
-          <h3>Observacoes internas</h3>
+          <h3>Observacoes (opcional)</h3>
 
           <div class="form-grid">
             <div class="field field-wide">
-              <label for="notes">Observacoes</label>
+              <label for="notes">Observacoes internas</label>
               <textarea
                 id="notes"
                 rows="5"

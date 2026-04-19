@@ -49,12 +49,13 @@
       <div tableContent class="ui-table-stack">
         <table class="ui-table ui-table-head">
           <colgroup>
-            <col style="width: 27%;" />
-            <col style="width: 18%;" />
-            <col style="width: 23%;" />
-            <col style="width: 12%;" />
-            <col style="width: 12%;" />
-            <col style="width: 8%;" />
+            <col style="width: 24%;" />
+            <col style="width: 16%;" />
+            <col style="width: 20%;" />
+            <col style="width: 10%;" />
+            <col style="width: 14%;" />
+            <col style="width: 10%;" />
+            <col style="width: 6%;" />
           </colgroup>
           <thead>
             <tr>
@@ -62,6 +63,7 @@
               <th>Propriedade</th>
               <th>Usuario</th>
               <th>Canal</th>
+              <th>Valor a receber</th>
               <th>Status</th>
               <th class="ui-center">Acoes</th>
             </tr>
@@ -71,12 +73,13 @@
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <colgroup>
-              <col style="width: 27%;" />
-              <col style="width: 18%;" />
-              <col style="width: 23%;" />
-              <col style="width: 12%;" />
-              <col style="width: 12%;" />
-              <col style="width: 8%;" />
+              <col style="width: 24%;" />
+              <col style="width: 16%;" />
+              <col style="width: 20%;" />
+              <col style="width: 10%;" />
+              <col style="width: 14%;" />
+              <col style="width: 10%;" />
+              <col style="width: 6%;" />
             </colgroup>
             <tbody>
               <tr *ngFor="let row of rows()">
@@ -106,6 +109,10 @@
                 </td>
 
                 <td class="ui-td-muted">{{ row.channel || '-' }}</td>
+
+                <td class="ui-td-strong">
+                  {{ displayAmountLabel(row.displayAmount ?? row.hostPayoutTotal) }}
+                </td>
 
                 <td>
                   <span
