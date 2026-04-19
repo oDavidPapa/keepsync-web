@@ -1,202 +1,173 @@
-<div class="dash">
-  <!-- Header -->
-  <div class="dash-header">
-    <div class="title">
-      <h1>Dashboard</h1>
-      <p class="muted">Visão geral do KeepSync — dados demonstrativos</p>
+<div class="ui-page ui-page-fit dashboard-page">
+  <app-page-header
+    title="Dashboard"
+    subtitle="Resumo da operacao de reservas"
+    [sticky]="true"
+    [top]="16"
+  >
+    <form [formGroup]="filterForm" class="month-form">
+      <label class="month-chip" aria-label="Mes de referencia">
+        <span>{{ monthChipLabel() }}</span>
+        <input type="month" formControlName="month" />
+      </label>
+    </form>
+  </app-page-header>
+
+  <div class="ui-page-body">
+    <div class="state error" *ngIf="error()">
+      <strong>Erro ao carregar o dashboard.</strong>
+      <p>{{ error() }}</p>
+      <button class="ui-btn mini" type="button" (click)="loadDashboard()">Tentar novamente</button>
     </div>
 
-    <div class="actions">
-      <div class="segmented">
-        <button class="seg active" type="button">7d</button>
-        <button class="seg" type="button">30d</button>
-        <button class="seg" type="button">90d</button>
-      </div>
+    <ng-container *ngIf="summary() as dashboardSummary">
+      <section class="kpi-grid">
+        <article class="kpi-card revenue">
+          <div class="kpi-top">
+            <span class="kpi-label">Valor a receber</span>
+            <span class="kpi-icon material-symbols-rounded">paid</span>
+          </div>
+          <strong class="kpi-value">{{ formatCurrency(dashboardSummary.kpis.valueToReceiveTotal) }}</strong>
+          <small class="kpi-note">mes atual</small>
+        </article>
 
-      <button class="btn primary" type="button">
-        <span class="material-symbols-rounded">add</span>
-        Nova Reserva
-      </button>
+        <article class="kpi-card reservations">
+          <div class="kpi-top">
+            <span class="kpi-label">Reservas confirmadas</span>
+            <span class="kpi-icon material-symbols-rounded">event_available</span>
+          </div>
+          <strong class="kpi-value">{{ dashboardSummary.kpis.confirmedReservations }}</strong>
+          <small class="kpi-note">todos os canais no período</small>
+        </article>
+
+        <article class="kpi-card conflicts" [class.has-conflicts]="dashboardSummary.kpis.openConflicts > 0">
+          <div class="kpi-top">
+            <span class="kpi-label">Conflitos detectados</span>
+            <span class="kpi-icon material-symbols-rounded">warning</span>
+          </div>
+          <strong class="kpi-value conflict-value">{{ dashboardSummary.kpis.openConflicts }}</strong>
+          <small class="kpi-note">{{ conflictLabel() }}</small>
+        </article>
+      </section>
+
+      <section class="grid-two">
+        <article class="panel-card">
+          <div class="panel-head">
+            <h3><span class="dot purple"></span>Reservas por canal</h3>
+          </div>
+
+          <table class="table-clean channels-table" *ngIf="channelRows().length; else noChannels">
+            <thead>
+              <tr>
+                <th>Canal</th>
+                <th class="center channel-count-col">Reservas</th>
+                <th class="right channel-value-col">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let channel of channelRows()">
+                <td>
+                  <span class="channel-pill" [ngClass]="channelPillClass(channel.channel)">
+                    {{ channelDisplayName(channel.channel) }}
+                  </span>
+                </td>
+                <td class="center number-cell">{{ channel.reservationsCount }}</td>
+                <td class="right channel-value-col">{{ formatCurrency(channel.valueToReceiveTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ng-template #noChannels>
+            <p class="empty">Sem reservas por canal no periodo.</p>
+          </ng-template>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-head">
+            <h3><span class="dot green"></span>Proximos check-ins</h3>
+            <small>hoje + 7 dias</small>
+          </div>
+
+          <div class="checkin-list" *ngIf="upcomingCheckIns().length; else noCheckIns">
+            <button
+              type="button"
+              class="checkin-row"
+              *ngFor="let reservation of upcomingCheckIns()"
+              (click)="openReservation(reservation.reservationPublicId)"
+            >
+              <div class="checkin-main">
+                <div class="checkin-title">
+                  <strong>{{ reservation.propertyName }}</strong>
+                  <span *ngIf="checkInTag(reservation.startAt) as tag" class="checkin-tag">{{ tag }}</span>
+                </div>
+                <span>
+                  {{ channelDisplayName(reservation.channel) }} - {{ reservationStatusLabel(reservation.status) }}
+                </span>
+              </div>
+              <div class="checkin-date">
+                <strong>{{ reservation.startAt | date: 'dd/MM/yyyy' }}</strong>
+                <span>{{ reservation.startAt | date: 'HH:mm' }}</span>
+              </div>
+            </button>
+          </div>
+
+          <ng-template #noCheckIns>
+            <p class="empty">Nenhum check-in previsto.</p>
+          </ng-template>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-head">
+            <h3><span class="dot blue"></span>Valores por propriedade</h3>
+          </div>
+
+          <div class="property-list" *ngIf="propertyValueRows().length; else noPropertyValues">
+            <div class="property-row" *ngFor="let propertyValue of propertyValueRows()">
+              <div>
+                <strong>{{ propertyValue.propertyName }}</strong>
+                <span>{{ propertyValue.confirmedReservations }} reservas confirmadas</span>
+              </div>
+              <div class="property-amount">
+                <strong>{{ formatCurrency(propertyValue.valueToReceiveTotal) }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noPropertyValues>
+            <p class="empty">Sem valores por propriedade no periodo.</p>
+          </ng-template>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-head">
+            <h3><span class="dot orange"></span>Taxa de ocupacao</h3>
+          </div>
+
+          <div class="occupancy-list" *ngIf="occupancyRows().length; else noOccupancy">
+            <div class="occupancy-row" *ngFor="let occupancy of occupancyRows()">
+              <div class="occupancy-top">
+                <strong>{{ occupancy.propertyName }}</strong>
+                <strong class="occupancy-rate">{{ formatPercent(occupancy.occupancyRatePercent) }}</strong>
+              </div>
+              <div class="occupancy-bar">
+                <span [style.width.%]="occupancyWidth(occupancy.occupancyRatePercent)"></span>
+              </div>
+              <div class="occupancy-foot">
+                <span>{{ occupancy.bookedDays }} dias</span>
+                <span>{{ occupancy.bookedDays }} / {{ occupancy.monthDays }} dias</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noOccupancy>
+            <p class="empty">Sem dados de ocupacao para o periodo.</p>
+          </ng-template>
+        </article>
+      </section>
+    </ng-container>
+
+    <div class="state loading" *ngIf="loading()">
+      Carregando dashboard...
     </div>
   </div>
-
-  <!-- KPI row -->
-  <section class="kpis">
-    <article class="card kpi" *ngFor="let k of kpis">
-      <div class="kpi-top">
-        <div class="kpi-label">{{ k.label }}</div>
-        <span class="pill" [class.primary]="k.tone==='primary'" [class.success]="k.tone==='success'" [class.warning]="k.tone==='warning'">
-          {{ k.delta }}
-        </span>
-      </div>
-      <div class="kpi-value">{{ k.value }}</div>
-      <div class="kpi-sub muted">Comparado ao período anterior</div>
-    </article>
-  </section>
-
-  <!-- Main grid -->
-  <section class="grid">
-    <!-- Line chart card -->
-    <article class="card">
-      <div class="card-head">
-        <div>
-          <h2>Ocupação por dia</h2>
-          <p class="muted">Últimos 14 dias (fake)</p>
-        </div>
-        <button class="icon-btn" type="button" aria-label="Opções">
-          <span class="material-symbols-rounded">more_horiz</span>
-        </button>
-      </div>
-
-      <div class="line-wrap">
-        <!-- SVG fake line chart -->
-        <svg class="line" viewBox="0 0 640 220" preserveAspectRatio="none" aria-hidden="true">
-          <!-- grid -->
-          <path class="gridline" d="M0 40 H640" />
-          <path class="gridline" d="M0 90 H640" />
-          <path class="gridline" d="M0 140 H640" />
-          <path class="gridline" d="M0 190 H640" />
-
-          <!-- area -->
-          <path class="area"
-                d="M0,170
-                   C40,150 70,150 100,140
-                   C140,120 170,140 210,110
-                   C250,80 290,105 330,90
-                   C370,75 410,85 450,60
-                   C490,40 530,55 570,45
-                   C600,38 620,40 640,35
-                   L640,220 L0,220 Z" />
-
-          <!-- line -->
-          <path class="stroke"
-                d="M0,170
-                   C40,150 70,150 100,140
-                   C140,120 170,140 210,110
-                   C250,80 290,105 330,90
-                   C370,75 410,85 450,60
-                   C490,40 530,55 570,45
-                   C600,38 620,40 640,35" />
-
-          <!-- points -->
-          <circle class="dot" cx="100" cy="140" r="4"/>
-          <circle class="dot" cx="210" cy="110" r="4"/>
-          <circle class="dot" cx="330" cy="90" r="4"/>
-          <circle class="dot" cx="450" cy="60" r="4"/>
-          <circle class="dot" cx="570" cy="45" r="4"/>
-        </svg>
-
-        <div class="legend">
-          <div class="chip"><span class="swatch"></span> Ocupação (%)</div>
-          <div class="muted">Pico: 92% • Média: 74%</div>
-        </div>
-      </div>
-    </article>
-
-    <!-- Bar chart card -->
-    <article class="card">
-      <div class="card-head">
-        <div>
-          <h2>Reservas por canal</h2>
-          <p class="muted">Distribuição (fake)</p>
-        </div>
-        <button class="icon-btn" type="button" aria-label="Opções">
-          <span class="material-symbols-rounded">tune</span>
-        </button>
-      </div>
-
-      <div class="bars">
-        <div class="bar-row" *ngFor="let b of channelBars">
-          <div class="bar-label">
-            <span class="dot"></span>
-            <span>{{ b.channel }}</span>
-          </div>
-          <div class="bar-track">
-            <div class="bar-fill" [style.width.%]="b.value"></div>
-          </div>
-          <div class="bar-val muted">{{ b.value }}</div>
-        </div>
-      </div>
-    </article>
-
-    <!-- Table card -->
-    <article class="card table-card">
-      <div class="card-head">
-        <div>
-          <h2>Últimas reservas</h2>
-          <p class="muted">Acompanhamento rápido</p>
-        </div>
-        <button class="btn ghost" type="button">
-          Ver todas
-          <span class="material-symbols-rounded">chevron_right</span>
-        </button>
-      </div>
-
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Propriedade</th>
-              <th>Hóspede</th>
-              <th>Check-in</th>
-              <th>Check-out</th>
-              <th>Canal</th>
-              <th>Status</th>
-              <th class="right">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let r of recent">
-              <td class="strong">{{ r.property }}</td>
-              <td>{{ r.guest }}</td>
-              <td>{{ r.checkin }}</td>
-              <td>{{ r.checkout }}</td>
-              <td><span class="tag">{{ r.channel }}</span></td>
-              <td><span [class]="badgeClass(r.status)">{{ r.status }}</span></td>
-              <td class="right strong">{{ r.amount }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </article>
-
-    <!-- Alerts card -->
-    <article class="card">
-      <div class="card-head">
-        <div>
-          <h2>Alertas</h2>
-          <p class="muted">Conflitos e pendências</p>
-        </div>
-      </div>
-
-      <div class="alerts">
-        <div class="alert">
-          <span class="material-symbols-rounded aicon warning">warning</span>
-          <div class="abody">
-            <div class="strong">Conflito detectado</div>
-            <div class="muted">Casa Praia (B) • 18/02</div>
-          </div>
-          <button class="btn mini" type="button">Resolver</button>
-        </div>
-
-        <div class="alert">
-          <span class="material-symbols-rounded aicon primary">schedule</span>
-          <div class="abody">
-            <div class="strong">iCal desatualizado</div>
-            <div class="muted">Airbnb • última sync há 6h</div>
-          </div>
-          <button class="btn mini ghost" type="button">Sincronizar</button>
-        </div>
-
-        <div class="alert">
-          <span class="material-symbols-rounded aicon success">check_circle</span>
-          <div class="abody">
-            <div class="strong">Tudo ok</div>
-            <div class="muted">Nenhuma falha crítica</div>
-          </div>
-          <button class="btn mini ghost" type="button">Ver logs</button>
-        </div>
-      </div>
-    </article>
-  </section>
 </div>

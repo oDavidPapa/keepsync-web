@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { DashboardComponent } from './dashboard.component';
+import { DashboardService } from '../../modules/dashboard/api/dashboard.service';
+import { ToastService } from '../../core/ui/toast/toast.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -8,7 +12,32 @@ describe('DashboardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DashboardComponent]
+      imports: [DashboardComponent],
+      providers: [
+        {
+          provide: DashboardService,
+          useValue: {
+            getSummary: () =>
+              of({
+                period: { monthReference: '2026-01', startAt: '2026-01-01T00:00:00Z', endAt: '2026-01-31T23:59:59Z' },
+                kpis: {
+                  valueToReceiveTotal: 0,
+                  guestTotal: 0,
+                  confirmedReservations: 0,
+                  reservationsInPeriod: 0,
+                  openConflicts: 0,
+                },
+                channels: [],
+                propertyValues: [],
+                occupancyByProperty: [],
+                upcomingCheckIns: [],
+                upcomingCheckOuts: [],
+              }),
+          },
+        },
+        { provide: ToastService, useValue: { error: () => null } },
+        { provide: Router, useValue: { navigate: () => Promise.resolve(true) } },
+      ],
     })
     .compileComponents();
     
