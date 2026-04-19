@@ -40,6 +40,10 @@ interface CalendarReservation {
   propertyId: string;
   propertyName: string;
   channel: CalendarChannel;
+  startAt: string;
+  endAt: string;
+  startAtMs: number;
+  endAtMs: number;
   startDate: string;
   endDate: string;
   status: ReservationStatus;
@@ -133,18 +137,18 @@ export class CalendarMonthComponent {
 
     reservationsByProperty.forEach((propertyReservations) => {
       const sortedReservations = [...propertyReservations].sort((leftReservation, rightReservation) => {
-        if (leftReservation.startDate !== rightReservation.startDate) {
-          return leftReservation.startDate.localeCompare(rightReservation.startDate);
+        if (leftReservation.startAtMs !== rightReservation.startAtMs) {
+          return leftReservation.startAtMs - rightReservation.startAtMs;
         }
 
-        return leftReservation.endDate.localeCompare(rightReservation.endDate);
+        return leftReservation.endAtMs - rightReservation.endAtMs;
       });
 
       const activeReservations: CalendarReservation[] = [];
 
       sortedReservations.forEach((reservation) => {
         const overlappingReservations = activeReservations.filter(
-          (activeReservation) => activeReservation.endDate > reservation.startDate
+          (activeReservation) => activeReservation.endAtMs > reservation.startAtMs
         );
 
         overlappingReservations.forEach((overlappingReservation) => {
@@ -214,7 +218,7 @@ export class CalendarMonthComponent {
           inMonth: cellDate.getMonth() === monthStart.getMonth(),
           isToday: isoDate === todayIso,
           bookings,
-          hasConflict: this.hasConflictOnDay(bookings),
+          hasConflict: this.hasConflictOnDay(bookings, isoDate),
         });
       }
 
@@ -514,11 +518,18 @@ export class CalendarMonthComponent {
   }
 
   private mapReservationToCalendarReservation(reservation: ReservationResponse): CalendarReservation {
+    const startAtMs = this.parseDateTimeToMillis(reservation.startAt);
+    const endAtMs = this.parseDateTimeToMillis(reservation.endAt);
+
     return {
       id: reservation.publicId,
       propertyId: this.normalizePropertyId(reservation.propertyPublicId),
       propertyName: String(reservation.propertyName ?? '').trim() || 'Reserva sem propriedade',
       channel: this.normalizeChannel(reservation.channel),
+      startAt: reservation.startAt,
+      endAt: reservation.endAt,
+      startAtMs,
+      endAtMs,
       startDate: this.extractDatePart(reservation.startAt),
       endDate: this.extractDatePart(reservation.endAt),
       status: reservation.status,
@@ -532,7 +543,9 @@ export class CalendarMonthComponent {
       reservation.propertyName &&
       reservation.startDate &&
       reservation.endDate &&
-      reservation.startDate < reservation.endDate
+      Number.isFinite(reservation.startAtMs) &&
+      Number.isFinite(reservation.endAtMs) &&
+      reservation.startAtMs < reservation.endAtMs
     );
   }
 
@@ -610,6 +623,16 @@ export class CalendarMonthComponent {
     return Number.isNaN(parsedDate.getTime()) ? '' : this.toISO(parsedDate);
   }
 
+  private parseDateTimeToMillis(dateTime: string): number {
+    const normalizedValue = String(dateTime ?? '').trim();
+    if (!normalizedValue) {
+      return Number.NaN;
+    }
+
+    const parsedDate = new Date(normalizedValue);
+    return parsedDate.getTime();
+  }
+
   private formatDate(isoDate: string): string {
     const [year, month, day] = isoDate.split('-').map((value) => Number(value));
     return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
@@ -636,14 +659,54 @@ export class CalendarMonthComponent {
     return reservation.startDate <= isoDay && isoDay < reservation.endDate;
   }
 
-  private hasConflictOnDay(bookings: CalendarReservation[]): boolean {
-    const bookingsPerProperty = new Map<string, number>();
+  private hasConflictOnDay(bookings: CalendarReservation[], isoDay: string): boolean {
+    const dayStart = this.fromISO(isoDay).getTime();
+    const dayEnd = this.fromISO(this.addDaysISO(isoDay, 1)).getTime();
+
+    const intervalsByProperty = new Map<string, Array<{ startMs: number; endMs: number }>>();
 
     bookings.forEach((booking) => {
-      bookingsPerProperty.set(booking.propertyId, (bookingsPerProperty.get(booking.propertyId) ?? 0) + 1);
+      const intersectsDay = booking.startAtMs < dayEnd && booking.endAtMs > dayStart;
+      if (!intersectsDay) {
+        return;
+      }
+
+      const intervalStart = Math.max(booking.startAtMs, dayStart);
+      const intervalEnd = Math.min(booking.endAtMs, dayEnd);
+      if (intervalStart >= intervalEnd) {
+        return;
+      }
+
+      const propertyIntervals = intervalsByProperty.get(booking.propertyId) ?? [];
+      propertyIntervals.push({ startMs: intervalStart, endMs: intervalEnd });
+      intervalsByProperty.set(booking.propertyId, propertyIntervals);
     });
 
-    return Array.from(bookingsPerProperty.values()).some((count) => count > 1);
+    for (const propertyIntervals of intervalsByProperty.values()) {
+      if (propertyIntervals.length < 2) {
+        continue;
+      }
+
+      const sortedIntervals = [...propertyIntervals].sort((leftInterval, rightInterval) => {
+        if (leftInterval.startMs !== rightInterval.startMs) {
+          return leftInterval.startMs - rightInterval.startMs;
+        }
+
+        return leftInterval.endMs - rightInterval.endMs;
+      });
+
+      let activeEnd = sortedIntervals[0].endMs;
+      for (let index = 1; index < sortedIntervals.length; index++) {
+        const currentInterval = sortedIntervals[index];
+        if (currentInterval.startMs < activeEnd) {
+          return true;
+        }
+
+        activeEnd = currentInterval.endMs;
+      }
+    }
+
+    return false;
   }
 
   private segmentForWeek(
