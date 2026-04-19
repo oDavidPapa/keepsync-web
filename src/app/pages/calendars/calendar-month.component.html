@@ -130,6 +130,12 @@
                   class="dot-mini"
                   *ngFor="let reservation of day.bookings | slice:0:3"
                   [style.background]="channelColor(reservation.channel)"
+                  (click)="openReservation(reservation)"
+                  (keydown.enter)="openReservation(reservation)"
+                  (keydown.space)="openReservation(reservation)"
+                  role="button"
+                  tabindex="0"
+                  title="Abrir reserva"
                 ></span>
                 <span class="more-mini" *ngIf="day.bookings.length > 3">
                   +{{ day.bookings.length - 3 }}
@@ -149,6 +155,12 @@
                   [class.end]="segment.isEnd"
                   [class.conflict]="conflictingReservationIds().has(segment.reservation.id)"
                   [title]="reservationTooltip(segment.reservation)"
+                  (click)="openReservation(segment.reservation)"
+                  (keydown.enter)="openReservation(segment.reservation)"
+                  (keydown.space)="openReservation(segment.reservation)"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Abrir reserva para edicao"
                 >
                   <span class="bar-text">{{ reservationBarLabel(segment.reservation) }}</span>
                 </div>

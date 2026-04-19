@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, computed, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { Page } from '../../core/api/api.models';
@@ -258,6 +259,7 @@ export class CalendarMonthComponent {
   });
 
   constructor(
+    private readonly router: Router,
     private readonly reservationService: ReservationService,
     private readonly propertyService: PropertyService,
     private readonly calendarProviderService: CalendarProviderService,
@@ -323,6 +325,14 @@ export class CalendarMonthComponent {
 
   laneRows(count: number): string {
     return `repeat(${Math.max(1, count)}, 24px)`;
+  }
+
+  openReservation(reservation: CalendarReservation) {
+    if (!reservation?.id) {
+      return;
+    }
+
+    this.router.navigate(['/app/reservations', reservation.id, 'edit']);
   }
 
   onOwnerUserChange(ownerUserPublicId: string) {
