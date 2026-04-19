@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of, throwError } from 'rxjs';
 
 import { PageHeaderComponent } from '../../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../../core/ui/toast/toast.service';
@@ -83,9 +84,19 @@ export class ReservationEditComponent {
   load(publicId: string) {
     this.loading.set(true);
 
+    const financeRequest = this.reservationService.getFinance(publicId).pipe(
+      catchError((error: unknown) => {
+        if (this.isReservationFinanceNotFound(error)) {
+          return of({} as ReservationFinanceResponse);
+        }
+
+        return throwError(() => error);
+      })
+    );
+
     forkJoin({
       reservation: this.reservationService.get(publicId),
-      finance: this.reservationService.getFinance(publicId),
+      finance: financeRequest,
     }).subscribe({
       next: ({ reservation, finance }) => {
         this.reservation.set(reservation);
@@ -174,7 +185,11 @@ export class ReservationEditComponent {
   }
 
   hasFinancialHighlights() {
-    return this.readMoneyField('guestTotal') != null || this.readMoneyField('hostPayoutTotal') != null;
+    return this.readMoneyField('guestTotal') != null
+      || this.readMoneyField('hostPayoutTotal') != null
+      || this.readMoneyField('totalFees') != null
+      || this.readMoneyField('cleaningFee') != null
+      || this.readMoneyField('adjustmentsTotal') != null;
   }
 
   shouldShowAdjustmentsHighlight() {
@@ -304,5 +319,16 @@ export class ReservationEditComponent {
 
   private readMoneyField(fieldName: ReservationMoneyFieldName) {
     return this.inputToDecimal(this.form.controls[fieldName].value);
+  }
+
+  private isReservationFinanceNotFound(error: unknown): boolean {
+    const httpError = error as HttpErrorResponse;
+    if (httpError?.status !== 404) {
+      return false;
+    }
+
+    const apiError = httpError?.error as { error?: string; message?: string } | undefined;
+    return apiError?.error === 'RESERVATION_FINCANCE_NOT_FOUND'
+      || (apiError?.message ?? '').includes('Reservation not found to:');
   }
 }

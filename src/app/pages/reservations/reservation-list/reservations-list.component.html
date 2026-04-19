@@ -49,10 +49,10 @@
       <div tableContent class="ui-table-stack">
         <table class="ui-table ui-table-head">
           <colgroup>
-            <col style="width: 26%;" />
-            <col style="width: 25%;" />
-            <col style="width: 13%;" />
-            <col style="width: 16%;" />
+            <col style="width: 27%;" />
+            <col style="width: 18%;" />
+            <col style="width: 23%;" />
+            <col style="width: 12%;" />
             <col style="width: 12%;" />
             <col style="width: 8%;" />
           </colgroup>
@@ -60,9 +60,9 @@
             <tr>
               <th>Estadia</th>
               <th>Propriedade</th>
+              <th>Usuario</th>
               <th>Canal</th>
               <th>Status</th>
-              <th>Criada em</th>
               <th class="ui-center">Acoes</th>
             </tr>
           </thead>
@@ -71,10 +71,10 @@
         <div class="ui-table-body-scroll">
           <table class="ui-table ui-table-body">
             <colgroup>
-              <col style="width: 26%;" />
-              <col style="width: 25%;" />
-              <col style="width: 13%;" />
-              <col style="width: 16%;" />
+              <col style="width: 27%;" />
+              <col style="width: 18%;" />
+              <col style="width: 23%;" />
+              <col style="width: 12%;" />
               <col style="width: 12%;" />
               <col style="width: 8%;" />
             </colgroup>
@@ -84,19 +84,22 @@
                   <div class="reservation-period">
                     <div class="reservation-period-item">
                       <span class="reservation-period-label">Check-in</span>
-                      <strong>{{ row.startAt | date:'dd/MM/yyyy' }}</strong>
+                      <strong class="reservation-period-date">{{ row.startAt | date:'dd/MM/yyyy' }}</strong>
                     </div>
 
                     <div class="reservation-period-item">
                       <span class="reservation-period-label">Check-out</span>
-                      <strong>{{ row.endAt | date:'dd/MM/yyyy' }}</strong>
+                      <strong class="reservation-period-date">{{ row.endAt | date:'dd/MM/yyyy' }}</strong>
                     </div>
                   </div>
                 </td>
 
                 <td class="ui-td-muted">
+                  <span class="property-name">{{ row.propertyName || '-' }}</span>
+                </td>
+
+                <td class="ui-td-muted">
                   <div class="owner-cell">
-                    <span class="property-name">{{ row.propertyName || '-' }}</span>
                     <span class="owner-name">{{ row.ownerName || row.ownerDisplay || 'Minha conta' }}</span>
                     <span *ngIf="row.ownerEmail" class="owner-email">{{ row.ownerEmail }}</span>
                   </div>
@@ -114,8 +117,6 @@
                     {{ statusLabel(row.status) }}
                   </span>
                 </td>
-
-                <td class="ui-td-muted">{{ row.createdAt | date:'dd/MM/yyyy' }}</td>
 
                 <td class="ui-right ui-actions-cell">
                   <button class="ui-icon-btn" title="Editar" type="button" (click)="edit(row.publicId)">

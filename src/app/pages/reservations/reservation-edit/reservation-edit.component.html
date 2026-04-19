@@ -47,61 +47,61 @@
         <article class="info-card info-card-emphasis">
           <span class="info-label">Check-in</span>
           <strong>{{ reservation.startAt | date:'dd/MM/yyyy' }}</strong>
-          <small>Horario {{ reservation.startAt | date:'HH:mm' }}</small>
         </article>
 
         <article class="info-card info-card-emphasis">
           <span class="info-label">Check-out</span>
           <strong>{{ reservation.endAt | date:'dd/MM/yyyy' }}</strong>
-          <small>Horario {{ reservation.endAt | date:'HH:mm' }}</small>
         </article>
       </div>
     </section>
 
-    <section class="card financial-summary-card">
-      <div class="card-head">
-        <div>
-          <h2>Resumo financeiro</h2>
-          <p class="card-sub">Uma visao rapida dos valores mais importantes cadastrados para esta reserva.</p>
+    <ng-container *ngIf="hasFinancialHighlights(); else onlyFinancialSummaryEmpty">
+      <section class="card financial-summary-card">
+        <div class="card-head">
+          <div>
+            <h2>Resumo financeiro</h2>
+            <p class="card-sub">Uma visao rapida dos valores mais importantes cadastrados para esta reserva.</p>
+          </div>
         </div>
-      </div>
 
-      <div class="financial-summary-grid" *ngIf="hasFinancialHighlights(); else emptyFinancialSummary">
-        <article class="summary-kpi summary-kpi-primary">
-          <span class="info-label">Repasse ao anfitriao</span>
-          <strong>{{ financialHighlightValue('hostPayoutTotal') }}</strong>
-          <small>Valor principal para acompanhamento</small>
-        </article>
+        <div class="financial-summary-grid">
+          <article class="summary-kpi summary-kpi-primary">
+            <span class="info-label">Repasse ao anfitriao</span>
+            <strong>{{ financialHighlightValue('hostPayoutTotal') }}</strong>
+            <small>Valor principal para acompanhamento</small>
+          </article>
 
-        <article class="summary-kpi">
-          <span class="info-label">Valor total da reserva</span>
-          <strong>{{ financialHighlightValue('guestTotal') }}</strong>
-        </article>
+          <article class="summary-kpi">
+            <span class="info-label">Valor total da reserva</span>
+            <strong>{{ financialHighlightValue('guestTotal') }}</strong>
+          </article>
 
-        <article class="summary-kpi">
-          <span class="info-label">Taxas</span>
-          <strong>{{ financialHighlightValue('totalFees') }}</strong>
-        </article>
+          <article class="summary-kpi">
+            <span class="info-label">Taxas</span>
+            <strong>{{ financialHighlightValue('totalFees') }}</strong>
+          </article>
 
-        <article class="summary-kpi">
-          <span class="info-label">Repasse final previsto</span>
-          <strong>{{ projectedHostPayoutValue() }}</strong>
-          <small>Repasse com ajustes aplicados</small>
-        </article>
+          <article class="summary-kpi">
+            <span class="info-label">Repasse final previsto</span>
+            <strong>{{ projectedHostPayoutValue() }}</strong>
+            <small>Repasse com ajustes aplicados</small>
+          </article>
 
-        <article class="summary-kpi" *ngIf="shouldShowAdjustmentsHighlight()">
-          <span class="info-label">Ajustes</span>
-          <strong>{{ financialHighlightValue('adjustmentsTotal') }}</strong>
-        </article>
-      </div>
-
-      <ng-template #emptyFinancialSummary>
-        <div class="financial-summary-empty">
-          <strong>Financeiro ainda nao informado</strong>
-          <p>Preencha os campos abaixo para visualizar o resumo desta reserva.</p>
+          <article class="summary-kpi" *ngIf="shouldShowAdjustmentsHighlight()">
+            <span class="info-label">Ajustes</span>
+            <strong>{{ financialHighlightValue('adjustmentsTotal') }}</strong>
+          </article>
         </div>
-      </ng-template>
-    </section>
+      </section>
+    </ng-container>
+
+    <ng-template #onlyFinancialSummaryEmpty>
+      <div class="financial-summary-empty">
+        <strong>Financeiro ainda nao informado</strong>
+        <p>Preencha os campos abaixo para visualizar o resumo desta reserva.</p>
+      </div>
+    </ng-template>
 
     <section class="card finance-card">
       <div class="card-head finance-card-head">
@@ -117,7 +117,7 @@
 
           <div class="form-grid">
             <div class="field">
-              <label for="guestTotal">Total do hospede</label>
+              <label for="guestTotal">Total Pago Pelo Hóspede</label>
               <input
                 id="guestTotal"
                 type="text"
@@ -129,7 +129,7 @@
             </div>
 
             <div class="field">
-              <label for="hostPayoutTotal">Repasse ao anfitriao</label>
+              <label for="hostPayoutTotal">Total Recebido Pelo Anfitrião</label>
               <input
                 id="hostPayoutTotal"
                 type="text"
