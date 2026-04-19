@@ -2,6 +2,7 @@ export interface DashboardPeriodResponse {
   monthReference: string;
   startAt: string;
   endAt: string;
+  periodMonths: number;
 }
 
 export interface DashboardKpiResponse {

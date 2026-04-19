@@ -14,6 +14,7 @@ export class DashboardService {
 
   getSummary(params: {
     month?: string;
+    periodMonths?: number;
     propertyPublicId?: string;
     channel?: string;
     ownerUserPublicId?: string;
@@ -21,12 +22,16 @@ export class DashboardService {
     let httpParams = new HttpParams();
 
     const month = (params.month ?? '').trim();
+    const periodMonths = Number(params.periodMonths ?? 0);
     const propertyPublicId = (params.propertyPublicId ?? '').trim();
     const channel = (params.channel ?? '').trim();
     const ownerUserPublicId = (params.ownerUserPublicId ?? '').trim();
 
     if (month) {
       httpParams = httpParams.set('month', month);
+    }
+    if (Number.isInteger(periodMonths) && periodMonths > 0) {
+      httpParams = httpParams.set('periodMonths', String(periodMonths));
     }
     if (propertyPublicId) {
       httpParams = httpParams.set('propertyPublicId', propertyPublicId);

@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { debounceTime } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { ToastService } from '../../core/ui/toast/toast.service';
@@ -14,33 +11,37 @@ import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PageHeaderComponent],
+  imports: [CommonModule, PageHeaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
+  readonly periodOptions = [
+    { months: 1, label: 'Mes atual' },
+    { months: 3, label: '3m' },
+    { months: 6, label: '6m' },
+    { months: 12, label: '12m' },
+  ] as const;
+  readonly validPeriodMonths = this.periodOptions.map((option) => option.months) as readonly number[];
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly summary = signal<DashboardSummaryResponse | null>(null);
-  readonly defaultMonth = this.currentMonthValue();
-
-  readonly filterForm = this.formBuilder.group({
-    month: [this.defaultMonth],
-  });
-
-  readonly monthChipLabel = computed(() => {
-    const summaryMonthReference = this.summary()?.period.monthReference;
-    if (summaryMonthReference) {
-      return this.formatMonthReference(summaryMonthReference);
-    }
-
-    const selectedMonth = this.filterForm.getRawValue().month ?? this.defaultMonth;
-    return this.formatMonthReference(selectedMonth);
-  });
+  readonly defaultPeriodMonths = 1;
+  readonly selectedPeriodMonths = signal<number>(this.defaultPeriodMonths);
+  private requestSequence = 0;
 
   readonly conflictLabel = computed(() => {
     const openConflicts = this.summary()?.kpis.openConflicts ?? 0;
     return openConflicts === 0 ? 'nenhum conflito' : `${openConflicts} conflitos`;
+  });
+
+  readonly periodCaption = computed(() => {
+    const selectedPeriodMonths = this.selectedPeriodMonths();
+    if (selectedPeriodMonths === 1) {
+      return 'mes atual';
+    }
+
+    return `proximos ${selectedPeriodMonths} meses`;
   });
 
   readonly upcomingCheckIns = computed(() => (this.summary()?.upcomingCheckIns ?? []).slice(0, 4));
@@ -56,37 +57,54 @@ export class DashboardComponent {
   });
 
   constructor(
-    private readonly formBuilder: FormBuilder,
     private readonly dashboardService: DashboardService,
     private readonly toastService: ToastService,
-    private readonly router: Router,
-    private readonly destroyRef: DestroyRef
+    private readonly router: Router
   ) {
-    this.filterForm.valueChanges
-      .pipe(debounceTime(250), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadDashboard());
-
     this.loadDashboard();
   }
 
   loadDashboard() {
+    const requestId = ++this.requestSequence;
     this.loading.set(true);
     this.error.set(null);
 
-    const selectedMonth = (this.filterForm.getRawValue().month ?? '').trim() || this.defaultMonth;
+    const selectedPeriodMonths = this.normalizePeriodMonths(this.selectedPeriodMonths());
 
-    this.dashboardService.getSummary({ month: selectedMonth }).subscribe({
+    this.dashboardService.getSummary({ periodMonths: selectedPeriodMonths }).subscribe({
       next: (dashboardSummary) => {
+        if (requestId !== this.requestSequence) {
+          return;
+        }
+
         this.summary.set(dashboardSummary);
         this.loading.set(false);
       },
       error: (errorResponse) => {
+        if (requestId !== this.requestSequence) {
+          return;
+        }
+
         const message = apiErrorMessage(errorResponse, 'Falha ao carregar o dashboard.');
         this.error.set(message);
         this.toastService.error(message);
         this.loading.set(false);
       },
     });
+  }
+
+  selectPeriod(periodMonths: number) {
+    const normalizedPeriodMonths = this.normalizePeriodMonths(periodMonths);
+    if (this.selectedPeriodMonths() === normalizedPeriodMonths) {
+      return;
+    }
+
+    this.selectedPeriodMonths.set(normalizedPeriodMonths);
+    this.loadDashboard();
+  }
+
+  isPeriodSelected(periodMonths: number): boolean {
+    return this.selectedPeriodMonths() === periodMonths;
   }
 
   openReservation(reservationPublicId: string) {
@@ -172,29 +190,12 @@ export class DashboardComponent {
     return `${Number(value).toFixed(1).replace('.', ',')}%`;
   }
 
-  formatMonthReference(monthReference: string | null | undefined): string {
-    if (!monthReference) {
-      return '-';
+  private normalizePeriodMonths(periodMonths: number | null | undefined): number {
+    const normalizedPeriodMonths = Number(periodMonths ?? 0);
+    if (this.validPeriodMonths.includes(normalizedPeriodMonths)) {
+      return normalizedPeriodMonths;
     }
 
-    const [year, month] = monthReference.split('-');
-    if (!year || !month) {
-      return monthReference;
-    }
-
-    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const monthIndex = Number(month) - 1;
-    if (monthIndex < 0 || monthIndex > 11) {
-      return monthReference;
-    }
-
-    return `${monthNames[monthIndex]} / ${year}`;
-  }
-
-  private currentMonthValue(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = `${now.getMonth() + 1}`.padStart(2, '0');
-    return `${year}-${month}`;
+    return this.defaultPeriodMonths;
   }
 }

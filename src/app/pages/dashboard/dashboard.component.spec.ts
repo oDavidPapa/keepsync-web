@@ -19,7 +19,12 @@ describe('DashboardComponent', () => {
           useValue: {
             getSummary: () =>
               of({
-                period: { monthReference: '2026-01', startAt: '2026-01-01T00:00:00Z', endAt: '2026-01-31T23:59:59Z' },
+                period: {
+                  monthReference: '2026-01',
+                  startAt: '2026-01-01T00:00:00Z',
+                  endAt: '2026-01-31T23:59:59Z',
+                  periodMonths: 3,
+                },
                 kpis: {
                   valueToReceiveTotal: 0,
                   guestTotal: 0,

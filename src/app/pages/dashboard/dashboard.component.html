@@ -5,12 +5,19 @@
     [sticky]="true"
     [top]="16"
   >
-    <form [formGroup]="filterForm" class="month-form">
-      <label class="month-chip" aria-label="Mes de referencia">
-        <span>{{ monthChipLabel() }}</span>
-        <input type="month" formControlName="month" />
-      </label>
-    </form>
+    <div class="month-form">
+      <div class="period-switch" role="group" aria-label="Periodo de analise">
+        <button
+          type="button"
+          class="period-option"
+          *ngFor="let option of periodOptions"
+          [class.active]="isPeriodSelected(option.months)"
+          (click)="selectPeriod(option.months)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </div>
   </app-page-header>
 
   <div class="ui-page-body">
@@ -28,7 +35,7 @@
             <span class="kpi-icon material-symbols-rounded">paid</span>
           </div>
           <strong class="kpi-value">{{ formatCurrency(dashboardSummary.kpis.valueToReceiveTotal) }}</strong>
-          <small class="kpi-note">mes atual</small>
+          <small class="kpi-note">{{ periodCaption() }}</small>
         </article>
 
         <article class="kpi-card reservations">
@@ -37,7 +44,7 @@
             <span class="kpi-icon material-symbols-rounded">event_available</span>
           </div>
           <strong class="kpi-value">{{ dashboardSummary.kpis.confirmedReservations }}</strong>
-          <small class="kpi-note">todos os canais no período</small>
+          <small class="kpi-note">todos os canais no periodo selecionado</small>
         </article>
 
         <article class="kpi-card conflicts" [class.has-conflicts]="dashboardSummary.kpis.openConflicts > 0">
