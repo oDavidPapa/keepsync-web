@@ -31,14 +31,17 @@
     <!-- FOOTER do card (sempre no fundo) -->
     <div class="sidebar-footer">
       <div class="current-user-footer expand-only" *ngIf="currentUserEmail()">
+        <span class="current-user-role">Anfitri&atilde;o</span>
         <span class="current-user-name">{{ currentUserName() }}</span>
         <span class="current-user-email">{{ currentUserEmail() }}</span>
       </div>
 
-      <button class="nav-link logout" type="button" (click)="logout()">
-        <span class="material-symbols-rounded icon">logout</span>
-        <span class="label">Sair</span>
-      </button>
+      <div class="logout-section">
+        <button class="nav-link logout" type="button" (click)="logout()">
+          <span class="material-symbols-rounded icon">logout</span>
+          <span class="label">Sair</span>
+        </button>
+      </div>
     </div>
   </div>
 </aside>
