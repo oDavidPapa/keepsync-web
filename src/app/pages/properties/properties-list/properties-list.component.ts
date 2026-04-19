@@ -202,11 +202,25 @@ export class PropertiesListComponent {
     });
   }
 
+  propertyScheduleLabel(row: PropertyResponse): string {
+    const defaultCheckInTime = this.formatPropertyTime(row.defaultCheckInTime);
+    const defaultCheckOutTime = this.formatPropertyTime(row.defaultCheckOutTime);
+    return `${defaultCheckInTime} / ${defaultCheckOutTime}`;
+  }
+
   readonly activeFiltersCount = computed(() => {
     const v = this.filterForm.value;
     const query = (v.query ?? '').trim();
     const country = (v.status ?? '').trim();
     return (query ? 1 : 0) + (country ? 1 : 0);
   });
+
+  private formatPropertyTime(timeValue?: string | null): string {
+    const normalizedValue = timeValue?.trim() ?? '';
+    if (!normalizedValue) {
+      return '--:--';
+    }
+    return normalizedValue.length >= 5 ? normalizedValue.slice(0, 5) : normalizedValue;
+  }
 
 }

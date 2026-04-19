@@ -30,6 +30,13 @@
   line-height: 1.2;
 }
 
+.reservation-period-time {
+  color: rgba(100, 116, 139, 0.95);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
 .owner-cell {
   display: flex;
   flex-direction: column;
@@ -51,6 +58,16 @@
   color: rgba(100, 116, 139, 0.95);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.ui-table-body td.ui-actions-cell {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ui-table-body td.ui-actions-cell .ui-icon-btn {
+  margin: 0 auto;
 }
 
 @media (max-width: 860px) {

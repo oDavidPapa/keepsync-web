@@ -148,6 +148,25 @@
   grid-column: span 2;
 }
 
+.city-state-postal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.city-field {
+  flex: 1 1 auto;
+  min-width: 220px;
+}
+
+.compact-field-state {
+  flex: 0 0 160px;
+}
+
+.compact-field-postal-code {
+  flex: 0 0 200px;
+}
+
 .new-row {
   display: flex;
   align-items: flex-start;
@@ -222,5 +241,16 @@
   .new-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .city-state-postal-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .city-field,
+  .compact-field-state,
+  .compact-field-postal-code {
+    flex: 1 1 auto;
   }
 }

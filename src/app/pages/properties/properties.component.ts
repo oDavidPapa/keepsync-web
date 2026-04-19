@@ -33,6 +33,8 @@ type ProviderCode = string;
 
 type PropertyBasicInfoForm = FormGroup<{
   name: FormControl<string>;
+  defaultCheckInTime: FormControl<string>;
+  defaultCheckOutTime: FormControl<string>;
   addressLine1: FormControl<string>;
   addressLine2: FormControl<string>;
   city: FormControl<string>;
@@ -71,6 +73,7 @@ type NewSourceForm = FormGroup<{
 export class PropertiesComponent {
   private static readonly DEFAULT_PROPERTY_TIMEZONE = 'America/Sao_Paulo';
   private static readonly PROVIDER_COLOR_FALLBACK = '#4B708F';
+  private static readonly TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
   readonly enabledProviders = signal<CalendarProviderItem[]>([]);
   readonly canAddSources = computed(() => this.enabledProviders().length > 0);
@@ -86,6 +89,8 @@ export class PropertiesComponent {
   readonly form: PropertiesForm = this.fb.group({
     basicInfo: this.fb.group({
       name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
+      defaultCheckInTime: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(PropertiesComponent.TIME_PATTERN)]),
+      defaultCheckOutTime: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(PropertiesComponent.TIME_PATTERN)]),
       addressLine1: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
       addressLine2: this.fb.nonNullable.control('', [Validators.maxLength(160)]),
       city: this.fb.nonNullable.control('', [Validators.maxLength(80)]),
@@ -354,11 +359,60 @@ export class PropertiesComponent {
     return control.invalid && (control.dirty || control.touched);
   }
 
+  formatTimeField(controlName: 'defaultCheckInTime' | 'defaultCheckOutTime') {
+    const basicInfoGroup = this.form.controls.basicInfo;
+    const control = basicInfoGroup.controls[controlName];
+    const digitsOnlyValue = control.value.replace(/\D/g, '').slice(0, 4);
+
+    if (digitsOnlyValue.length <= 2) {
+      control.setValue(digitsOnlyValue, { emitEvent: false });
+      return;
+    }
+
+    const formattedValue = `${digitsOnlyValue.slice(0, 2)}:${digitsOnlyValue.slice(2)}`;
+    control.setValue(formattedValue, { emitEvent: false });
+  }
+
+  normalizeTimeField(controlName: 'defaultCheckInTime' | 'defaultCheckOutTime') {
+    const basicInfoGroup = this.form.controls.basicInfo;
+    const control = basicInfoGroup.controls[controlName];
+    control.setValue(this.normalizeTimeValue(control.value), { emitEvent: false });
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  shouldShowTimeFieldError(controlName: 'defaultCheckInTime' | 'defaultCheckOutTime'): boolean {
+    const basicInfoGroup = this.form.controls.basicInfo;
+    const control = basicInfoGroup.controls[controlName];
+    return this.submitted() && control.invalid;
+  }
+
+  timeFieldErrorMessage(controlName: 'defaultCheckInTime' | 'defaultCheckOutTime'): string {
+    const basicInfoGroup = this.form.controls.basicInfo;
+    const control = basicInfoGroup.controls[controlName];
+    const shouldShowError = this.shouldShowTimeFieldError(controlName);
+
+    if (!shouldShowError) {
+      return '';
+    }
+
+    if (control.hasError('required')) {
+      return 'Informe este horario.';
+    }
+
+    if (control.hasError('pattern')) {
+      return 'Use o formato HH:mm (ex: 15:00).';
+    }
+
+    return 'Horario invalido.';
+  }
+
   private resetFormForCreate() {
     this.submitted.set(false);
 
     this.form.controls.basicInfo.reset({
       name: '',
+      defaultCheckInTime: '',
+      defaultCheckOutTime: '',
       addressLine1: '',
       addressLine2: '',
       city: '',
@@ -428,6 +482,59 @@ export class PropertiesComponent {
     return trimmedValue ? trimmedValue : undefined;
   }
 
+  private normalizeRequiredTime(value: string): string {
+    return this.normalizeTimeValue(value);
+  }
+
+  private toTimeInputValue(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const trimmedValue = value.trim();
+    return trimmedValue.length >= 5 ? trimmedValue.slice(0, 5) : trimmedValue;
+  }
+
+  private normalizeTimeValue(value: string | null | undefined): string {
+    const trimmedValue = value?.trim() ?? '';
+    if (!trimmedValue) {
+      return '';
+    }
+
+    if (PropertiesComponent.TIME_PATTERN.test(trimmedValue)) {
+      return trimmedValue;
+    }
+
+    const normalizedSplitMatch = trimmedValue.match(/^(\d{1,2}):(\d{1,2})$/);
+    if (normalizedSplitMatch) {
+      const hoursValue = Number(normalizedSplitMatch[1]);
+      const minutesValue = Number(normalizedSplitMatch[2]);
+      if (hoursValue <= 23 && minutesValue <= 59) {
+        return `${String(hoursValue).padStart(2, '0')}:${String(minutesValue).padStart(2, '0')}`;
+      }
+      return trimmedValue;
+    }
+
+    const digitsOnlyValue = trimmedValue.replace(/\D/g, '').slice(0, 4);
+    if (digitsOnlyValue.length === 3 || digitsOnlyValue.length === 4) {
+      const hourDigits = digitsOnlyValue.length === 3
+        ? digitsOnlyValue.slice(0, 1)
+        : digitsOnlyValue.slice(0, 2);
+      const minuteDigits = digitsOnlyValue.length === 3
+        ? digitsOnlyValue.slice(1)
+        : digitsOnlyValue.slice(2);
+
+      const hoursValue = Number(hourDigits);
+      const minutesValue = Number(minuteDigits);
+
+      if (hoursValue <= 23 && minutesValue <= 59) {
+        return `${String(hoursValue).padStart(2, '0')}:${String(minutesValue).padStart(2, '0')}`;
+      }
+    }
+
+    return trimmedValue;
+  }
+
   private mapFormToPropertyPayload(): CreatePropertyRequest {
     const basicInfoValue = this.form.controls.basicInfo.getRawValue();
 
@@ -440,6 +547,8 @@ export class PropertiesComponent {
       state: this.normalizeOptionalText(basicInfoValue.state),
       country: 'BR',
       postalCode: this.normalizeOptionalText(basicInfoValue.postalCode),
+      defaultCheckInTime: this.normalizeRequiredTime(basicInfoValue.defaultCheckInTime),
+      defaultCheckOutTime: this.normalizeRequiredTime(basicInfoValue.defaultCheckOutTime),
     };
   }
 
@@ -545,6 +654,8 @@ export class PropertiesComponent {
 
     this.form.controls.basicInfo.patchValue({
       name: property.name ?? '',
+      defaultCheckInTime: this.toTimeInputValue(property.defaultCheckInTime),
+      defaultCheckOutTime: this.toTimeInputValue(property.defaultCheckOutTime),
       addressLine1: property.addressLine1 ?? '',
       addressLine2: property.addressLine2 ?? '',
       city: property.city ?? '',

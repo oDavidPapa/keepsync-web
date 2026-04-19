@@ -88,11 +88,13 @@
                     <div class="reservation-period-item">
                       <span class="reservation-period-label">Check-in</span>
                       <strong class="reservation-period-date">{{ row.startAt | date:'dd/MM/yyyy' }}</strong>
+                      <span class="reservation-period-time">{{ row.startAt | date:'HH:mm' }}</span>
                     </div>
 
                     <div class="reservation-period-item">
                       <span class="reservation-period-label">Check-out</span>
                       <strong class="reservation-period-date">{{ row.endAt | date:'dd/MM/yyyy' }}</strong>
+                      <span class="reservation-period-time">{{ row.endAt | date:'HH:mm' }}</span>
                     </div>
                   </div>
                 </td>

@@ -35,6 +35,34 @@
           <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
           <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome com ate 120 caracteres.</span>
         </div>
+
+        <div class="field">
+          <label for="defaultCheckInTime">Horario padrao de check-in</label>
+          <input
+            id="defaultCheckInTime"
+            type="text"
+            inputmode="numeric"
+            maxlength="5"
+            formControlName="defaultCheckInTime"
+            (input)="formatTimeField('defaultCheckInTime')"
+            (blur)="normalizeTimeField('defaultCheckInTime')"
+          />
+          <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckInTime')">{{ timeFieldErrorMessage('defaultCheckInTime') }}</span>
+        </div>
+
+        <div class="field">
+          <label for="defaultCheckOutTime">Horario padrao de check-out</label>
+          <input
+            id="defaultCheckOutTime"
+            type="text"
+            inputmode="numeric"
+            maxlength="5"
+            formControlName="defaultCheckOutTime"
+            (input)="formatTimeField('defaultCheckOutTime')"
+            (blur)="normalizeTimeField('defaultCheckOutTime')"
+          />
+          <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckOutTime')">{{ timeFieldErrorMessage('defaultCheckOutTime') }}</span>
+        </div>
       </div>
     </div>
 
@@ -57,19 +85,21 @@
           <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referencia" />
         </div>
 
-        <div class="field">
-          <label for="city">Cidade</label>
-          <input id="city" type="text" formControlName="city" placeholder="Ex: Florianopolis" />
-        </div>
+        <div class="span-2 city-state-postal-row">
+          <div class="field city-field">
+            <label for="city">Cidade</label>
+            <input id="city" type="text" formControlName="city" placeholder="Ex: Florianopolis" />
+          </div>
 
-        <div class="field">
-          <label for="state">Estado</label>
-          <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
-        </div>
+          <div class="field compact-field-state">
+            <label for="state">Estado</label>
+            <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
+          </div>
 
-        <div class="field">
-          <label for="postalCode">CEP</label>
-          <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+          <div class="field compact-field-postal-code">
+            <label for="postalCode">CEP</label>
+            <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+          </div>
         </div>
       </div>
     </div>

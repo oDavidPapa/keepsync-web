@@ -11,6 +11,8 @@ export interface PropertyResponse {
   state?: string | null;
   country?: string | null;
   postalCode?: string | null;
+  defaultCheckInTime?: string | null;
+  defaultCheckOutTime?: string | null;
   ownerDisplay?: string | null;
   ownerName?: string | null;
   ownerEmail?: string | null;
@@ -29,6 +31,8 @@ export interface PropertySourceRequest {
 export interface CreatePropertyRequest {
   name: string;
   timezone: string;
+  defaultCheckInTime: string;
+  defaultCheckOutTime: string;
 
   addressLine1?: string | null;
   addressLine2?: string | null;
@@ -43,6 +47,8 @@ export interface CreatePropertyRequest {
 export interface UpdatePropertyRequest {
   name?: string | null;
   timezone?: string | null;
+  defaultCheckInTime: string;
+  defaultCheckOutTime: string;
 
   addressLine1?: string | null;
   addressLine2?: string | null;
