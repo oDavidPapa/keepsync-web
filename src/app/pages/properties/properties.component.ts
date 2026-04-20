@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormArray,
   FormBuilder,
@@ -23,12 +24,15 @@ import {
 } from '../../modules/calendar-source/api/calendar-source.model';
 import { CalendarSourceService } from '../../modules/calendar-source/api/calendar-source.service';
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
+import { ApiError } from '../../core/api/api.models';
 import {
   CreatePropertyRequest,
   PropertyResponse,
   UpdatePropertyRequest
 } from '../../modules/properties/api/property.models';
 import { PropertyService } from '../../modules/properties/api/property.service';
+import { UserPlanCode } from '../../modules/users/api/user.models';
+import { UserService } from '../../modules/users/api/user.service';
 
 type ProviderCode = string;
 
@@ -64,6 +68,13 @@ type NewSourceForm = FormGroup<{
   icalUrl: FormControl<string>;
 }>;
 
+interface CreateLimitState {
+  planCode: UserPlanCode;
+  maxProperties: number;
+  currentProperties: number;
+  message: string;
+}
+
 @Component({
   selector: 'app-properties',
   standalone: true,
@@ -82,10 +93,13 @@ export class PropertiesComponent {
   readonly submitted = signal(false);
   readonly loading = signal(false);
   readonly togglingSourcePublicId = signal<string | null>(null);
+  readonly checkingCreateAvailability = signal(false);
+  readonly createLimitState = signal<CreateLimitState | null>(null);
 
   private readonly propertyPublicId = signal<string | null>(null);
   readonly isEditMode = computed(() => !!this.propertyPublicId());
   readonly isCreateMode = computed(() => !this.propertyPublicId());
+  readonly showCreateBlockedState = computed(() => this.isCreateMode() && !!this.createLimitState());
 
   readonly form: PropertiesForm = this.fb.group({
     basicInfo: this.fb.group({
@@ -113,6 +127,7 @@ export class PropertiesComponent {
     private readonly propertyService: PropertyService,
     private readonly calendarSourceService: CalendarSourceService,
     private readonly calendarProviderService: CalendarProviderService,
+    private readonly userService: UserService,
     private readonly toast: ToastService,
     private readonly confirm: ConfirmService
   ) {
@@ -125,10 +140,13 @@ export class PropertiesComponent {
         this.propertyPublicId.set(null);
         this.loading.set(false);
         this.resetFormForCreate();
+        this.loadCreateAvailability();
         return;
       }
 
       this.propertyPublicId.set(routePublicId);
+      this.createLimitState.set(null);
+      this.checkingCreateAvailability.set(false);
       this.loadForEdit(routePublicId);
     });
   }
@@ -259,6 +277,10 @@ export class PropertiesComponent {
 
   cancel() {
     this.router.navigate(['/app/properties']);
+  }
+
+  goToUpgrade() {
+    this.router.navigate(['/app/settings']);
   }
 
   addSourceFromDraft() {
@@ -611,6 +633,12 @@ export class PropertiesComponent {
         this.persistQueuedSources(createdProperty.publicId, queuedSourceRequests);
       },
       error: (error) => {
+        if (this.isPropertyPlanLimitError(error)) {
+          this.saving.set(false);
+          this.loadCreateAvailability(apiErrorMessage(error, 'Seu plano nao permite cadastrar novas propriedades.'));
+          return;
+        }
+
         this.toast.error(apiErrorMessage(error, 'Nao foi possivel salvar a propriedade.'));
         this.saving.set(false);
         console.error(error);
@@ -704,6 +732,80 @@ export class PropertiesComponent {
         this.toast.error(apiErrorMessage(error, 'Nao foi possivel carregar os providers habilitados.'));
       },
     });
+  }
+
+  private loadCreateAvailability(priorityMessage?: string) {
+    if (!this.isCreateMode()) {
+      return;
+    }
+
+    this.checkingCreateAvailability.set(true);
+    this.createLimitState.set(null);
+
+    forkJoin({
+      currentUser: this.userService.getCurrentUser(),
+      propertiesPage: this.propertyService.list({
+        page: 0,
+        size: 1,
+        sort: 'createdAt,desc',
+      }),
+    }).subscribe({
+      next: ({ currentUser, propertiesPage }) => {
+        const maxProperties = this.maxPropertiesForPlan(currentUser.planCode);
+        const currentProperties = Number(propertiesPage?.totalElements ?? 0);
+
+        if (maxProperties > 0 && currentProperties >= maxProperties) {
+          this.createLimitState.set({
+            planCode: currentUser.planCode,
+            maxProperties,
+            currentProperties,
+            message:
+              priorityMessage ??
+              `Seu plano ${this.planLabel(currentUser.planCode)} permite no maximo ${maxProperties} propriedades.`,
+          });
+        } else {
+          this.createLimitState.set(null);
+        }
+
+        this.checkingCreateAvailability.set(false);
+      },
+      error: (error) => {
+        this.checkingCreateAvailability.set(false);
+        this.createLimitState.set(null);
+        console.error(error);
+      }
+    });
+  }
+
+  private maxPropertiesForPlan(planCode: UserPlanCode): number {
+    switch (planCode) {
+      case 'FREE':
+        return 1;
+      case 'BASIC':
+        return 3;
+      case 'PRO':
+      default:
+        return 0;
+    }
+  }
+
+  private planLabel(planCode: UserPlanCode): string {
+    switch (planCode) {
+      case 'FREE':
+        return 'FREE';
+      case 'BASIC':
+        return 'BASIC';
+      case 'PRO':
+      default:
+        return 'PRO';
+    }
+  }
+
+  private isPropertyPlanLimitError(error: unknown): boolean {
+    const httpError = error as HttpErrorResponse | undefined;
+    const apiError = httpError?.error as ApiError | undefined;
+
+    return apiError?.error === 'PROPERTY_PLAN_LIMIT_EXCEEDED';
   }
 
   private ensureNewSourceSelectedProviderIsEnabled() {

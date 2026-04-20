@@ -5,269 +5,310 @@
     [sticky]="false"
     [top]="0"
   >
-    <button class="ui-btn ghost" type="button" [disabled]="saving()" (click)="cancel()">
-      Cancelar
-    </button>
+    <ng-container *ngIf="!showCreateBlockedState(); else blockedHeaderActions">
+      <button class="ui-btn ghost" type="button" [disabled]="saving()" (click)="cancel()">
+        Cancelar
+      </button>
 
-    <button class="ui-btn primary solid" type="submit" [disabled]="saving()">
-      <span class="material-symbols-rounded">save</span>
-      {{ saving() ? 'Salvando...' : (isEditMode() ? 'Salvar alteracoes' : 'Salvar propriedade') }}
-    </button>
+      <button class="ui-btn primary solid" type="submit" [disabled]="saving() || checkingCreateAvailability()">
+        <span class="material-symbols-rounded">save</span>
+        {{ saving() ? 'Salvando...' : (isEditMode() ? 'Salvar alteracoes' : 'Salvar propriedade') }}
+      </button>
+    </ng-container>
+
+    <ng-template #blockedHeaderActions>
+      <button class="ui-btn ghost" type="button" (click)="cancel()">
+        Voltar
+      </button>
+
+      <button class="ui-btn primary solid" type="button" (click)="goToUpgrade()">
+        Fazer upgrade
+      </button>
+    </ng-template>
   </app-page-header>
 
-  <section class="card properties-card">
-    <div class="card-head">
-      <div>
-        <h2>Dados da propriedade</h2>
-      </div>
-    </div>
+  <ng-container *ngIf="checkingCreateAvailability(); else createAvailabilityLoaded">
+    <section class="card properties-card state-card">
+      <div class="state loading">Verificando limite do seu plano...</div>
+    </section>
+  </ng-container>
 
-    <div class="section-panel" formGroupName="basicInfo">
-      <div class="section-panel-head">
-        <div>
-          <h3>Informacoes principais</h3>
+  <ng-template #createAvailabilityLoaded>
+    <section class="card properties-card state-card state-fullscreen" *ngIf="showCreateBlockedState(); else propertyFormContent">
+      <div class="state blocked">
+        <div class="state-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">lock</span>
+        </div>
+
+        <strong>Limite de propriedades atingido</strong>
+        <p>{{ createLimitState()?.message }}</p>
+        <p class="state-caption">
+          Voce possui {{ createLimitState()?.currentProperties }} de {{ createLimitState()?.maxProperties }} propriedades disponiveis.
+        </p>
+
+        <div class="state-actions">
+          <button class="ui-btn ghost" type="button" (click)="cancel()">Voltar para propriedades</button>
+          <button class="ui-btn primary solid" type="button" (click)="goToUpgrade()">Conhecer upgrade</button>
         </div>
       </div>
-
-      <div class="form-grid">
-        <div class="field span-2">
-          <label for="name">Nome da propriedade</label>
-          <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
-          <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome com ate 120 caracteres.</span>
-        </div>
-
-        <div class="field">
-          <label for="defaultCheckInTime">Horario padrao de check-in</label>
-          <input
-            id="defaultCheckInTime"
-            type="text"
-            inputmode="numeric"
-            maxlength="5"
-            formControlName="defaultCheckInTime"
-            (input)="formatTimeField('defaultCheckInTime')"
-            (blur)="normalizeTimeField('defaultCheckInTime')"
-          />
-          <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckInTime')">{{ timeFieldErrorMessage('defaultCheckInTime') }}</span>
-        </div>
-
-        <div class="field">
-          <label for="defaultCheckOutTime">Horario padrao de check-out</label>
-          <input
-            id="defaultCheckOutTime"
-            type="text"
-            inputmode="numeric"
-            maxlength="5"
-            formControlName="defaultCheckOutTime"
-            (input)="formatTimeField('defaultCheckOutTime')"
-            (blur)="normalizeTimeField('defaultCheckOutTime')"
-          />
-          <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckOutTime')">{{ timeFieldErrorMessage('defaultCheckOutTime') }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-panel" formGroupName="basicInfo">
-      <div class="section-panel-head">
-        <div>
-          <h3>Endereco</h3>
-          <p>Esses dados facilitam a identificacao da localizacao da propriedade.</p>
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="field span-2">
-          <label for="addressLine1">Endereco</label>
-          <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="Rua, numero" />
-        </div>
-
-        <div class="field span-2">
-          <label for="addressLine2">Complemento</label>
-          <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referencia" />
-        </div>
-
-        <div class="span-2 city-state-postal-row">
-          <div class="field city-field">
-            <label for="city">Cidade</label>
-            <input id="city" type="text" formControlName="city" placeholder="Ex: Florianopolis" />
-          </div>
-
-          <div class="field compact-field-state">
-            <label for="state">Estado</label>
-            <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
-          </div>
-
-          <div class="field compact-field-postal-code">
-            <label for="postalCode">CEP</label>
-            <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card properties-card">
-    <div class="card-head channels-head">
-      <div>
-        <h2>Canais e iCal</h2>
-        <p class="card-sub">Conecte os canais que alimentam as reservas dessa propriedade.</p>
-      </div>
-
-      <span class="section-pill" *ngIf="isCreateMode()">Sera salvo junto com a propriedade</span>
-    </div>
-
-    <section class="section-panel">
-      <div class="section-panel-head">
-        <div>
-          <h3>Novo canal</h3>
-          <p *ngIf="isEditMode()">Adicione uma nova fonte de sincronizacao para a propriedade.</p>
-          <p *ngIf="isCreateMode()">Voce pode cadastrar os canais agora. Eles serao conectados no momento em que a propriedade for salva.</p>
-        </div>
-      </div>
-
-      <div class="new-row" [formGroup]="newSourceForm">
-        <div class="field">
-          <label for="newChannel">Canal</label>
-          <select id="newChannel" formControlName="channel">
-            <option value="" disabled>Selecione</option>
-            <option *ngFor="let provider of enabledProviders()" [value]="provider.code">
-              {{ provider.displayName }}
-            </option>
-          </select>
-          <span class="error field-feedback" [class.visible]="newSourceError('channel')">
-            {{ newSourceError('channel') ? 'Selecione o canal.' : '' }}
-          </span>
-        </div>
-
-        <div class="field grow">
-          <label for="newIcalUrl">Link iCal</label>
-          <input id="newIcalUrl" type="url" formControlName="icalUrl" placeholder="https://..." />
-          <span class="error field-feedback" [class.visible]="newSourceError('icalUrl')">
-            {{ newSourceError('icalUrl') ? 'Informe o link iCal.' : '' }}
-          </span>
-        </div>
-
-        <div class="new-row-action">
-          <button class="ui-btn primary" type="button" [disabled]="!canAddSources()" (click)="addSourceFromDraft()">
-            Adicionar canal
-          </button>
-        </div>
-      </div>
-
-      <p class="providers-warning" *ngIf="!canAddSources()">
-        Nenhum provider habilitado. Ative ao menos um em Configuracoes para adicionar canais de iCal.
-      </p>
     </section>
 
-    <app-table-card
-      class="ui-table-card"
-      title="Canais cadastrados"
-      [hasRows]="sourcesArray.length > 0"
-      [loading]="loading()"
-      [hasFilters]="false"
-    >
-      <div tableContent class="ui-table-stack">
-        <table class="ui-table ui-table-head">
-          <colgroup>
-            <col style="width: 14%;" />
-            <col style="width: 34%;" />
-            <col style="width: 18%;" />
-            <col style="width: 12%;" />
-            <col style="width: 10%;" />
-            <col style="width: 12%;" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Canal</th>
-              <th>Link iCal</th>
-              <th>Ultima sincronizacao</th>
-              <th class="ui-center">Resultado</th>
-              <th class="ui-center">Status</th>
-              <th class="ui-center">Acoes</th>
-            </tr>
-          </thead>
-        </table>
-
-        <div class="ui-table-body-scroll">
-          <table class="ui-table ui-table-body">
-            <colgroup>
-              <col style="width: 14%;" />
-              <col style="width: 34%;" />
-              <col style="width: 18%;" />
-              <col style="width: 12%;" />
-              <col style="width: 10%;" />
-              <col style="width: 12%;" />
-            </colgroup>
-            <tbody formArrayName="sources">
-              <tr
-                *ngFor="let source of sourcesArray.controls; let index = index"
-                [formGroupName]="index"
-                [class.ui-row-inactive]="source.get('publicId')?.value && !source.get('active')?.value"
-              >
-                <td class="ui-td-strong">
-                  <span class="provider-tag">
-                    <span
-                      class="provider-dot"
-                      [style.background]="channelColor(source.get('provider')?.value, source.get('providerColor')?.value)"
-                    ></span>
-                    {{ channelLabel(source.get('provider')?.value, source.get('providerDisplayName')?.value) }}
-                  </span>
-                </td>
-
-                <td class="ui-td-muted">
-                  <span class="truncate" [title]="source.get('icalUrl')?.value">
-                    {{ source.get('icalUrl')?.value }}
-                  </span>
-                </td>
-
-                <td class="ui-td-muted">
-                  {{ sourceLastSyncLabel(source) }}
-                </td>
-
-                <td>
-                  <div class="sources-status-cell">
-                    <span class="badge" [ngClass]="sourceSyncStatusClass(source)">
-                      {{ sourceSyncStatusLabel(source) }}
-                    </span>
-                  </div>
-                </td>
-
-                <td>
-                  <div class="sources-status-cell">
-                    <span class="badge" [ngClass]="sourceStatusClass(source)">
-                      {{ sourceStatusLabel(source) }}
-                    </span>
-                  </div>
-                </td>
-
-                <td>
-                  <div class="sources-actions-cell">
-                    <button
-                      class="ui-icon-btn warning"
-                      type="button"
-                      [title]="sourceToggleTitle(source)"
-                      [disabled]="!source.get('publicId')?.value || togglingSourcePublicId() === source.get('publicId')?.value"
-                      (click)="toggleSourceActive(index)"
-                    >
-                      <span class="material-symbols-rounded">
-                        {{ sourceToggleIcon(source) }}
-                      </span>
-                    </button>
-
-                    <button
-                      class="ui-icon-btn danger"
-                      type="button"
-                      title="Remover"
-                      (click)="removeSource(index)"
-                    >
-                      <span class="material-symbols-rounded">delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <ng-template #propertyFormContent>
+      <section class="card properties-card">
+        <div class="card-head">
+          <div>
+            <h2>Dados da propriedade</h2>
+          </div>
         </div>
-      </div>
-    </app-table-card>
-  </section>
+
+        <div class="section-panel" formGroupName="basicInfo">
+          <div class="section-panel-head">
+            <div>
+              <h3>Informacoes principais</h3>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field span-2">
+              <label for="name">Nome da propriedade</label>
+              <input id="name" type="text" formControlName="name" placeholder="Ex: Casa da Lagoa" />
+              <span class="error" *ngIf="hasError('basicInfo.name')">Informe o nome com ate 120 caracteres.</span>
+            </div>
+
+            <div class="field">
+              <label for="defaultCheckInTime">Horario padrao de check-in</label>
+              <input
+                id="defaultCheckInTime"
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                formControlName="defaultCheckInTime"
+                (input)="formatTimeField('defaultCheckInTime')"
+                (blur)="normalizeTimeField('defaultCheckInTime')"
+              />
+              <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckInTime')">{{ timeFieldErrorMessage('defaultCheckInTime') }}</span>
+            </div>
+
+            <div class="field">
+              <label for="defaultCheckOutTime">Horario padrao de check-out</label>
+              <input
+                id="defaultCheckOutTime"
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                formControlName="defaultCheckOutTime"
+                (input)="formatTimeField('defaultCheckOutTime')"
+                (blur)="normalizeTimeField('defaultCheckOutTime')"
+              />
+              <span class="error" *ngIf="shouldShowTimeFieldError('defaultCheckOutTime')">{{ timeFieldErrorMessage('defaultCheckOutTime') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-panel" formGroupName="basicInfo">
+          <div class="section-panel-head">
+            <div>
+              <h3>Endereco</h3>
+              <p>Esses dados facilitam a identificacao da localizacao da propriedade.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field span-2">
+              <label for="addressLine1">Endereco</label>
+              <input id="addressLine1" type="text" formControlName="addressLine1" placeholder="Rua, numero" />
+            </div>
+
+            <div class="field span-2">
+              <label for="addressLine2">Complemento</label>
+              <input id="addressLine2" type="text" formControlName="addressLine2" placeholder="Apto, bloco, referencia" />
+            </div>
+
+            <div class="span-2 city-state-postal-row">
+              <div class="field city-field">
+                <label for="city">Cidade</label>
+                <input id="city" type="text" formControlName="city" placeholder="Ex: Florianopolis" />
+              </div>
+
+              <div class="field compact-field-state">
+                <label for="state">Estado</label>
+                <input id="state" type="text" formControlName="state" placeholder="Ex: SC" />
+              </div>
+
+              <div class="field compact-field-postal-code">
+                <label for="postalCode">CEP</label>
+                <input id="postalCode" type="text" formControlName="postalCode" placeholder="00000-000" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card properties-card">
+        <div class="card-head channels-head">
+          <div>
+            <h2>Canais e iCal</h2>
+            <p class="card-sub">Conecte os canais que alimentam as reservas dessa propriedade.</p>
+          </div>
+
+          <span class="section-pill" *ngIf="isCreateMode()">Sera salvo junto com a propriedade</span>
+        </div>
+
+        <section class="section-panel">
+          <div class="section-panel-head">
+            <div>
+              <h3>Novo canal</h3>
+              <p *ngIf="isEditMode()">Adicione uma nova fonte de sincronizacao para a propriedade.</p>
+              <p *ngIf="isCreateMode()">Voce pode cadastrar os canais agora. Eles serao conectados no momento em que a propriedade for salva.</p>
+            </div>
+          </div>
+
+          <div class="new-row" [formGroup]="newSourceForm">
+            <div class="field">
+              <label for="newChannel">Canal</label>
+              <select id="newChannel" formControlName="channel">
+                <option value="" disabled>Selecione</option>
+                <option *ngFor="let provider of enabledProviders()" [value]="provider.code">
+                  {{ provider.displayName }}
+                </option>
+              </select>
+              <span class="error field-feedback" [class.visible]="newSourceError('channel')">
+                {{ newSourceError('channel') ? 'Selecione o canal.' : '' }}
+              </span>
+            </div>
+
+            <div class="field grow">
+              <label for="newIcalUrl">Link iCal</label>
+              <input id="newIcalUrl" type="url" formControlName="icalUrl" placeholder="https://..." />
+              <span class="error field-feedback" [class.visible]="newSourceError('icalUrl')">
+                {{ newSourceError('icalUrl') ? 'Informe o link iCal.' : '' }}
+              </span>
+            </div>
+
+            <div class="new-row-action">
+              <button class="ui-btn primary" type="button" [disabled]="!canAddSources()" (click)="addSourceFromDraft()">
+                Adicionar canal
+              </button>
+            </div>
+          </div>
+
+          <p class="providers-warning" *ngIf="!canAddSources()">
+            Nenhum provider habilitado. Ative ao menos um em Configuracoes para adicionar canais de iCal.
+          </p>
+        </section>
+
+        <app-table-card
+          class="ui-table-card"
+          title="Canais cadastrados"
+          [hasRows]="sourcesArray.length > 0"
+          [loading]="loading()"
+          [hasFilters]="false"
+        >
+          <div tableContent class="ui-table-stack">
+            <table class="ui-table ui-table-head">
+              <colgroup>
+                <col style="width: 14%;" />
+                <col style="width: 34%;" />
+                <col style="width: 18%;" />
+                <col style="width: 12%;" />
+                <col style="width: 10%;" />
+                <col style="width: 12%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Canal</th>
+                  <th>Link iCal</th>
+                  <th>Ultima sincronizacao</th>
+                  <th class="ui-center">Resultado</th>
+                  <th class="ui-center">Status</th>
+                  <th class="ui-center">Acoes</th>
+                </tr>
+              </thead>
+            </table>
+
+            <div class="ui-table-body-scroll">
+              <table class="ui-table ui-table-body">
+                <colgroup>
+                  <col style="width: 14%;" />
+                  <col style="width: 34%;" />
+                  <col style="width: 18%;" />
+                  <col style="width: 12%;" />
+                  <col style="width: 10%;" />
+                  <col style="width: 12%;" />
+                </colgroup>
+                <tbody formArrayName="sources">
+                  <tr
+                    *ngFor="let source of sourcesArray.controls; let index = index"
+                    [formGroupName]="index"
+                    [class.ui-row-inactive]="source.get('publicId')?.value && !source.get('active')?.value"
+                  >
+                    <td class="ui-td-strong">
+                      <span class="provider-tag">
+                        <span
+                          class="provider-dot"
+                          [style.background]="channelColor(source.get('provider')?.value, source.get('providerColor')?.value)"
+                        ></span>
+                        {{ channelLabel(source.get('provider')?.value, source.get('providerDisplayName')?.value) }}
+                      </span>
+                    </td>
+
+                    <td class="ui-td-muted">
+                      <span class="truncate" [title]="source.get('icalUrl')?.value">
+                        {{ source.get('icalUrl')?.value }}
+                      </span>
+                    </td>
+
+                    <td class="ui-td-muted">
+                      {{ sourceLastSyncLabel(source) }}
+                    </td>
+
+                    <td>
+                      <div class="sources-status-cell">
+                        <span class="badge" [ngClass]="sourceSyncStatusClass(source)">
+                          {{ sourceSyncStatusLabel(source) }}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="sources-status-cell">
+                        <span class="badge" [ngClass]="sourceStatusClass(source)">
+                          {{ sourceStatusLabel(source) }}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="sources-actions-cell">
+                        <button
+                          class="ui-icon-btn warning"
+                          type="button"
+                          [title]="sourceToggleTitle(source)"
+                          [disabled]="!source.get('publicId')?.value || togglingSourcePublicId() === source.get('publicId')?.value"
+                          (click)="toggleSourceActive(index)"
+                        >
+                          <span class="material-symbols-rounded">
+                            {{ sourceToggleIcon(source) }}
+                          </span>
+                        </button>
+
+                        <button
+                          class="ui-icon-btn danger"
+                          type="button"
+                          title="Remover"
+                          (click)="removeSource(index)"
+                        >
+                          <span class="material-symbols-rounded">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </app-table-card>
+      </section>
+    </ng-template>
+  </ng-template>
 </form>
