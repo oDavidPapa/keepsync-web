@@ -102,9 +102,16 @@
                     </span>
                   </button>
 
-                  <button class="ui-icon-btn danger" title="Excluir" type="button" (click)="remove(row)">
+                  <button
+                    class="ui-icon-btn danger"
+                    title="Excluir"
+                    type="button"
+                    *ngIf="row.canDelete"
+                    (click)="remove(row)"
+                  >
                     <span class="material-symbols-rounded">delete</span>
                   </button>
+
                 </td>
               </tr>
             </tbody>

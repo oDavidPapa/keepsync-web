@@ -748,6 +748,7 @@ export class PropertiesComponent {
         page: 0,
         size: 1,
         sort: 'createdAt,desc',
+        status: 'ACTIVE',
       }),
     }).subscribe({
       next: ({ currentUser, propertiesPage }) => {
@@ -761,7 +762,7 @@ export class PropertiesComponent {
             currentProperties,
             message:
               priorityMessage ??
-              `Seu plano ${this.planLabel(currentUser.planCode)} permite no maximo ${maxProperties} propriedades.`,
+              `Seu plano ${this.planLabel(currentUser.planCode)} permite no maximo ${maxProperties} propriedades ativas.`,
           });
         } else {
           this.createLimitState.set(null);

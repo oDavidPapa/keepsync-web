@@ -16,6 +16,7 @@ export interface PropertyResponse {
   ownerDisplay?: string | null;
   ownerName?: string | null;
   ownerEmail?: string | null;
+  canDelete?: boolean;
   
   active: boolean;
 

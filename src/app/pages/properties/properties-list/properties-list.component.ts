@@ -140,18 +140,20 @@ export class PropertiesListComponent {
         confirmText: 'Excluir',
         cancelText: 'Cancelar',
         tone: 'danger',
-        hint: 'Essa ação não pode ser desfeita.',
+        hint: 'Essa acao nao pode ser desfeita.',
       })
       .subscribe((confirmed) => {
-        if (!confirmed) return;
+        if (!confirmed) {
+          return;
+        }
 
         this.propertyService.delete(row.publicId).subscribe({
           next: () => {
-            this.toast.success('Propriedade excluída.');
+            this.toast.success('Propriedade excluida.');
             this.load();
           },
           error: (err) => {
-            this.toast.error(apiErrorMessage(err, 'Não foi possível excluir a propriedade.'));
+            this.toast.error(apiErrorMessage(err, 'Nao foi possivel excluir a propriedade.'));
             console.error(err);
           },
         });
@@ -176,7 +178,7 @@ export class PropertiesListComponent {
         this.toast.success(updated.active ? 'Propriedade ativada.' : 'Propriedade inativada.');
       },
       error: (err) => {
-        this.toast.error(apiErrorMessage(err, 'Não foi possível atualizar o status.'));
+        this.toast.error(apiErrorMessage(err, 'Nao foi possivel atualizar o status.'));
         console.error(err);
       },
     });
