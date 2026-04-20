@@ -21,13 +21,16 @@
   </app-page-header>
 
   <div class="ui-page-body">
-    <div class="state error" *ngIf="error()">
-      <strong>Erro ao carregar o dashboard.</strong>
+    <div class="state error state-fullscreen" *ngIf="error() && !loading()">
+      <div class="state-error-hero-icon" aria-hidden="true">
+        <span class="material-symbols-rounded">broken_image</span>
+      </div>
+      <strong>Algo deu errado no dashboard</strong>
       <p>{{ error() }}</p>
-      <button class="ui-btn mini" type="button" (click)="loadDashboard()">Tentar novamente</button>
+      <button class="ui-btn" type="button" (click)="loadDashboard()">Tentar novamente</button>
     </div>
 
-    <ng-container *ngIf="summary() as dashboardSummary">
+    <ng-container *ngIf="!error() && summary() as dashboardSummary">
       <section class="kpi-grid">
         <article class="kpi-card revenue">
           <div class="kpi-top">

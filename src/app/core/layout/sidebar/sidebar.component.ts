@@ -64,6 +64,29 @@ export class SidebarComponent {
     return item.route;
   }
 
+  currentUserInitials(): string {
+    const currentName = this.currentUserName().trim();
+    if (!currentName) {
+      return 'U';
+    }
+
+    const nameParts = currentName.split(/\s+/).filter((part) => part.length > 0);
+    if (nameParts.length === 0) {
+      return 'U';
+    }
+
+    const firstInitial = nameParts[0].charAt(0);
+    const secondInitial = nameParts.length > 1
+      ? nameParts[nameParts.length - 1].charAt(0)
+      : nameParts[0].charAt(1);
+
+    return `${firstInitial}${secondInitial ?? ''}`.toUpperCase();
+  }
+
+  isCurrentUserNameLong(): boolean {
+    return this.currentUserName().trim().length > 18;
+  }
+
   logout(): void {
     this.authService.logout();
   }

@@ -31,9 +31,13 @@
     <!-- FOOTER do card (sempre no fundo) -->
     <div class="sidebar-footer">
       <div class="current-user-footer expand-only" *ngIf="currentUserEmail()">
-        <span class="current-user-role">Anfitri&atilde;o</span>
-        <span class="current-user-name">{{ currentUserName() }}</span>
-        <span class="current-user-email">{{ currentUserEmail() }}</span>
+        <div class="current-user-top">
+          <span class="current-user-avatar" aria-hidden="true">{{ currentUserInitials() }}</span>
+          <span class="current-user-meta">
+            <span class="current-user-name" [class.compact]="isCurrentUserNameLong()">{{ currentUserName() }}</span>
+            <span class="current-user-email">{{ currentUserEmail() }}</span>
+          </span>
+        </div>
       </div>
 
       <div class="logout-section">
