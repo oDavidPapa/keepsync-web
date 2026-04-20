@@ -9,11 +9,12 @@ import {
   Validators
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, take } from 'rxjs';
 
 import { CalendarProviderItem } from '../../modules/calendar-providers/api/calendar-provider.models';
 import { CalendarProviderService } from '../../modules/calendar-providers/api/calendar-provider.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
+import { ConfirmService } from '../../core/ui/confirm/confirm.service';
 import { PageHeaderComponent } from '../../core/ui/page-header/page-header.component';
 import { TableCardComponent } from '../../core/ui/table-card/table-card.component';
 import {
@@ -112,7 +113,8 @@ export class PropertiesComponent {
     private readonly propertyService: PropertyService,
     private readonly calendarSourceService: CalendarSourceService,
     private readonly calendarProviderService: CalendarProviderService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly confirm: ConfirmService
   ) {
     this.loadEnabledProviders();
 
@@ -302,23 +304,45 @@ export class PropertiesComponent {
   removeSource(index: number) {
     const sourceFormGroup = this.sourcesArray.at(index);
     const sourcePublicId = sourceFormGroup.controls.publicId.value;
+    const channelName = this.channelLabel(
+      sourceFormGroup.controls.provider.value,
+      sourceFormGroup.controls.providerDisplayName.value
+    );
 
-    if (!sourcePublicId) {
-      this.sourcesArray.removeAt(index);
-      this.toast.success('Canal removido.');
-      return;
-    }
+    this.confirm
+      .ask({
+        title: 'Remover canal',
+        message: `Deseja remover o canal ${channelName}?`,
+        confirmText: 'Remover',
+        cancelText: 'Cancelar',
+        tone: 'danger',
+        hint: sourcePublicId
+          ? 'Essa acao nao podera ser desfeita.'
+          : 'Esse canal ainda nao foi salvo e sera removido da tela.',
+      })
+      .pipe(take(1))
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
 
-    this.calendarSourceService.delete(sourcePublicId).subscribe({
-      next: () => {
-        this.sourcesArray.removeAt(index);
-        this.toast.success('Canal removido.');
-      },
-      error: (error) => {
-        this.toast.error('Erro ao remover canal.');
-        console.error(error);
-      }
-    });
+        if (!sourcePublicId) {
+          this.sourcesArray.removeAt(index);
+          this.toast.success('Canal removido.');
+          return;
+        }
+
+        this.calendarSourceService.delete(sourcePublicId).subscribe({
+          next: () => {
+            this.sourcesArray.removeAt(index);
+            this.toast.success('Canal removido.');
+          },
+          error: (error) => {
+            this.toast.error('Erro ao remover canal.');
+            console.error(error);
+          }
+        });
+      });
   }
 
   toggleSourceActive(index: number) {

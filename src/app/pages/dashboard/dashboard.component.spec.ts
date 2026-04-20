@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../modules/dashboard/api/dashboard.service';
 import { ToastService } from '../../core/ui/toast/toast.service';
+import { UserService } from '../../modules/users/api/user.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -37,6 +38,24 @@ describe('DashboardComponent', () => {
                 occupancyByProperty: [],
                 upcomingCheckIns: [],
                 upcomingCheckOuts: [],
+              }),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getCurrentUser: () =>
+              of({
+                publicId: 'user-1',
+                role: 'USER',
+                active: true,
+                fullName: 'Usuario Teste',
+                email: 'usuario@teste.com',
+                emailVerified: true,
+                phoneVerified: false,
+                planCode: 'FREE',
+                createdAt: '2026-01-01T00:00:00Z',
+                updatedAt: '2026-01-01T00:00:00Z',
               }),
           },
         },

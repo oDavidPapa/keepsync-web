@@ -50,33 +50,35 @@
         </button>
       </div>
 
-      <div class="ui-field owner-filter" *ngIf="isCurrentUserAdmin()">
-        <label for="calendarOwnerUser">Usuario</label>
-        <select
-          id="calendarOwnerUser"
-          [ngModel]="selectedOwnerUserPublicId()"
-          (ngModelChange)="onOwnerUserChange($event)"
-        >
-          <option value="">Selecione um usuario</option>
-          <option *ngFor="let ownerUser of calendarOwnerUsers()" [value]="ownerUser.publicId">
-            {{ ownerUser.label }}
-          </option>
-        </select>
-      </div>
+      <div class="toolbar-right-filters">
+        <div class="ui-field property-filter">
+          <label for="calendarProperty">Propriedade</label>
+          <select
+            id="calendarProperty"
+            [ngModel]="selectedPropertyId()"
+            [disabled]="requiresOwnerSelection()"
+            (ngModelChange)="selectedPropertyId.set($event)"
+          >
+            <option value="all">Todas</option>
+            <option *ngFor="let property of properties()" [value]="property.id">
+              {{ property.name }}
+            </option>
+          </select>
+        </div>
 
-      <div class="ui-field property-filter">
-        <label for="calendarProperty">Propriedade</label>
-        <select
-          id="calendarProperty"
-          [ngModel]="selectedPropertyId()"
-          [disabled]="requiresOwnerSelection()"
-          (ngModelChange)="selectedPropertyId.set($event)"
-        >
-          <option value="all">Todas</option>
-          <option *ngFor="let property of properties()" [value]="property.id">
-            {{ property.name }}
-          </option>
-        </select>
+        <div class="ui-field owner-filter" *ngIf="isCurrentUserAdmin()">
+          <label for="calendarOwnerUser">Usuario</label>
+          <select
+            id="calendarOwnerUser"
+            [ngModel]="selectedOwnerUserPublicId()"
+            (ngModelChange)="onOwnerUserChange($event)"
+          >
+            <option value="">Selecione um usuario</option>
+            <option *ngFor="let ownerUser of calendarOwnerUsers()" [value]="ownerUser.publicId">
+              {{ ownerUser.label }}
+            </option>
+          </select>
+        </div>
       </div>
     </div>
   </section>

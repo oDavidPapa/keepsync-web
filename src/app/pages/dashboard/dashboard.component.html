@@ -6,12 +6,28 @@
     [top]="16"
   >
     <div class="month-form">
+      <div class="ui-field owner-filter" *ngIf="isCurrentUserAdmin()">
+        <label for="dashboardOwnerUser">Usuario</label>
+        <select
+          id="dashboardOwnerUser"
+          #dashboardOwnerUser
+          [value]="selectedOwnerUserPublicId()"
+          (change)="onOwnerUserChange(dashboardOwnerUser.value)"
+        >
+          <option value="">Selecione um usuario</option>
+          <option *ngFor="let ownerUser of dashboardOwnerUsers()" [value]="ownerUser.publicId">
+            {{ ownerUser.label }}
+          </option>
+        </select>
+      </div>
+
       <div class="period-switch" role="group" aria-label="Periodo de analise">
         <button
           type="button"
           class="period-option"
           *ngFor="let option of periodOptions"
           [class.active]="isPeriodSelected(option.months)"
+          [disabled]="requiresOwnerSelection()"
           (click)="selectPeriod(option.months)"
         >
           {{ option.label }}
@@ -28,6 +44,10 @@
       <strong>Algo deu errado no dashboard</strong>
       <p>{{ error() }}</p>
       <button class="ui-btn" type="button" (click)="loadDashboard()">Tentar novamente</button>
+    </div>
+
+    <div class="state info" *ngIf="!error() && !loading() && requiresOwnerSelection()">
+      Selecione um usuario para visualizar o dashboard.
     </div>
 
     <ng-container *ngIf="!error() && summary() as dashboardSummary">
