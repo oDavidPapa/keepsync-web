@@ -74,6 +74,11 @@ export class SettingsComponent {
   readonly passwordSubmitted = signal(false);
   readonly currentUser = signal<CurrentUserResponse | null>(null);
   readonly calendarProviders = signal<CalendarProviderItem[]>([]);
+  readonly whatsappControlNames = [
+    'conflictOpenedWhatsapp',
+    'reservationConfirmedWhatsapp',
+    'reservationCanceledWhatsapp',
+  ] as const;
 
   readonly profileForm = this.fb.group({
     fullName: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
@@ -135,6 +140,10 @@ export class SettingsComponent {
     return `Expira em ${this.formatDate(currentUser.subscriptionExpiresAt)}.`;
   });
 
+  readonly canUseWhatsAppNotifications = computed(() => {
+    return this.currentUser()?.planCode !== 'FREE';
+  });
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly toast: ToastService,
@@ -160,6 +169,7 @@ export class SettingsComponent {
         this.currentUser.set(currentUser);
         this.applyCurrentUserToForm(currentUser);
         this.applyNotificationPreferencesToForm(notificationPreferences.preferences);
+        this.applyWhatsAppAvailabilityByPlan(currentUser.planCode);
         this.calendarProviders.set(calendarProviders.providers ?? []);
         this.loading.set(false);
       },
@@ -218,7 +228,7 @@ export class SettingsComponent {
       {
         type: setting.type,
         channel: 'WHATSAPP',
-        enabled: this.notificationForm.controls[setting.whatsappControlName].value,
+        enabled: this.canUseWhatsAppNotifications() && this.notificationForm.controls[setting.whatsappControlName].value,
         cooldownMinutes: null,
       },
     ]);
@@ -370,6 +380,22 @@ export class SettingsComponent {
       reservationConfirmedWhatsapp: preferencesByKey.get('RESERVATION_CONFIRMED_WHATSAPP') ?? true,
       reservationCanceledEmail: preferencesByKey.get('RESERVATION_CANCELED_EMAIL') ?? false,
       reservationCanceledWhatsapp: preferencesByKey.get('RESERVATION_CANCELED_WHATSAPP') ?? false,
+    });
+  }
+
+  private applyWhatsAppAvailabilityByPlan(planCode: UserPlanCode) {
+    const canUseWhatsApp = planCode !== 'FREE';
+
+    this.whatsappControlNames.forEach((controlName) => {
+      const control = this.notificationForm.controls[controlName];
+
+      if (canUseWhatsApp) {
+        control.enable({ emitEvent: false });
+        return;
+      }
+
+      control.setValue(false, { emitEvent: false });
+      control.disable({ emitEvent: false });
     });
   }
 

@@ -256,11 +256,29 @@
   font-weight: 800;
 }
 
+.channel-toggle-disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  background: rgba(17, 24, 39, 0.03);
+}
+
 .notification-item input,
 .channel-toggle input {
   width: 18px;
   height: 18px;
   accent-color: var(--color-primary);
+}
+
+.notification-upgrade-hint {
+  margin: 0.8rem 0 0;
+  color: rgba(100, 116, 139, 0.96);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.notification-upgrade-cta {
+  color: var(--color-primary);
+  font-weight: 800;
 }
 
 .password-actions {

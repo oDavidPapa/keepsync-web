@@ -161,7 +161,11 @@
               />
             </label>
 
-            <label class="channel-toggle" [for]="setting.whatsappControlName">
+            <label
+              class="channel-toggle"
+              [class.channel-toggle-disabled]="!canUseWhatsAppNotifications()"
+              [for]="setting.whatsappControlName"
+            >
               <span>WhatsApp</span>
               <input
                 type="checkbox"
@@ -172,6 +176,11 @@
           </div>
         </div>
       </div>
+
+      <p class="notification-upgrade-hint" *ngIf="!canUseWhatsAppNotifications()">
+        No plano Free, notificacoes por WhatsApp ficam indisponiveis.
+        <span class="notification-upgrade-cta">Faca upgrade para habilitar esta notificacao.</span>
+      </p>
     </div>
 
     <div class="card-foot">
