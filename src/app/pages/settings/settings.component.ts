@@ -19,6 +19,7 @@ import {
 import { apiErrorMessage } from '../../modules/properties/api/api-error.util';
 import { CurrentUserResponse, UserPlanCode } from '../../modules/users/api/user.models';
 import { UserService } from '../../modules/users/api/user.service';
+import { resolveEffectivePlanCode } from '../../modules/users/api/user-plan.util';
 
 @Component({
   selector: 'app-settings',
@@ -101,18 +102,34 @@ export class SettingsComponent {
     confirmPassword: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(8), Validators.maxLength(120)]),
   });
 
+  readonly effectivePlanCode = computed<UserPlanCode>(() => resolveEffectivePlanCode(this.currentUser()));
+
   readonly planLabel = computed(() => {
+    const currentUser = this.currentUser();
+    return currentUser ? this.mapPlanLabel(this.effectivePlanCode()) : '-';
+  });
+
+  readonly contractedPlanLabel = computed(() => {
     const currentUser = this.currentUser();
     return currentUser ? this.mapPlanLabel(currentUser.planCode) : '-';
   });
 
-  readonly planToneClass = computed(() => {
+  readonly showContractedPlan = computed(() => {
     const currentUser = this.currentUser();
     if (!currentUser) {
+      return false;
+    }
+
+    return currentUser.planCode !== this.effectivePlanCode();
+  });
+
+  readonly planToneClass = computed(() => {
+    const effectivePlanCode = this.effectivePlanCode();
+    if (!this.currentUser()) {
       return 'basic';
     }
 
-    switch (currentUser.planCode) {
+    switch (effectivePlanCode) {
       case 'FREE':
         return 'free';
       case 'PRO':
@@ -129,19 +146,28 @@ export class SettingsComponent {
       return 'Carregando plano...';
     }
 
-    if (currentUser.planCode === 'FREE') {
-      return 'Plano gratuito sem expiracao.';
+    const effectivePlanCode = this.effectivePlanCode();
+    if (effectivePlanCode === 'FREE') {
+      if (currentUser.planCode === 'FREE') {
+        return 'Plano gratuito sem expiracao.';
+      }
+
+      if (currentUser.subscriptionExpiresAt) {
+        return `Seu plano ${this.mapPlanLabel(currentUser.planCode)} expirou em ${this.formatDate(currentUser.subscriptionExpiresAt)}.`;
+      }
+
+      return `Seu plano ${this.mapPlanLabel(currentUser.planCode)} nao possui vigencia ativa.`;
     }
 
     if (!currentUser.subscriptionExpiresAt) {
-      return 'Assinatura sem expiracao informada.';
+      return 'Assinatura ativa.';
     }
 
     return `Expira em ${this.formatDate(currentUser.subscriptionExpiresAt)}.`;
   });
 
   readonly canUseWhatsAppNotifications = computed(() => {
-    return this.currentUser()?.planCode !== 'FREE';
+    return this.effectivePlanCode() !== 'FREE';
   });
 
   constructor(
@@ -169,7 +195,7 @@ export class SettingsComponent {
         this.currentUser.set(currentUser);
         this.applyCurrentUserToForm(currentUser);
         this.applyNotificationPreferencesToForm(notificationPreferences.preferences);
-        this.applyWhatsAppAvailabilityByPlan(currentUser.planCode);
+        this.applyWhatsAppAvailabilityByPlan(resolveEffectivePlanCode(currentUser));
         this.calendarProviders.set(calendarProviders.providers ?? []);
         this.loading.set(false);
       },
@@ -200,6 +226,7 @@ export class SettingsComponent {
         next: (response) => {
           this.currentUser.set(response.user);
           this.applyCurrentUserToForm(response.user);
+          this.applyWhatsAppAvailabilityByPlan(resolveEffectivePlanCode(response.user));
 
           if (response.accessToken) {
             this.tokenStorage.set(response.accessToken);

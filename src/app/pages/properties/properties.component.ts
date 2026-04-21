@@ -33,6 +33,7 @@ import {
 import { PropertyService } from '../../modules/properties/api/property.service';
 import { UserPlanCode } from '../../modules/users/api/user.models';
 import { UserService } from '../../modules/users/api/user.service';
+import { resolveEffectivePlanCode } from '../../modules/users/api/user-plan.util';
 
 type ProviderCode = string;
 
@@ -634,8 +635,10 @@ export class PropertiesComponent {
       },
       error: (error) => {
         if (this.isPropertyPlanLimitError(error)) {
+          const message = apiErrorMessage(error, 'Seu plano nao permite cadastrar novas propriedades.');
+          this.toast.error(message);
           this.saving.set(false);
-          this.loadCreateAvailability(apiErrorMessage(error, 'Seu plano nao permite cadastrar novas propriedades.'));
+          this.loadCreateAvailability(message);
           return;
         }
 
@@ -752,17 +755,22 @@ export class PropertiesComponent {
       }),
     }).subscribe({
       next: ({ currentUser, propertiesPage }) => {
-        const maxProperties = this.maxPropertiesForPlan(currentUser.planCode);
+        const effectivePlanCode = resolveEffectivePlanCode(currentUser);
+        const maxProperties = this.maxPropertiesForPlan(effectivePlanCode);
         const currentProperties = Number(propertiesPage?.totalElements ?? 0);
 
         if (maxProperties > 0 && currentProperties >= maxProperties) {
+          const contractedPlanExpired = currentUser.planCode !== effectivePlanCode;
+          const baseMessage = `Seu plano ${this.planLabel(effectivePlanCode)} permite no maximo ${maxProperties} propriedades ativas.`;
           this.createLimitState.set({
-            planCode: currentUser.planCode,
+            planCode: effectivePlanCode,
             maxProperties,
             currentProperties,
             message:
               priorityMessage ??
-              `Seu plano ${this.planLabel(currentUser.planCode)} permite no maximo ${maxProperties} propriedades ativas.`,
+              (contractedPlanExpired
+                ? `${baseMessage} O ultimo plano contratado (${this.planLabel(currentUser.planCode)}) nao esta mais vigente.`
+                : baseMessage),
           });
         } else {
           this.createLimitState.set(null);

@@ -70,6 +70,9 @@
         <span class="plan-badge">{{ planLabel() }}</span>
         <strong>{{ planLabel() }}</strong>
         <span>{{ subscriptionDescription() }}</span>
+        <span *ngIf="showContractedPlan()">
+          Ultimo plano contratado: {{ contractedPlanLabel() }}.
+        </span>
       </div>
 
       <div class="plan-meta" *ngIf="currentUser() as user">
