@@ -21,6 +21,7 @@ export interface ReservationResponse {
   hostPayoutTotal?: number | null;
   displayAmount?: number | null;
   status: ReservationStatus;
+  hasOpenConflict?: boolean;
   createdAt: string;
   updatedAt: string;
   lastSeenAt?: string | null;

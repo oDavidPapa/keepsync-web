@@ -70,6 +70,26 @@
   margin: 0 auto;
 }
 
+.status-cell {
+  vertical-align: middle;
+}
+
+.reservation-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.reservation-status-cell.has-conflict .badge {
+  min-width: 6.9rem;
+  justify-content: center;
+}
+
+.conflict-badge {
+  white-space: nowrap;
+}
+
 @media (max-width: 860px) {
   .reservation-period {
     grid-template-columns: 1fr;

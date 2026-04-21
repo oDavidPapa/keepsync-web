@@ -32,6 +32,14 @@
       </div>
 
       <div class="ui-field">
+        <label>Conflitos</label>
+        <select formControlName="conflictFilter">
+          <option value="">Todos</option>
+          <option value="ONLY">Somente conflitos</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
         <label>Periodo (De)</label>
         <input type="date" formControlName="periodStart" />
       </div>
@@ -116,15 +124,21 @@
                   {{ displayAmountLabel(row.displayAmount ?? row.hostPayoutTotal) }}
                 </td>
 
-                <td>
-                  <span
-                    class="badge"
-                    [class.success]="statusBadgeClass(row.status) === 'success'"
-                    [class.warning]="statusBadgeClass(row.status) === 'warning'"
-                    [class.danger]="statusBadgeClass(row.status) === 'danger'"
-                  >
-                    {{ statusLabel(row.status) }}
-                  </span>
+                <td class="status-cell">
+                  <div class="reservation-status-cell" [class.has-conflict]="row.hasOpenConflict">
+                    <span
+                      class="badge"
+                      [class.success]="statusBadgeClass(row.status) === 'success'"
+                      [class.warning]="statusBadgeClass(row.status) === 'warning'"
+                      [class.danger]="statusBadgeClass(row.status) === 'danger'"
+                    >
+                      {{ statusLabel(row.status) }}
+                    </span>
+
+                    <span *ngIf="row.hasOpenConflict" class="badge danger conflict-badge">
+                      Conflito
+                    </span>
+                  </div>
                 </td>
 
                 <td class="ui-right ui-actions-cell">

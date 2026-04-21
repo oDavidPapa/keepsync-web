@@ -22,6 +22,7 @@ export class ReservationService {
     sort?: string;
     query?: string;
     status?: string;
+    onlyConflicts?: boolean;
     ownerUserPublicId?: string;
     periodStart?: string;
     periodEnd?: string;
@@ -34,12 +35,14 @@ export class ReservationService {
 
     const queryParam = (params.query ?? '').trim();
     const statusParam = (params.status ?? '').trim();
+    const onlyConflictsParam = params.onlyConflicts === true;
     const ownerUserPublicIdParam = (params.ownerUserPublicId ?? '').trim();
     const periodStartParam = (params.periodStart ?? '').trim();
     const periodEndParam = (params.periodEnd ?? '').trim();
 
     if (queryParam) httpParams = httpParams.set('query', queryParam);
     if (statusParam) httpParams = httpParams.set('status', statusParam);
+    if (onlyConflictsParam) httpParams = httpParams.set('onlyConflicts', 'true');
     if (ownerUserPublicIdParam) httpParams = httpParams.set('ownerUserPublicId', ownerUserPublicIdParam);
     if (periodStartParam) httpParams = httpParams.set('periodStart', periodStartParam);
     if (periodEndParam) httpParams = httpParams.set('periodEnd', periodEndParam);

@@ -51,6 +51,7 @@ export class ReservationsListComponent {
   readonly filterForm = this.fb.group({
     query: [''],
     status: [''],
+    conflictFilter: [''],
     periodStart: [''],
     periodEnd: [''],
   });
@@ -68,9 +69,10 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.value;
     const query = (filterValues.query ?? '').trim();
     const status = (filterValues.status ?? '').trim();
+    const conflictFilter = (filterValues.conflictFilter ?? '').trim();
     const periodStart = (filterValues.periodStart ?? '').trim();
     const periodEnd = (filterValues.periodEnd ?? '').trim();
-    return (query ? 1 : 0) + (status ? 1 : 0) + (periodStart ? 1 : 0) + (periodEnd ? 1 : 0);
+    return (query ? 1 : 0) + (status ? 1 : 0) + (conflictFilter ? 1 : 0) + (periodStart ? 1 : 0) + (periodEnd ? 1 : 0);
   });
 
   constructor(
@@ -100,6 +102,8 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.getRawValue();
     const query = (filterValues.query ?? '').trim() || undefined;
     const status = (filterValues.status ?? '').trim() || undefined;
+    const conflictFilter = (filterValues.conflictFilter ?? '').trim();
+    const onlyConflicts = conflictFilter === 'ONLY';
     const periodStart = (filterValues.periodStart ?? '').trim() || undefined;
     const periodEnd = (filterValues.periodEnd ?? '').trim() || undefined;
 
@@ -112,7 +116,7 @@ export class ReservationsListComponent {
     }
 
     this.reservationService
-      .list({ page: requestPage, size: requestSize, sort: 'createdAt,desc', query, status, periodStart, periodEnd })
+      .list({ page: requestPage, size: requestSize, sort: 'startAt,asc', query, status, onlyConflicts, periodStart, periodEnd })
       .subscribe({
         next: (pageResult) => {
           const content = pageResult?.content ?? [];
@@ -152,7 +156,7 @@ export class ReservationsListComponent {
   }
 
   clearFilters() {
-    this.filterForm.reset({ query: '', status: '', periodStart: '', periodEnd: '' });
+    this.filterForm.reset({ query: '', status: '', conflictFilter: '', periodStart: '', periodEnd: '' });
     this.pageNumber.set(0);
     this.load();
   }
