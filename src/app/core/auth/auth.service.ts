@@ -5,7 +5,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../api/api.models';
-import { AuthResponse, LoginRequest, RegisterRequest } from './auth.models';
+import { AuthResponse, ForgotPasswordRequest, ForgotPasswordResponse, LoginRequest, RegisterRequest } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +30,12 @@ export class AuthService {
   register(payload: RegisterRequest): Observable<AuthResponse> {
     return this.http
       .post<ApiEnvelope<AuthResponse>>(`${this.baseUrl}/register`, payload)
+      .pipe(map((response) => response.data));
+  }
+
+  forgotPassword(payload: ForgotPasswordRequest): Observable<ForgotPasswordResponse> {
+    return this.http
+      .post<ApiEnvelope<ForgotPasswordResponse>>(`${this.baseUrl}/forgot-password`, payload)
       .pipe(map((response) => response.data));
   }
 

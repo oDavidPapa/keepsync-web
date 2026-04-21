@@ -77,9 +77,7 @@ export class LoginComponent {
   }
 
   forgotPassword(): void {
-    this.helperMessage.set(
-      'Use o fluxo de redefinicao de senha disponibilizado pelo administrador da sua conta.'
-    );
+    void this.router.navigate(['/forgot-password']);
   }
 
   requestAccess(): void {
