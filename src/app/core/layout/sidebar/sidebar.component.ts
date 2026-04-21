@@ -30,6 +30,7 @@ export class SidebarComponent {
     { label: 'Reservas', route: '/app/reservations', icon: 'event_available' },
     { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
     { label: 'Propriedades', route: '/app/properties', icon: 'home_work' },
+    { label: 'Apoio ao Anfitriao', route: '/app/support/host-help', icon: 'menu_book' },
     { label: 'Configuracoes', route: '/app/settings', icon: 'manage_accounts' }
   ];
 

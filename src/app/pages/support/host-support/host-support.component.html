@@ -1,0 +1,219 @@
+<div class="ui-page ui-page-fit host-support-page">
+  <app-page-header
+    title="Apoio ao Anfitriao"
+    subtitle="Edite e publique a cartilha por propriedade com mais seguranca."
+    [sticky]="false"
+    [top]="0"
+  ></app-page-header>
+
+  <section class="card host-support-card selector-card sticky-panel">
+    <div class="card-head">
+      <div>
+        <h2>Guia publico por propriedade</h2>
+        <p class="card-sub">Selecione a propriedade para editar e publicar o guia correto.</p>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loadingProperties()">Carregando propriedades...</div>
+
+    <ng-container *ngIf="!loadingProperties() && hasProperties()">
+      <div class="property-select-row">
+        <div class="field grow">
+          <label for="propertyPicker">Propriedade</label>
+          <select
+            id="propertyPicker"
+            [value]="selectedPropertyPublicId() ?? ''"
+            [disabled]="loadingGuide()"
+            (change)="onPropertySelectionChange($any($event.target).value)"
+          >
+            <option *ngFor="let property of properties()" [value]="property.publicId">
+              {{ property.name }}{{ property.city ? ' - ' + property.city : '' }}
+            </option>
+          </select>
+        </div>
+        <span class="property-count">{{ propertiesCountLabel() }}</span>
+      </div>
+
+      <div class="selected-property-pill">
+        <span class="dot"></span>
+        Editando agora: <strong>{{ selectedPropertyLabel() }}</strong>
+      </div>
+    </ng-container>
+
+    <div class="empty-state-block" *ngIf="!loadingProperties() && !hasProperties()">
+      <span class="material-symbols-rounded empty-state-icon">inbox</span>
+      <p class="empty-state-title">Nenhuma propriedade encontrada</p>
+      <p class="empty-state-sub">Cadastre uma propriedade para criar a cartilha.</p>
+    </div>
+  </section>
+
+  <section class="card host-support-card setup-card" *ngIf="hasProperties()">
+    <ng-container *ngIf="!loadingProperties() && hasProperties()">
+      <div class="publish-row">
+        <div class="publish-text">
+          <strong>Publicar guia para hospedes</strong>
+          <p>Quando ativo, qualquer pessoa com o link consegue visualizar a cartilha.</p>
+        </div>
+
+        <label class="switch" aria-label="Publicar guia para hospedes">
+          <input
+            type="checkbox"
+            [checked]="isPublished()"
+            [disabled]="publishToggleBusy() || loadingGuide()"
+            (change)="onPublishToggleChange($any($event.target).checked)"
+          />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="status-line">
+        <span class="status-badge" [class.online]="isPublished()" [class.offline]="!isPublished()">
+          {{ isPublished() ? 'Publicado e acessivel' : 'Guia fora do ar' }}
+        </span>
+        <span class="updated-at" *ngIf="updatedAtLabel()">Ultima atualizacao: {{ updatedAtLabel() }}</span>
+      </div>
+
+      <div class="link-box">
+        <label>Link publico do hospede</label>
+        <div class="link-value">
+          <code>{{ publicGuideLink() || '--' }}</code>
+          <button class="ui-btn primary solid mini" type="button" [disabled]="!canUsePublicLink()" (click)="copyPublicGuideLink()">
+            <span class="material-symbols-rounded">content_copy</span>
+            Copiar
+          </button>
+        </div>
+        <div class="link-actions">
+          <button class="ui-btn primary solid mini" type="button" [disabled]="!canUsePublicLink()" (click)="openPublicGuideLink()">
+            <span class="material-symbols-rounded">open_in_new</span>
+            Abrir link
+          </button>
+          <button class="ui-btn primary solid mini" type="button" [disabled]="!canUsePublicLink()" (click)="generatePdfFromGuide()">
+            <span class="material-symbols-rounded">picture_as_pdf</span>
+            Gerar PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="warning-strip" *ngIf="!isPublished()">
+        Guia nao publicado. Ative a publicacao acima antes de enviar o link para o hospede.
+      </div>
+    </ng-container>
+  </section>
+
+  <section class="card host-support-card content-card" *ngIf="hasProperties()">
+    <div class="card-head">
+      <div>
+        <h2>Conteudo do guia</h2>
+        <p class="card-sub">Tudo o que estiver aqui aparece na pagina publica quando o guia estiver publicado.</p>
+        <p class="card-note">Edite conforme achar necessário.</p>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loadingGuide()">Carregando conteudo do guia...</div>
+
+    <form class="guide-form" [formGroup]="guideForm" *ngIf="!loadingGuide()">
+      <p class="section-label">Identificacao</p>
+      <div class="field">
+        <label for="guideTitle">Titulo do guia</label>
+        <input id="guideTitle" type="text" formControlName="title" maxlength="120" placeholder="Ex: Cartilha da Hospedagem" />
+        <span class="error" *ngIf="hasError('title')">Titulo deve ter no maximo 120 caracteres.</span>
+      </div>
+
+      <div class="field">
+        <label for="guideWelcomeMessage">Mensagem de boas-vindas</label>
+        <textarea id="guideWelcomeMessage" formControlName="welcomeMessage" rows="3" maxlength="4000"></textarea>
+        <span class="error" *ngIf="hasError('welcomeMessage')">Texto invalido (maximo 4000 caracteres).</span>
+      </div>
+
+      <p class="section-label">Acesso e Wi-Fi</p>
+      <div class="inline-fields">
+        <div class="field">
+          <label for="guideWifiName">Wi-Fi (nome da rede)</label>
+          <input id="guideWifiName" type="text" formControlName="wifiName" maxlength="120" />
+          <span class="error" *ngIf="hasError('wifiName')">Valor invalido (maximo 120 caracteres).</span>
+        </div>
+
+        <div class="field">
+          <label for="guideWifiPassword">Wi-Fi (senha)</label>
+          <input id="guideWifiPassword" type="text" formControlName="wifiPassword" maxlength="120" />
+          <span class="error" *ngIf="hasError('wifiPassword')">Valor invalido (maximo 120 caracteres).</span>
+        </div>
+      </div>
+
+      <p class="section-label">Horarios</p>
+      <div class="inline-fields">
+        <div class="field">
+          <label>Check-in a partir de</label>
+          <input type="text" [value]="checkInTimeLabel()" readonly class="readonly-input" />
+        </div>
+
+        <div class="field">
+          <label>Check-out ate</label>
+          <input type="text" [value]="checkOutTimeLabel()" readonly class="readonly-input" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="guideCheckInInstructions">Instrucoes de check-in</label>
+        <textarea id="guideCheckInInstructions" formControlName="checkInInstructions" rows="4" maxlength="4000"></textarea>
+        <span class="error" *ngIf="hasError('checkInInstructions')">Texto invalido (maximo 4000 caracteres).</span>
+      </div>
+
+      <div class="field">
+        <label for="guideCheckOutInstructions">Instrucoes de check-out</label>
+        <textarea id="guideCheckOutInstructions" formControlName="checkOutInstructions" rows="4" maxlength="4000"></textarea>
+        <span class="error" *ngIf="hasError('checkOutInstructions')">Texto invalido (maximo 4000 caracteres).</span>
+      </div>
+
+      <p class="section-label">Regras e dicas</p>
+      <div class="field">
+        <label for="guideHouseRules">Regras da casa</label>
+        <textarea id="guideHouseRules" formControlName="houseRules" rows="4" maxlength="4000"></textarea>
+        <span class="error" *ngIf="hasError('houseRules')">Texto invalido (maximo 4000 caracteres).</span>
+      </div>
+
+      <div class="field">
+        <label for="guideLocalTips">Dicas locais</label>
+        <textarea id="guideLocalTips" formControlName="localTips" rows="4" maxlength="4000"></textarea>
+        <span class="error" *ngIf="hasError('localTips')">Texto invalido (maximo 4000 caracteres).</span>
+      </div>
+
+      <p class="section-label">Suporte e localizacao</p>
+      <div class="inline-fields">
+        <div class="field">
+          <label for="guideEmergencyContact">Link do Google Maps</label>
+          <input
+            id="guideEmergencyContact"
+            type="text"
+            formControlName="emergencyContact"
+            maxlength="200"
+            placeholder="https://maps.google.com/..."
+          />
+          <span class="error" *ngIf="hasError('emergencyContact')">Link invalido (maximo 200 caracteres).</span>
+        </div>
+
+        <div class="field">
+          <label for="guideSupportWhatsapp">WhatsApp</label>
+          <input
+            id="guideSupportWhatsapp"
+            type="text"
+            formControlName="supportWhatsapp"
+            maxlength="15"
+            placeholder="(11) 99999-9999"
+            (input)="onWhatsappInput()"
+          />
+          <span class="error" *ngIf="hasError('supportWhatsapp')">Numero invalido (maximo 40 caracteres).</span>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="ui-btn ghost mini" type="button" [disabled]="!canUsePublicLink()" (click)="openPublicGuideLink()">
+          Pre-visualizar guia
+        </button>
+        <button class="ui-btn primary solid" type="button" [disabled]="saveButtonBusy()" (click)="saveGuide()">
+          {{ saveButtonBusy() ? 'Salvando...' : 'Salvar alteracoes' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

@@ -17,6 +17,8 @@ import { RegisterSuccessComponent } from './pages/register-success/register-succ
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { ContactComponent } from './pages/support/contact/contact.component';
 import { AccountDeletionComponent } from './pages/support/account-deletion/account-deletion.component';
+import { HostSupportComponent } from './pages/support/host-support/host-support.component';
+import { PublicHostGuideComponent } from './pages/support/public-host-guide/public-host-guide.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -24,6 +26,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
   { path: 'register/success', component: RegisterSuccessComponent, canActivate: [guestGuard] },
+  { path: 'guia/:publicSlug', component: PublicHostGuideComponent },
   {
     path: 'app',
     component: MainLayoutComponent,
@@ -37,6 +40,7 @@ export const routes: Routes = [
       { path: 'properties/new', component: PropertiesComponent },
       { path: 'properties/:publicId/edit', component: PropertiesComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'support/host-help', component: HostSupportComponent },
       { path: 'support/contact', component: ContactComponent },
       { path: 'support/account-deletion', component: AccountDeletionComponent },
       { path: 'admin/users', component: UsersListComponent, canActivate: [adminGuard] },

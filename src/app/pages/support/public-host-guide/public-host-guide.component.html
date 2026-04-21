@@ -1,0 +1,106 @@
+<div class="guide-page">
+  <article class="guide-booklet" *ngIf="!loading() && !error() && guide() as loadedGuide">
+    <header class="cover">
+      <p class="badge">Cartilha do Hospede</p>
+      <h1>{{ title() }}</h1>
+      <p class="address" *ngIf="fullAddress()">{{ fullAddress() }}</p>
+    </header>
+
+    <section class="wifi-strip" *ngIf="loadedGuide.wifiName || loadedGuide.wifiPassword">
+      <div class="wifi-cell" *ngIf="loadedGuide.wifiName">
+        <span class="label">
+          <span class="material-symbols-rounded">wifi</span>
+          Rede Wi-Fi
+        </span>
+        <strong>{{ loadedGuide.wifiName }}</strong>
+      </div>
+      <div class="wifi-cell" *ngIf="loadedGuide.wifiPassword">
+        <span class="label">
+          <span class="material-symbols-rounded">key</span>
+          Senha
+        </span>
+        <strong>{{ loadedGuide.wifiPassword }}</strong>
+      </div>
+    </section>
+
+    <section class="chapter" *ngIf="loadedGuide.welcomeMessage">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">waving_hand</span>
+        Boas-vindas
+      </h2>
+      <p>{{ loadedGuide.welcomeMessage }}</p>
+    </section>
+
+    <section class="chapter" *ngIf="loadedGuide.checkInInstructions || loadedGuide.defaultCheckInTime">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">vpn_key</span>
+        Check-in
+      </h2>
+      <p class="highlight" *ngIf="loadedGuide.defaultCheckInTime">A partir das {{ loadedGuide.defaultCheckInTime.slice(0, 5) }}</p>
+      <p *ngIf="loadedGuide.checkInInstructions">{{ loadedGuide.checkInInstructions }}</p>
+    </section>
+
+    <section class="chapter" *ngIf="loadedGuide.checkOutInstructions || loadedGuide.defaultCheckOutTime">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">meeting_room</span>
+        Check-out
+      </h2>
+      <p class="highlight" *ngIf="loadedGuide.defaultCheckOutTime">Ate as {{ loadedGuide.defaultCheckOutTime.slice(0, 5) }}</p>
+      <p *ngIf="loadedGuide.checkOutInstructions">{{ loadedGuide.checkOutInstructions }}</p>
+    </section>
+
+    <section class="chapter" *ngIf="loadedGuide.houseRules">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">gavel</span>
+        Regras da casa
+      </h2>
+      <p>{{ loadedGuide.houseRules }}</p>
+    </section>
+
+    <section class="chapter" *ngIf="mapsHref() || fullAddress()">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">pin_drop</span>
+        Como chegar
+      </h2>
+      <div class="map-card">
+        <p class="map-address">{{ fullAddress() || 'Endereco nao informado' }}</p>
+        <div class="map-actions">
+          <a class="map-btn" *ngIf="mapsHref()" [href]="mapsHref()" target="_blank" rel="noopener noreferrer">Google Maps</a>
+          <a class="map-btn alt" *ngIf="wazeHref()" [href]="wazeHref()" target="_blank" rel="noopener noreferrer">Waze</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter" *ngIf="loadedGuide.localTips">
+      <h2>
+        <span class="material-symbols-rounded chapter-icon">lightbulb</span>
+        Dicas locais
+      </h2>
+      <p>{{ loadedGuide.localTips }}</p>
+    </section>
+
+    <section class="host-footer" *ngIf="loadedGuide.hostName || hasWhatsappContact()">
+      <div>
+        <p class="host-label">Anfitriao</p>
+        <strong>{{ loadedGuide.hostName || 'Anfitriao KeepSync' }}</strong>
+        <p class="host-whatsapp" *ngIf="hasWhatsappContact()">WhatsApp: {{ loadedGuide.supportWhatsapp }}</p>
+      </div>
+      <a class="whatsapp-btn no-print" *ngIf="hasWhatsappContact()" [href]="whatsappHref()" target="_blank" rel="noopener noreferrer">
+        WhatsApp
+      </a>
+    </section>
+
+    <footer class="guide-bottom">
+      <span>Gerado pelo KeepSync</span>
+    </footer>
+  </article>
+
+  <article class="guide-booklet state-card" *ngIf="loading()">
+    <h1>Carregando cartilha...</h1>
+  </article>
+
+  <article class="guide-booklet state-card" *ngIf="!loading() && error()">
+    <h1>Nao foi possivel abrir esta cartilha</h1>
+    <p>{{ error() }}</p>
+  </article>
+</div>

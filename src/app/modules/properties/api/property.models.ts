@@ -61,6 +61,65 @@ export interface UpdatePropertyRequest {
   sources?: PropertySourceRequest[];
 }
 
+export interface PropertyHostGuideResponse {
+  propertyPublicId: string;
+  propertyName: string;
+  publicSlug: string;
+  title?: string | null;
+  welcomeMessage?: string | null;
+  wifiName?: string | null;
+  wifiPassword?: string | null;
+  checkInInstructions?: string | null;
+  checkOutInstructions?: string | null;
+  houseRules?: string | null;
+  emergencyContact?: string | null;
+  supportPhone?: string | null;
+  supportWhatsapp?: string | null;
+  localTips?: string | null;
+  published: boolean;
+  updatedAt: string;
+}
+
+export interface UpdatePropertyHostGuideRequest {
+  title?: string | null;
+  welcomeMessage?: string | null;
+  wifiName?: string | null;
+  wifiPassword?: string | null;
+  checkInInstructions?: string | null;
+  checkOutInstructions?: string | null;
+  houseRules?: string | null;
+  emergencyContact?: string | null;
+  supportPhone?: string | null;
+  supportWhatsapp?: string | null;
+  localTips?: string | null;
+  published: boolean;
+}
+
+export interface PublicPropertyHostGuideResponse {
+  publicSlug: string;
+  propertyName: string;
+  hostName?: string | null;
+  title?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  defaultCheckInTime?: string | null;
+  defaultCheckOutTime?: string | null;
+  welcomeMessage?: string | null;
+  wifiName?: string | null;
+  wifiPassword?: string | null;
+  checkInInstructions?: string | null;
+  checkOutInstructions?: string | null;
+  houseRules?: string | null;
+  emergencyContact?: string | null;
+  supportPhone?: string | null;
+  supportWhatsapp?: string | null;
+  localTips?: string | null;
+  updatedAt: string;
+}
+
 
 export type PropertyListResponse = ApiEnvelope<Page<PropertyResponse>>;
 export type PropertyGetResponse = ApiEnvelope<PropertyResponse>;

@@ -6,6 +6,9 @@ import {
   PropertyResponse,
   CreatePropertyRequest,
   UpdatePropertyRequest,
+  PropertyHostGuideResponse,
+  PublicPropertyHostGuideResponse,
+  UpdatePropertyHostGuideRequest,
 } from './property.models';
 import { ApiEnvelope, Page } from '../../../core/api/api.models';
 
@@ -64,5 +67,23 @@ export class PropertyService {
 
   sync(publicId: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${publicId}/sync`, null);
+  }
+
+  getHostGuide(publicId: string): Observable<PropertyHostGuideResponse> {
+    return this.http
+      .get<ApiEnvelope<PropertyHostGuideResponse>>(`${this.baseUrl}/${publicId}/host-guide`)
+      .pipe(map((response) => response.data));
+  }
+
+  updateHostGuide(publicId: string, payload: UpdatePropertyHostGuideRequest): Observable<PropertyHostGuideResponse> {
+    return this.http
+      .put<ApiEnvelope<PropertyHostGuideResponse>>(`${this.baseUrl}/${publicId}/host-guide`, payload)
+      .pipe(map((response) => response.data));
+  }
+
+  getPublicHostGuide(publicSlug: string): Observable<PublicPropertyHostGuideResponse> {
+    return this.http
+      .get<ApiEnvelope<PublicPropertyHostGuideResponse>>(`${environment.apiBaseUrl}/v1/public/host-guides/${publicSlug}`)
+      .pipe(map((response) => response.data));
   }
 }

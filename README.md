@@ -25,3 +25,26 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+
+## KeepSync specific notes
+
+- Support area includes:
+  - `Fale Conosco`
+  - `Exclusao de Conta`
+  - `Apoio ao Anfitriao`
+- `Apoio ao Anfitriao` now supports one editable public guest guide per property.
+- Host guide editing flow now uses:
+  - property selector (`select`) with count
+  - selected-property highlight to reduce mistakes
+  - publish toggle with confirmation (`Publicar` / `Despublicar`)
+  - link actions (`Copiar`, `Abrir link`, `Gerar PDF`)
+- Guide form is organized in sections (`Identificacao`, `Acesso e Wi-Fi`, `Horarios`, `Regras e dicas`, `Suporte e localizacao`).
+- Guide content section shows orange helper text: `Edite conforme achar necessário.`
+- Guide location uses Google Maps link field (stored in `emergencyContact` for compatibility).
+- Host guide contact field is focused on WhatsApp (cellphone with input mask).
+- Public guest guide displays host name and WhatsApp contact in the footer.
+- Public guest guide includes section icons and print-optimized `Gerar PDF` action.
+- Public guest guide route:
+  - `/guia/:publicSlug`
+- Default starter copy (welcome/check-in/check-out/rules/local tips) is seeded by backend when a property guide is created for the first time.
+- Host support screen empty state (when there are no properties) now follows the same icon/title/subtitle visual pattern used in other screens.
