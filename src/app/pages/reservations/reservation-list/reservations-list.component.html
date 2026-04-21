@@ -32,6 +32,14 @@
       </div>
 
       <div class="ui-field">
+        <label>Propriedades</label>
+        <select formControlName="includeInactiveProperties">
+          <option value="ACTIVE_ONLY">Somente ativas</option>
+          <option value="INCLUDE_INACTIVE">Incluir inativas/bloqueadas</option>
+        </select>
+      </div>
+
+      <div class="ui-field">
         <label>Conflitos</label>
         <select formControlName="conflictFilter">
           <option value="">Todos</option>

@@ -51,6 +51,7 @@ export class ReservationsListComponent {
   readonly filterForm = this.fb.group({
     query: [''],
     status: [''],
+    includeInactiveProperties: ['ACTIVE_ONLY'],
     conflictFilter: [''],
     periodStart: [''],
     periodEnd: [''],
@@ -69,10 +70,16 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.value;
     const query = (filterValues.query ?? '').trim();
     const status = (filterValues.status ?? '').trim();
+    const includeInactiveProperties = (filterValues.includeInactiveProperties ?? '').trim();
     const conflictFilter = (filterValues.conflictFilter ?? '').trim();
     const periodStart = (filterValues.periodStart ?? '').trim();
     const periodEnd = (filterValues.periodEnd ?? '').trim();
-    return (query ? 1 : 0) + (status ? 1 : 0) + (conflictFilter ? 1 : 0) + (periodStart ? 1 : 0) + (periodEnd ? 1 : 0);
+    return (query ? 1 : 0)
+      + (status ? 1 : 0)
+      + (includeInactiveProperties === 'INCLUDE_INACTIVE' ? 1 : 0)
+      + (conflictFilter ? 1 : 0)
+      + (periodStart ? 1 : 0)
+      + (periodEnd ? 1 : 0);
   });
 
   constructor(
@@ -102,6 +109,7 @@ export class ReservationsListComponent {
     const filterValues = this.filterForm.getRawValue();
     const query = (filterValues.query ?? '').trim() || undefined;
     const status = (filterValues.status ?? '').trim() || undefined;
+    const includeInactiveProperties = (filterValues.includeInactiveProperties ?? '').trim() === 'INCLUDE_INACTIVE';
     const conflictFilter = (filterValues.conflictFilter ?? '').trim();
     const onlyConflicts = conflictFilter === 'ONLY';
     const periodStart = (filterValues.periodStart ?? '').trim() || undefined;
@@ -116,7 +124,17 @@ export class ReservationsListComponent {
     }
 
     this.reservationService
-      .list({ page: requestPage, size: requestSize, sort: 'startAt,asc', query, status, onlyConflicts, periodStart, periodEnd })
+      .list({
+        page: requestPage,
+        size: requestSize,
+        sort: 'startAt,asc',
+        query,
+        status,
+        includeInactiveProperties,
+        onlyConflicts,
+        periodStart,
+        periodEnd
+      })
       .subscribe({
         next: (pageResult) => {
           const content = pageResult?.content ?? [];
@@ -156,7 +174,14 @@ export class ReservationsListComponent {
   }
 
   clearFilters() {
-    this.filterForm.reset({ query: '', status: '', conflictFilter: '', periodStart: '', periodEnd: '' });
+    this.filterForm.reset({
+      query: '',
+      status: '',
+      includeInactiveProperties: 'ACTIVE_ONLY',
+      conflictFilter: '',
+      periodStart: '',
+      periodEnd: ''
+    });
     this.pageNumber.set(0);
     this.load();
   }

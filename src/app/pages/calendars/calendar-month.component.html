@@ -48,6 +48,18 @@
           <span class="conflict-dot"></span>
           Somente conflitos
         </button>
+
+        <button
+          class="channel-chip historical-filter"
+          type="button"
+          [class.active]="includeInactiveProperties()"
+          [attr.aria-pressed]="includeInactiveProperties()"
+          [disabled]="requiresOwnerSelection()"
+          (click)="toggleInactivePropertyVisibility()"
+        >
+          <span class="material-symbols-rounded">history</span>
+          Incluir inativas/bloqueadas
+        </button>
       </div>
 
       <div class="toolbar-right-filters">

@@ -22,6 +22,7 @@ export class ReservationService {
     sort?: string;
     query?: string;
     status?: string;
+    includeInactiveProperties?: boolean;
     onlyConflicts?: boolean;
     ownerUserPublicId?: string;
     periodStart?: string;
@@ -35,6 +36,7 @@ export class ReservationService {
 
     const queryParam = (params.query ?? '').trim();
     const statusParam = (params.status ?? '').trim();
+    const includeInactivePropertiesParam = params.includeInactiveProperties === true;
     const onlyConflictsParam = params.onlyConflicts === true;
     const ownerUserPublicIdParam = (params.ownerUserPublicId ?? '').trim();
     const periodStartParam = (params.periodStart ?? '').trim();
@@ -42,6 +44,7 @@ export class ReservationService {
 
     if (queryParam) httpParams = httpParams.set('query', queryParam);
     if (statusParam) httpParams = httpParams.set('status', statusParam);
+    if (includeInactivePropertiesParam) httpParams = httpParams.set('includeInactiveProperties', 'true');
     if (onlyConflictsParam) httpParams = httpParams.set('onlyConflicts', 'true');
     if (ownerUserPublicIdParam) httpParams = httpParams.set('ownerUserPublicId', ownerUserPublicIdParam);
     if (periodStartParam) httpParams = httpParams.set('periodStart', periodStartParam);

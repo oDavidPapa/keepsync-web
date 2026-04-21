@@ -101,6 +101,7 @@ export class CalendarMonthComponent {
   readonly channelFilters = signal<Record<string, boolean>>({});
 
   readonly showOnlyConflicts = signal(false);
+  readonly includeInactiveProperties = signal(false);
   readonly selectedPropertyId = signal<string>(CalendarMonthComponent.PROPERTY_FILTER_ALL);
   readonly isCurrentUserAdmin = signal(false);
   readonly selectedOwnerUserPublicId = signal('');
@@ -298,6 +299,12 @@ export class CalendarMonthComponent {
     this.showOnlyConflicts.update((currentValue) => !currentValue);
   }
 
+  toggleInactivePropertyVisibility() {
+    this.includeInactiveProperties.update((currentValue) => !currentValue);
+    this.selectedPropertyId.set(CalendarMonthComponent.PROPERTY_FILTER_ALL);
+    this.loadCalendarData();
+  }
+
   channelLabel(channel: CalendarChannel): string {
     return this.availableChannels().find((availableChannel) => availableChannel.id === channel)?.label ?? channel;
   }
@@ -451,22 +458,26 @@ export class CalendarMonthComponent {
   }
 
   private loadAllReservations(ownerUserPublicId?: string): Observable<ReservationResponse[]> {
+    const includeInactiveProperties = this.includeInactiveProperties();
     return this.collectAllPages((pageNumber) =>
       this.reservationService.list({
         page: pageNumber,
         size: CalendarMonthComponent.PAGE_SIZE,
         sort: 'startAt,asc',
+        includeInactiveProperties,
         ownerUserPublicId,
       })
     );
   }
 
   private loadAllProperties(ownerUserPublicId?: string): Observable<PropertyResponse[]> {
+    const includeInactiveProperties = this.includeInactiveProperties();
     return this.collectAllPages((pageNumber) =>
       this.propertyService.list({
         page: pageNumber,
         size: CalendarMonthComponent.PAGE_SIZE,
         sort: 'name,asc',
+        status: includeInactiveProperties ? undefined : 'ACTIVE',
         ownerUserPublicId,
       })
     );
@@ -511,8 +522,9 @@ export class CalendarMonthComponent {
     properties.forEach((property) => {
       const propertyId = String(property.publicId ?? '').trim();
       const propertyName = String(property.name ?? '').trim();
+      const propertyLabel = property.active ? propertyName : `${propertyName} (Inativa)`;
       if (propertyId && propertyName) {
-        propertyMap.set(propertyId, propertyName);
+        propertyMap.set(propertyId, propertyLabel);
       }
     });
 
