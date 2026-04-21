@@ -163,6 +163,12 @@
   border-top: 1px solid var(--border-color);
 }
 
+.nav-support-block {
+  margin-top: 0.45rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(17, 24, 39, 0.09);
+}
+
 .nav-link {
   display: flex;
   align-items: center;

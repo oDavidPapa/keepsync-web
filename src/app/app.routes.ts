@@ -15,6 +15,8 @@ import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { RegisterSuccessComponent } from './pages/register-success/register-success.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { ContactComponent } from './pages/support/contact/contact.component';
+import { AccountDeletionComponent } from './pages/support/account-deletion/account-deletion.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -35,6 +37,8 @@ export const routes: Routes = [
       { path: 'properties/new', component: PropertiesComponent },
       { path: 'properties/:publicId/edit', component: PropertiesComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'support/contact', component: ContactComponent },
+      { path: 'support/account-deletion', component: AccountDeletionComponent },
       { path: 'admin/users', component: UsersListComponent, canActivate: [adminGuard] },
       { path: 'admin/notifications', component: NotificationsComponent, canActivate: [adminGuard] },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

@@ -25,7 +25,7 @@ export interface NavItem {
 export class SidebarComponent {
   @Input() mobileOpen = false;
 
-  private readonly userNav: NavItem[] = [
+  private readonly userPrimaryNav: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: 'dashboard' },
     { label: 'Reservas', route: '/app/reservations', icon: 'event_available' },
     { label: 'Calendarios', route: '/app/calendars', icon: 'calendar_month' },
@@ -33,12 +33,18 @@ export class SidebarComponent {
     { label: 'Configuracoes', route: '/app/settings', icon: 'manage_accounts' }
   ];
 
+  private readonly userSupportNav: NavItem[] = [
+    { label: 'Fale Conosco', route: '/app/support/contact', icon: 'support_agent' },
+    { label: 'Exclusao de Conta', route: '/app/support/account-deletion', icon: 'person_off' }
+  ];
+
   private readonly adminOnlyNav: NavItem[] = [
     { label: 'Notificacoes', route: '/app/admin/notifications', icon: 'notifications' },
     { label: 'Usuarios', route: '/app/admin/users', icon: 'group' }
   ];
 
-  readonly nav = signal<NavItem[]>(this.cloneNavItems(this.userNav));
+  readonly nav = signal<NavItem[]>(this.cloneNavItems(this.userPrimaryNav));
+  readonly supportNav = signal<NavItem[]>(this.cloneNavItems(this.userSupportNav));
   readonly adminNav = signal<NavItem[]>([]);
   readonly currentUserName = signal('Usuario');
   readonly currentUserEmail = signal('');
@@ -123,7 +129,8 @@ export class SidebarComponent {
 
   private applyRoleToMenu(role: string | null | undefined): void {
     const isAdmin = this.isAdminRole(role);
-    this.nav.set(this.cloneNavItems(this.userNav));
+    this.nav.set(this.cloneNavItems(this.userPrimaryNav));
+    this.supportNav.set(this.cloneNavItems(this.userSupportNav));
     this.adminNav.set(isAdmin ? this.cloneNavItems(this.adminOnlyNav) : []);
   }
 

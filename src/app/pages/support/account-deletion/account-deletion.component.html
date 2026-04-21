@@ -1,0 +1,96 @@
+<div class="ui-page ui-page-fit deletion-page">
+  <app-page-header
+    title="Exclusao de Conta"
+    subtitle="Solicite a exclusao dos seus dados conforme a legislacao vigente."
+    [sticky]="false"
+    [top]="0"
+  ></app-page-header>
+
+  <section class="card deletion-card danger-card">
+    <div class="card-head">
+      <div>
+        <h2>Antes de solicitar</h2>
+      </div>
+    </div>
+
+    <ul class="danger-list">
+      <li>Essa solicitacao inicia o processo de exclusao dos dados da sua conta.</li>
+      <li>Podemos solicitar confirmacao adicional por seguranca.</li>
+      <li>O time de suporte conduzira o procedimento e retornara por e-mail.</li>
+    </ul>
+  </section>
+
+  <section class="card deletion-card">
+    <div class="card-head">
+      <div>
+        <h2>Solicitar exclusao</h2>
+        <p class="card-sub">Descreva o motivo da solicitacao e confirme sua autorizacao.</p>
+      </div>
+    </div>
+
+    <div class="section-panel" [formGroup]="form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="deletionReason">Motivo da solicitacao</label>
+          <textarea
+            id="deletionReason"
+            formControlName="reason"
+            rows="7"
+            maxlength="2000"
+            placeholder="Ex: Nao desejo manter meus dados na plataforma."
+          ></textarea>
+          <span class="error" *ngIf="hasReasonError()">Informe o motivo da solicitacao (maximo 2000 caracteres).</span>
+        </div>
+
+        <div class="field">
+          <label for="typedConfirmation">
+            Para confirmar, digite exatamente:
+            <strong class="confirm-phrase">{{ typedConfirmationHint() }}</strong>
+          </label>
+          <input
+            id="typedConfirmation"
+            type="text"
+            formControlName="typedConfirmation"
+            maxlength="30"
+            placeholder="Digite exatamente como acima"
+          />
+          <span class="error" *ngIf="hasTypedConfirmationError()">
+            Digite exatamente <strong class="confirm-phrase">{{ typedConfirmationHint() }}</strong> (respeitando maiusculas e minusculas).
+          </span>
+        </div>
+
+        <label class="confirm-line" for="deletionConfirm">
+          <input id="deletionConfirm" type="checkbox" formControlName="confirmed" />
+          <span>Confirmo que desejo solicitar a exclusao dos dados da minha conta.</span>
+        </label>
+        <span class="error" *ngIf="hasConfirmationError()">Confirme a solicitacao para continuar.</span>
+      </div>
+    </div>
+
+    <div class="request-sent" *ngIf="requestSent()">
+      Solicitacao enviada com sucesso. Em caso de duvidas, contate
+      <a [href]="supportMailto()">{{ contactEmail() }}</a>.
+    </div>
+
+    <div class="card-foot">
+      <button class="ui-btn danger" type="button" [disabled]="submitting() || requestSent()" (click)="sendRequest()">
+        <span class="material-symbols-rounded">delete_forever</span>
+        {{ submitting() ? 'Enviando...' : 'Solicitar exclusao' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="card deletion-card contact-card">
+    <div class="card-head">
+      <div>
+        <h2>Contato direto</h2>
+      </div>
+    </div>
+
+    <p>
+      Se preferir, envie a solicitacao diretamente para
+      <a [href]="supportMailto()">{{ contactEmail() }}</a>.
+      <span *ngIf="loadingContactInfo()">Carregando contato...</span>
+    </p>
+  </section>
+</div>

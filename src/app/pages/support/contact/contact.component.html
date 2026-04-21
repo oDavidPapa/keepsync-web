@@ -1,0 +1,71 @@
+<div class="ui-page ui-page-fit contact-page">
+  <app-page-header
+    title="Fale Conosco"
+    subtitle="Entre em contato com nosso time de suporte."
+    [sticky]="false"
+    [top]="0"
+  ></app-page-header>
+
+  <section class="card support-card support-info-card">
+    <div class="card-head">
+      <div>
+        <h2>Canal de atendimento</h2>
+        <p class="card-sub">
+          Use o e-mail abaixo para qualquer necessidade de suporte.
+        </p>
+      </div>
+    </div>
+
+    <div class="support-contact-block">
+      <span class="support-label">E-mail de suporte</span>
+      <a [href]="supportMailto()" class="support-email">
+        {{ contactEmail() }}
+      </a>
+      <span class="support-caption" *ngIf="loadingContactInfo()">Carregando contato...</span>
+    </div>
+  </section>
+
+  <section class="card support-card">
+    <div class="card-head">
+      <div>
+        <h2>Enviar mensagem</h2>
+        <p class="card-sub">Voce tambem pode enviar uma mensagem diretamente por aqui.</p>
+      </div>
+    </div>
+
+    <div class="section-panel" [formGroup]="form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="supportSubject">Assunto</label>
+          <input
+            id="supportSubject"
+            type="text"
+            formControlName="subject"
+            maxlength="120"
+            placeholder="Ex: Duvida sobre sincronizacao"
+          />
+          <span class="error" *ngIf="hasError('subject')">Informe um assunto (maximo 120 caracteres).</span>
+        </div>
+
+        <div class="field">
+          <label for="supportMessage">Mensagem</label>
+          <textarea
+            id="supportMessage"
+            formControlName="message"
+            rows="7"
+            maxlength="2000"
+            placeholder="Descreva sua necessidade com detalhes."
+          ></textarea>
+          <span class="error" *ngIf="hasError('message')">Informe a mensagem (maximo 2000 caracteres).</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-foot">
+      <button class="ui-btn primary solid" type="button" [disabled]="sending()" (click)="send()">
+        <span class="material-symbols-rounded">send</span>
+        {{ sending() ? 'Enviando...' : 'Enviar mensagem' }}
+      </button>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,159 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.deletion-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.deletion-card,
+.section-panel {
+  background: var(--color-white);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 18px;
+}
+
+.deletion-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  box-shadow: 0 1.2rem 2.2rem rgba(17, 24, 39, 0.06);
+}
+
+.danger-card {
+  border-color: rgba(255, 59, 107, 0.2);
+  background: linear-gradient(180deg, rgba(255, 59, 107, 0.06), rgba(255, 59, 107, 0.02));
+}
+
+.card-head h2 {
+  margin: 0;
+  color: rgba(17, 24, 39, 0.92);
+}
+
+.card-sub {
+  margin: 0.3rem 0 0;
+  color: var(--color-dark-variant);
+}
+
+.danger-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: rgba(17, 24, 39, 0.8);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.section-panel {
+  padding: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: rgba(17, 24, 39, 0.72);
+}
+
+.field textarea {
+  width: 100%;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+  outline: none;
+  font: inherit;
+  resize: vertical;
+  transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
+}
+
+.field input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+  outline: none;
+  font: inherit;
+  transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
+}
+
+.field textarea:focus,
+.field input:focus {
+  border-color: rgba(195, 83, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(195, 83, 0, 0.08);
+}
+
+.confirm-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: rgba(17, 24, 39, 0.84);
+  font-weight: 650;
+}
+
+.confirm-line input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.confirm-phrase {
+  color: var(--color-primary);
+}
+
+.request-sent {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  color: #0f5132;
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  background: rgba(16, 185, 129, 0.12);
+  font-weight: 700;
+}
+
+.request-sent a,
+.contact-card a {
+  color: var(--color-primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.request-sent a:hover,
+.contact-card a:hover {
+  text-decoration: underline;
+}
+
+.contact-card p {
+  margin: 0;
+  color: rgba(17, 24, 39, 0.78);
+}
+
+.card-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ui-btn.danger {
+  border: 1px solid rgba(255, 59, 107, 0.48);
+  background: linear-gradient(180deg, #f85f89, #e6396d);
+  color: #fff;
+}
