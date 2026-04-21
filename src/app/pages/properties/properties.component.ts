@@ -317,7 +317,7 @@ export class PropertiesComponent {
         this.toast.success('Canal adicionado.');
       },
       error: (error) => {
-        this.toast.error('Erro ao adicionar canal.');
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel adicionar o canal.'));
         console.error(error);
       }
     });
@@ -388,7 +388,7 @@ export class PropertiesComponent {
         this.togglingSourcePublicId.set(null);
       },
       error: (error) => {
-        this.toast.error('Erro ao atualizar o status do canal.');
+        this.toast.error(apiErrorMessage(error, 'Nao foi possivel atualizar o status do canal.'));
         this.togglingSourcePublicId.set(null);
         console.error(error);
       }

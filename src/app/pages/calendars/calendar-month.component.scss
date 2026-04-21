@@ -4,12 +4,12 @@
 .calendar-header-actions{justify-content:flex-end}
 .calendar-month-label{min-width:14rem;padding:.65rem 1rem;border:1px solid rgba(17,24,39,.08);border-radius:14px;color:rgba(17,24,39,.82);font-size:.95rem;font-weight:800;text-transform:capitalize}
 .calendar-toolbar{padding:1rem 1.2rem}
-.calendar-toolbar-row{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.calendar-toolbar-row{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .channel-chip{height:36px;padding:0 .9rem;border:1px solid rgba(17,24,39,.1);border-radius:999px;background:rgba(17,24,39,.015);color:rgba(17,24,39,.82);font-weight:800;display:inline-flex;align-items:center;gap:.55rem;cursor:pointer}
 .channel-chip.off{opacity:.45}
-.channel-filters{flex:1 1 auto;min-width:16rem}
-.toolbar-right-filters{margin-left:auto;display:flex;align-items:flex-end;gap:.85rem;flex-wrap:wrap;justify-content:flex-end}
-.owner-filter,.property-filter{min-width:17rem}
+.channel-filters{flex:1 1 28rem;min-width:16rem}
+.toolbar-right-filters{margin-left:auto;display:flex;align-items:flex-end;gap:.85rem;flex-wrap:wrap;justify-content:flex-end;flex:0 1 auto}
+.owner-filter,.property-filter{flex:1 1 17rem;min-width:17rem;max-width:24rem}
 .channel-chip.conflict-filter.active{border-color:rgba(255,59,107,.22);background:rgba(255,59,107,.08);color:var(--color-danger)}
 .channel-dot,.dot-mini,.conflict-dot{border-radius:999px}
 .channel-dot,.conflict-dot{width:.6rem;height:.6rem}
@@ -43,6 +43,15 @@
 .dot-mini{cursor:pointer}
 .dot-mini:focus-visible{outline:none;box-shadow:0 0 0 2px rgba(37,99,235,.4)}
 .more-mini{color:rgba(17,24,39,.55);font-size:.68rem;font-weight:800}
+@media (max-width:1320px){
+  .toolbar-right-filters{flex:1 1 100%;width:100%;margin-left:0;justify-content:flex-start}
+  .owner-filter,.property-filter{max-width:none;min-width:15rem}
+}
+
+@media (max-width:1080px){
+  .owner-filter,.property-filter{flex:1 1 100%;min-width:0}
+}
+
 @media (max-width:860px){
   .calendar-header-actions,.calendar-toolbar-row{width:100%}
   .calendar-toolbar-row{flex-direction:column;align-items:stretch}
