@@ -34,6 +34,13 @@
   border-color: rgba(195, 83, 0, 0.18);
 }
 
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
 .card-head h2 {
   margin: 0;
   color: rgba(17, 24, 39, 0.92);
@@ -93,73 +100,24 @@
   background: rgba(16, 185, 129, 0.98);
 }
 
-.publish-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.9rem;
-  border: 1px solid rgba(17, 24, 39, 0.09);
-  border-radius: 14px;
-  background: rgba(17, 24, 39, 0.015);
-  padding: 0.8rem;
-}
-
-.publish-text strong {
-  color: rgba(17, 24, 39, 0.94);
-}
-
-.publish-text p {
-  margin: 0.22rem 0 0;
-  color: rgba(71, 85, 105, 0.9);
-  font-size: 0.82rem;
-}
-
-.switch {
-  position: relative;
-  width: 48px;
-  height: 28px;
+.publish-main-btn {
+  border: 1px solid rgba(16, 185, 129, 0.36);
+  background: rgba(16, 185, 129, 0.14);
+  color: rgba(6, 95, 70, 0.98);
   flex: 0 0 auto;
 }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.publish-main-btn.unpublish {
+  border-color: rgba(239, 68, 68, 0.38);
+  background: rgba(239, 68, 68, 0.14);
+  color: rgba(153, 27, 27, 0.98);
 }
 
-.slider {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.65);
-  transition: background var(--speed) var(--ease);
-  cursor: pointer;
-}
-
-.slider::before {
-  content: "";
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  left: 3px;
-  top: 3px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
-  transition: transform var(--speed) var(--ease);
-}
-
-.switch input:checked + .slider {
-  background: rgba(16, 185, 129, 0.95);
-}
-
-.switch input:checked + .slider::before {
-  transform: translateX(20px);
-}
-
-.switch input:disabled + .slider {
-  opacity: 0.65;
+.publish-main-btn:disabled {
+  opacity: 0.72;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .status-line {
@@ -167,6 +125,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+
+.link-status-line {
+  margin-top: -0.1rem;
 }
 
 .status-badge {
@@ -297,6 +259,18 @@
   resize: vertical;
 }
 
+.check-flow-fields {
+  align-items: start;
+}
+
+.textarea-lg {
+  min-height: 11rem;
+}
+
+.textarea-xl {
+  min-height: 14rem;
+}
+
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
@@ -379,7 +353,7 @@
     top: auto;
   }
 
-  .publish-row {
+  .card-head {
     flex-direction: column;
     align-items: flex-start;
   }

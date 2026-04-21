@@ -12,6 +12,22 @@
         <h2>Guia publico por propriedade</h2>
         <p class="card-sub">Selecione a propriedade para editar e publicar o guia correto.</p>
       </div>
+
+      <button
+        class="ui-btn mini publish-main-btn"
+        type="button"
+        *ngIf="!loadingProperties() && hasProperties()"
+        [class.unpublish]="isPublished()"
+        [disabled]="publishToggleBusy() || loadingGuide()"
+        (click)="onPublishButtonClick()"
+      >
+        <span class="material-symbols-rounded">{{ isPublished() ? 'public_off' : 'public' }}</span>
+        {{
+          publishToggleBusy()
+            ? (isPublished() ? 'Despublicando...' : 'Publicando...')
+            : (isPublished() ? 'Despublicar Guia' : 'Publicar Guia')
+        }}
+      </button>
     </div>
 
     <div class="loading-state" *ngIf="loadingProperties()">Carregando propriedades...</div>
@@ -38,6 +54,7 @@
         <span class="dot"></span>
         Editando agora: <strong>{{ selectedPropertyLabel() }}</strong>
       </div>
+
     </ng-container>
 
     <div class="empty-state-block" *ngIf="!loadingProperties() && !hasProperties()">
@@ -49,30 +66,6 @@
 
   <section class="card host-support-card setup-card" *ngIf="hasProperties()">
     <ng-container *ngIf="!loadingProperties() && hasProperties()">
-      <div class="publish-row">
-        <div class="publish-text">
-          <strong>Publicar guia para hospedes</strong>
-          <p>Quando ativo, qualquer pessoa com o link consegue visualizar a cartilha.</p>
-        </div>
-
-        <label class="switch" aria-label="Publicar guia para hospedes">
-          <input
-            type="checkbox"
-            [checked]="isPublished()"
-            [disabled]="publishToggleBusy() || loadingGuide()"
-            (change)="onPublishToggleChange($any($event.target).checked)"
-          />
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="status-line">
-        <span class="status-badge" [class.online]="isPublished()" [class.offline]="!isPublished()">
-          {{ isPublished() ? 'Publicado e acessivel' : 'Guia fora do ar' }}
-        </span>
-        <span class="updated-at" *ngIf="updatedAtLabel()">Ultima atualizacao: {{ updatedAtLabel() }}</span>
-      </div>
-
       <div class="link-box">
         <label>Link publico do hospede</label>
         <div class="link-value">
@@ -81,6 +74,12 @@
             <span class="material-symbols-rounded">content_copy</span>
             Copiar
           </button>
+        </div>
+        <div class="status-line link-status-line">
+          <span class="status-badge" [class.online]="isPublished()" [class.offline]="!isPublished()">
+            {{ isPublished() ? 'Publicado e acessivel' : 'Guia fora do ar' }}
+          </span>
+          <span class="updated-at" *ngIf="updatedAtLabel()">Ultima atualizacao: {{ updatedAtLabel() }}</span>
         </div>
         <div class="link-actions">
           <button class="ui-btn primary solid mini" type="button" [disabled]="!canUsePublicLink()" (click)="openPublicGuideLink()">
@@ -95,7 +94,7 @@
       </div>
 
       <div class="warning-strip" *ngIf="!isPublished()">
-        Guia nao publicado. Ative a publicacao acima antes de enviar o link para o hospede.
+        Guia nao publicado. Clique em Publicar no topo antes de enviar o link para o hospede.
       </div>
     </ng-container>
   </section>
@@ -121,7 +120,13 @@
 
       <div class="field">
         <label for="guideWelcomeMessage">Mensagem de boas-vindas</label>
-        <textarea id="guideWelcomeMessage" formControlName="welcomeMessage" rows="3" maxlength="4000"></textarea>
+        <textarea
+          id="guideWelcomeMessage"
+          class="textarea-lg"
+          formControlName="welcomeMessage"
+          rows="6"
+          maxlength="4000"
+        ></textarea>
         <span class="error" *ngIf="hasError('welcomeMessage')">Texto invalido (maximo 4000 caracteres).</span>
       </div>
 
@@ -153,22 +158,42 @@
         </div>
       </div>
 
-      <div class="field">
-        <label for="guideCheckInInstructions">Instrucoes de check-in</label>
-        <textarea id="guideCheckInInstructions" formControlName="checkInInstructions" rows="4" maxlength="4000"></textarea>
-        <span class="error" *ngIf="hasError('checkInInstructions')">Texto invalido (maximo 4000 caracteres).</span>
-      </div>
+      <div class="inline-fields check-flow-fields">
+        <div class="field">
+          <label for="guideCheckInInstructions">Instrucoes de check-in</label>
+          <textarea
+            id="guideCheckInInstructions"
+            class="textarea-xl"
+            formControlName="checkInInstructions"
+            rows="8"
+            maxlength="4000"
+          ></textarea>
+          <span class="error" *ngIf="hasError('checkInInstructions')">Texto invalido (maximo 4000 caracteres).</span>
+        </div>
 
-      <div class="field">
-        <label for="guideCheckOutInstructions">Instrucoes de check-out</label>
-        <textarea id="guideCheckOutInstructions" formControlName="checkOutInstructions" rows="4" maxlength="4000"></textarea>
-        <span class="error" *ngIf="hasError('checkOutInstructions')">Texto invalido (maximo 4000 caracteres).</span>
+        <div class="field">
+          <label for="guideCheckOutInstructions">Instrucoes de check-out</label>
+          <textarea
+            id="guideCheckOutInstructions"
+            class="textarea-xl"
+            formControlName="checkOutInstructions"
+            rows="8"
+            maxlength="4000"
+          ></textarea>
+          <span class="error" *ngIf="hasError('checkOutInstructions')">Texto invalido (maximo 4000 caracteres).</span>
+        </div>
       </div>
 
       <p class="section-label">Regras e dicas</p>
       <div class="field">
         <label for="guideHouseRules">Regras da casa</label>
-        <textarea id="guideHouseRules" formControlName="houseRules" rows="4" maxlength="4000"></textarea>
+        <textarea
+          id="guideHouseRules"
+          class="textarea-lg"
+          formControlName="houseRules"
+          rows="6"
+          maxlength="4000"
+        ></textarea>
         <span class="error" *ngIf="hasError('houseRules')">Texto invalido (maximo 4000 caracteres).</span>
       </div>
 

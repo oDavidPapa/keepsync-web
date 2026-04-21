@@ -36,9 +36,12 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 - Host guide editing flow now uses:
   - property selector (`select`) with count
   - selected-property highlight to reduce mistakes
-  - publish toggle with confirmation (`Publicar` / `Despublicar`)
+  - top-right publish button with confirmation (`Publicar` / `Despublicar`) in `Guia publico por propriedade` (without wrapper bar)
+  - publication status (`Publicado e acessivel` + `Ultima atualizacao`) shown in the link card below URL and above link/PDF actions
   - link actions (`Copiar`, `Abrir link`, `Gerar PDF`)
 - Guide form is organized in sections (`Identificacao`, `Acesso e Wi-Fi`, `Horarios`, `Regras e dicas`, `Suporte e localizacao`).
+- In host guide editor, larger textareas are applied for `Mensagem de boas-vindas` and `Regras da casa`.
+- In host guide editor, `Instrucoes de check-in` and `Instrucoes de check-out` are displayed side by side on desktop with taller editing area.
 - Guide content section shows orange helper text: `Edite conforme achar necessário.`
 - Guide location uses Google Maps link field (stored in `emergencyContact` for compatibility).
 - Host guide contact field is focused on WhatsApp (cellphone with input mask).

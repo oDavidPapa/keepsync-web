@@ -191,6 +191,10 @@ export class HostSupportComponent {
       });
   }
 
+  onPublishButtonClick() {
+    this.onPublishToggleChange(!this.isPublished());
+  }
+
   saveGuide() {
     this.persistGuide(this.isPublished(), 'save');
   }
