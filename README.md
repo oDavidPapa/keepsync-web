@@ -51,3 +51,7 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
   - `/guia/:publicSlug`
 - Default starter copy (welcome/check-in/check-out/rules/local tips) is seeded by backend when a property guide is created for the first time.
 - Host support screen empty state (when there are no properties) now follows the same icon/title/subtitle visual pattern used in other screens.
+- Main layout now enforces first-access terms acceptance modal (blocking overlay) when backend signals `termsAcceptanceRequired=true`.
+- Terms modal allows `Aceitar e continuar` (calls `POST /v1/users/me/terms/accept`) or `Sair` (logout).
+- Terms modal visual updated to a cleaner style without visible borders on dialog/content separators.
+- Terms modal now uses softer typography colors, orange title/acceptance label, and no visible terms-version line.

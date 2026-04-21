@@ -14,6 +14,10 @@ export interface CurrentUserResponse {
   subscriptionExpiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  termsAcceptanceRequired?: boolean;
+  termsCurrentVersion?: string | null;
+  termsVersionAccepted?: string | null;
+  termsAcceptedAt?: string | null;
 }
 
 export interface UpdateCurrentUserProfileRequest {
@@ -34,6 +38,10 @@ export interface ChangeCurrentUserPasswordRequest {
 
 export interface ResetCurrentUserPasswordResponse {
   maskedEmail: string;
+}
+
+export interface AcceptTermsRequest {
+  accepted: boolean;
 }
 
 export interface UserListItemResponse {

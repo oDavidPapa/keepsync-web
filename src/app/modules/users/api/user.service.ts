@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiEnvelope, Page } from '../../../core/api/api.models';
 import {
+  AcceptTermsRequest,
   ChangeCurrentUserPasswordRequest,
   CurrentUserResponse,
   ResetCurrentUserPasswordResponse,
@@ -62,6 +63,12 @@ export class UserService {
   resetCurrentUserPassword(): Observable<ResetCurrentUserPasswordResponse> {
     return this.http
       .post<ApiEnvelope<ResetCurrentUserPasswordResponse>>(`${this.baseUrl}/me/password/reset`, {})
+      .pipe(map((response) => response.data));
+  }
+
+  acceptCurrentUserTerms(payload: AcceptTermsRequest): Observable<CurrentUserResponse> {
+    return this.http
+      .post<ApiEnvelope<CurrentUserResponse>>(`${this.baseUrl}/me/terms/accept`, payload)
       .pipe(map((response) => response.data));
   }
 }

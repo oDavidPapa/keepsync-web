@@ -15,3 +15,75 @@
 <button class="mobile-toggle" type="button" (click)="mobileOpen = !mobileOpen">
   <span class="material-symbols-rounded">menu</span>
 </button>
+
+<div class="terms-backdrop" *ngIf="termsModalOpen()">
+  <section class="terms-dialog" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+    <header class="terms-head">
+      <h2 id="termsTitle">Termo de Uso e Responsabilidade</h2>
+      <p>
+        Para continuar usando o KeepSync, voce precisa aceitar este termo.
+      </p>
+    </header>
+
+    <div class="terms-content">
+      <p><strong>1. Uso da plataforma</strong></p>
+      <p>
+        O KeepSync e uma ferramenta de apoio para sincronizacao de calendarios e operacao de hospedagens.
+        O anfitriao e responsavel por revisar dados, reservas e configuracoes antes de qualquer decisao operacional.
+      </p>
+
+      <p><strong>2. Dados e integracoes de terceiros</strong></p>
+      <p>
+        O sistema depende de integracoes externas (como links iCal e plataformas de reserva). Indisponibilidades,
+        alteracoes ou falhas de terceiros podem impactar sincronizacoes e notificacoes.
+      </p>
+
+      <p><strong>3. Responsabilidade do usuario</strong></p>
+      <p>
+        O usuario deve manter seus dados atualizados, proteger credenciais de acesso e validar informacoes criticas
+        de check-in, check-out, conflitos e comunicacoes com hospedes.
+      </p>
+
+      <p><strong>4. Limitacao de responsabilidade</strong></p>
+      <p>
+        O KeepSync nao se responsabiliza por perdas indiretas, lucros cessantes ou danos decorrentes de indisponibilidade
+        de servicos de terceiros, erro de configuracao do usuario ou uso indevido da plataforma.
+      </p>
+
+      <p><strong>5. Privacidade e LGPD</strong></p>
+      <p>
+        O tratamento de dados pessoais ocorre para execucao do servico contratado, melhoria da plataforma e atendimento
+        de obrigacoes legais, nos termos da legislacao aplicavel.
+      </p>
+
+      <p><strong>6. Atualizacao dos termos</strong></p>
+      <p>
+        Este termo pode ser atualizado periodicamente. Novas versoes podem exigir novo aceite para continuidade de uso.
+      </p>
+    </div>
+
+    <label class="terms-check">
+      <input
+        type="checkbox"
+        [checked]="termsChecked()"
+        [disabled]="termsSubmitting()"
+        (change)="onTermsCheckedChange($any($event.target).checked)"
+      />
+      <span>Li e aceito os termos de uso e responsabilidade.</span>
+    </label>
+
+    <footer class="terms-actions">
+      <button class="ui-btn ghost" type="button" [disabled]="termsSubmitting()" (click)="logoutFromTerms()">
+        Sair
+      </button>
+      <button
+        class="ui-btn primary solid"
+        type="button"
+        [disabled]="termsSubmitting() || !termsChecked()"
+        (click)="acceptTerms()"
+      >
+        {{ termsSubmitting() ? 'Salvando aceite...' : 'Aceitar e continuar' }}
+      </button>
+    </footer>
+  </section>
+</div>
