@@ -73,6 +73,11 @@ export class PublicHostGuideComponent {
     return `https://www.waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`;
   });
 
+  readonly checkInSteps = computed(() => this.toGuideList(this.guide()?.checkInInstructions));
+  readonly checkOutSteps = computed(() => this.toGuideList(this.guide()?.checkOutInstructions));
+  readonly houseRulesList = computed(() => this.toGuideList(this.guide()?.houseRules));
+  readonly localTipsList = computed(() => this.toGuideList(this.guide()?.localTips));
+
   readonly whatsappDigits = computed(() => {
     const loadedGuide = this.guide();
     const whatsappValue = String(loadedGuide?.supportWhatsapp ?? '').trim();
@@ -142,5 +147,37 @@ export class PublicHostGuideComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  private toGuideList(rawValue: string | null | undefined): string[] {
+    const normalized = String(rawValue ?? '')
+      .replace(/\r/g, '\n')
+      .trim();
+
+    if (!normalized) {
+      return [];
+    }
+
+    const items = normalized
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .flatMap((line) =>
+        line
+          .split(/\s*[;|]\s*/g)
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0)
+      )
+      .map((line) => line.replace(/^((?:[-*]|\u2022)+|\d+[.)])\s*/, '').trim())
+      .filter((line) => line.length > 0);
+
+    if (items.length === 1 && items[0].length > 120) {
+      return items[0]
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 0);
+    }
+
+    return items;
   }
 }

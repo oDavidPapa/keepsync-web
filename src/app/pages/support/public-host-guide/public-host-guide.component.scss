@@ -4,237 +4,259 @@
   min-height: 0;
 }
 
-.guide-page {
+.guest-flyer-page {
   height: 100dvh;
   overflow-y: auto;
-  padding: clamp(0.9rem, 2.5vw, 1.8rem);
-  background: linear-gradient(180deg, #f6f7fb 0%, #eef2f7 100%);
+  padding: clamp(0.8rem, 2vw, 1.8rem);
+  background: linear-gradient(180deg, #fff9f5 0%, #f5f7fb 100%);
 }
 
-.guide-booklet {
-  max-width: 760px;
-  margin: 0 auto;
-  margin-bottom: 1.25rem;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: #fff;
-  box-shadow: 0 1.2rem 2.4rem rgba(15, 23, 42, 0.12);
+.guest-flyer {
+  max-width: 1160px;
+  margin: 0 auto 1.25rem;
+  border-radius: 20px;
+  border: 1px solid rgba(194, 104, 33, 0.22);
+  background: #fffdf9;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
-.cover {
-  padding: 1.1rem 1.1rem 1rem;
-  background: linear-gradient(135deg, #c85314 0%, #d7672d 100%);
+.guest-flyer__header {
+  padding: clamp(1.1rem, 2.1vw, 1.6rem);
+  background: linear-gradient(136deg, #b45309 0%, #e77b2f 52%, #f4ab5b 100%);
   color: #fff;
 }
 
-.badge {
-  margin: 0 0 0.45rem;
+.guest-flyer__badge {
+  margin: 0 0 0.5rem;
   display: inline-flex;
   align-items: center;
-  padding: 0.18rem 0.5rem;
+  padding: 0.22rem 0.62rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.71rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.cover h1 {
+.guest-flyer__title {
   margin: 0;
-  font-size: clamp(1.35rem, 3vw, 2rem);
-  line-height: 1.15;
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
 }
 
-.address {
-  margin: 0.45rem 0 0;
+.guest-flyer__address {
+  margin: 0.5rem 0 0;
   color: rgba(255, 255, 255, 0.92);
-  font-size: 0.86rem;
 }
 
-.wifi-strip {
+.guest-flyer__folds {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guest-flyer__fold {
+  min-width: 0;
+  padding: clamp(0.8rem, 1.4vw, 1rem);
+  display: grid;
+  align-content: start;
+  gap: 0.72rem;
+}
+
+.guest-flyer__fold + .guest-flyer__fold {
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.guest-flyer__card {
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  padding: 0.85rem;
+}
+
+.guest-flyer__mini-grid,
+.guest-flyer__schedule-grid {
+  margin-top: 0.62rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.guest-flyer__mini-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  border-bottom: 1px dashed rgba(203, 109, 49, 0.45);
-  background: #fffaf7;
 }
 
-.wifi-cell {
-  padding: 0.7rem 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.wifi-cell + .wifi-cell {
-  border-left: 1px dashed rgba(203, 109, 49, 0.45);
-}
-
-.wifi-cell span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  color: rgba(146, 64, 14, 0.95);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-}
-
-.wifi-cell span .material-symbols-rounded {
-  font-size: 0.92rem;
-}
-
-.wifi-cell strong {
-  color: rgba(30, 41, 59, 0.95);
-}
-
-.chapter {
-  padding: 0.85rem 1.1rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-.chapter h2 {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.36rem;
-  color: rgba(15, 23, 42, 0.95);
-  font-size: 1rem;
-}
-
-.chapter-icon {
-  font-size: 1rem;
-  color: rgba(195, 83, 0, 0.96);
-}
-
-.chapter p {
-  margin: 0.4rem 0 0;
-  color: rgba(30, 41, 59, 0.9);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.chapter .highlight {
-  color: rgba(21, 128, 61, 0.95);
-  font-weight: 700;
-}
-
-.map-card {
-  border: 1px solid rgba(59, 130, 246, 0.25);
+.guest-flyer__mini-card,
+.guest-flyer__schedule-item {
   border-radius: 10px;
-  background: #f8fbff;
-  padding: 0.7rem;
-  margin-top: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #fff;
+  padding: 0.55rem 0.62rem;
 }
 
-.map-address {
+.guest-flyer__section-title {
   margin: 0;
-  color: rgba(30, 41, 59, 0.9);
+  color: rgba(146, 64, 14, 0.98);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.map-actions {
-  margin-top: 0.55rem;
+.guest-flyer__section-heading {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.97);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.guest-flyer__value {
+  margin: 0;
+  color: rgba(51, 65, 85, 0.95);
+}
+
+.guest-flyer__value--strong {
+  margin-top: 0.3rem;
+  color: rgba(17, 24, 39, 0.97);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  font-weight: 800;
+}
+
+.guest-flyer__text {
+  margin: 0.55rem 0 0;
+  color: rgba(51, 65, 85, 0.95);
+  white-space: pre-wrap;
+}
+
+.guest-flyer__time {
+  margin: 0.35rem 0 0;
+  color: #166534;
+  font-weight: 800;
+}
+
+.guest-flyer__list {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
-.map-btn {
+.guest-flyer__list-item {
+  position: relative;
+  padding-left: 0.8rem;
+  color: rgba(51, 65, 85, 0.95);
+  line-height: 1.36;
+}
+
+.guest-flyer__list-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(180, 83, 9, 0.7);
+}
+
+.guest-flyer__list--steps .guest-flyer__list-item::before {
+  background: rgba(22, 163, 74, 0.78);
+}
+
+.guest-flyer__map-address {
+  margin: 0.58rem 0 0;
+  color: rgba(51, 65, 85, 0.95);
+  word-break: break-word;
+}
+
+.guest-flyer__actions {
+  margin-top: 0.7rem;
+  display: grid;
+}
+
+.guest-flyer__action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  border-radius: 8px;
+  min-height: 42px;
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.guest-flyer__action-btn--maps {
+  border: 1px solid rgba(59, 130, 246, 0.34);
   background: #dbeafe;
-  color: #1e40af;
-  font-weight: 700;
-  text-decoration: none;
+  color: #1d4ed8;
 }
 
-.map-btn.alt {
-  background: #e6f4ea;
-  color: #166534;
+.guest-flyer__action-btn--waze {
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  background: #dff4ff;
+  color: #0c4a6e;
 }
 
-.map-btn:hover {
-  text-decoration: none;
-  filter: brightness(0.98);
-}
-
-.host-footer {
-  padding: 0.85rem 1.1rem;
-  border-top: 1px dashed rgba(203, 109, 49, 0.45);
-  background: #fffaf7;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-}
-
-.host-label {
-  margin: 0;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgba(146, 64, 14, 0.95);
-  font-weight: 700;
-}
-
-.host-footer strong {
-  color: rgba(15, 23, 42, 0.93);
-}
-
-.host-whatsapp {
-  margin: 0.2rem 0 0;
-  color: rgba(71, 85, 105, 0.95);
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.whatsapp-btn {
+.guest-flyer__whatsapp-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 0 0.85rem;
-  border-radius: 8px;
-  background: #e8f6ec;
-  border: 1px solid rgba(34, 197, 94, 0.32);
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  background: linear-gradient(180deg, #eafaf0 0%, #dcfce7 100%);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15);
   color: #166534;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
+  font-weight: 800;
 }
 
-.guide-bottom {
-  padding: 0.55rem 1.1rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.22);
-  color: rgba(100, 116, 139, 0.9);
-  font-size: 0.76rem;
+.guest-flyer__footer {
+  padding: 0.78rem 1rem 0.95rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.23);
+  color: rgba(100, 116, 139, 0.95);
 }
 
-.state-card {
+.guest-flyer--state {
   min-height: 220px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  align-content: center;
+  justify-items: center;
   text-align: center;
   padding: 1.1rem;
 }
 
-.state-card h1 {
-  margin: 0;
-  color: rgba(15, 23, 42, 0.94);
+@media (max-width: 1040px) {
+  .guest-flyer__folds {
+    grid-template-columns: 1fr;
+  }
+
+  .guest-flyer__fold + .guest-flyer__fold {
+    border-left: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+  }
 }
 
-.state-card p {
-  margin: 0.45rem 0 0;
-  color: rgba(71, 85, 105, 0.95);
+@media (max-width: 680px) {
+  .guest-flyer-page {
+    padding: 0.62rem;
+  }
+
+  .guest-flyer {
+    border-radius: 14px;
+  }
+
+  .guest-flyer__mini-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guest-flyer__actions {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .guest-flyer__action-btn,
+  .guest-flyer__whatsapp-btn {
+    width: 100%;
+  }
 }
 
 @media print {
@@ -242,39 +264,21 @@
     height: auto;
   }
 
-  .guide-page {
+  .guest-flyer-page {
     height: auto;
     overflow: visible;
-    background: #fff;
     padding: 0;
   }
 
-  .guide-booklet {
+  .guest-flyer {
     max-width: 100%;
     margin: 0;
     border: none;
-    box-shadow: none;
     border-radius: 0;
+    box-shadow: none;
   }
 
   .no-print {
     display: none !important;
-  }
-}
-
-@media (max-width: 680px) {
-  .wifi-strip,
-  .map-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .wifi-cell + .wifi-cell {
-    border-left: none;
-    border-top: 1px dashed rgba(203, 109, 49, 0.45);
-  }
-
-  .host-footer {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

@@ -1,105 +1,124 @@
-<div class="guide-page">
-  <article class="guide-booklet" *ngIf="!loading() && !error() && guide() as loadedGuide">
-    <header class="cover">
-      <p class="badge">Cartilha do Hospede</p>
-      <h1>{{ title() }}</h1>
-      <p class="address" *ngIf="fullAddress()">{{ fullAddress() }}</p>
+<div class="guest-flyer-page">
+  <article class="guest-flyer" *ngIf="!loading() && !error() && guide() as loadedGuide">
+    <header class="guest-flyer__header">
+      <p class="guest-flyer__badge">Cartilha do Hospede</p>
+      <h1 class="guest-flyer__title">{{ title() }}</h1>
+      <p class="guest-flyer__address" *ngIf="fullAddress()">{{ fullAddress() }}</p>
     </header>
 
-    <section class="wifi-strip" *ngIf="loadedGuide.wifiName || loadedGuide.wifiPassword">
-      <div class="wifi-cell" *ngIf="loadedGuide.wifiName">
-        <span class="label">
-          <span class="material-symbols-rounded">wifi</span>
-          Rede Wi-Fi
-        </span>
-        <strong>{{ loadedGuide.wifiName }}</strong>
-      </div>
-      <div class="wifi-cell" *ngIf="loadedGuide.wifiPassword">
-        <span class="label">
-          <span class="material-symbols-rounded">key</span>
-          Senha
-        </span>
-        <strong>{{ loadedGuide.wifiPassword }}</strong>
-      </div>
-    </section>
+    <div class="guest-flyer__folds">
+      <section class="guest-flyer__fold">
+        <article class="guest-flyer__card" *ngIf="loadedGuide.wifiName || loadedGuide.wifiPassword">
+          <h2 class="guest-flyer__section-heading">Wi-Fi</h2>
+          <div class="guest-flyer__mini-grid">
+            <div class="guest-flyer__mini-card" *ngIf="loadedGuide.wifiName">
+              <p class="guest-flyer__section-title">Rede</p>
+              <p class="guest-flyer__value guest-flyer__value--strong">{{ loadedGuide.wifiName }}</p>
+            </div>
+            <div class="guest-flyer__mini-card" *ngIf="loadedGuide.wifiPassword">
+              <p class="guest-flyer__section-title">Senha</p>
+              <p class="guest-flyer__value guest-flyer__value--strong">{{ loadedGuide.wifiPassword }}</p>
+            </div>
+          </div>
+        </article>
 
-    <section class="chapter" *ngIf="loadedGuide.welcomeMessage">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">waving_hand</span>
-        Boas-vindas
-      </h2>
-      <p>{{ loadedGuide.welcomeMessage }}</p>
-    </section>
+        <article class="guest-flyer__card" *ngIf="loadedGuide.checkInInstructions || loadedGuide.defaultCheckInTime || loadedGuide.checkOutInstructions || loadedGuide.defaultCheckOutTime">
+          <h2 class="guest-flyer__section-heading">Horarios</h2>
 
-    <section class="chapter" *ngIf="loadedGuide.checkInInstructions || loadedGuide.defaultCheckInTime">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">vpn_key</span>
-        Check-in
-      </h2>
-      <p class="highlight" *ngIf="loadedGuide.defaultCheckInTime">A partir das {{ loadedGuide.defaultCheckInTime.slice(0, 5) }}</p>
-      <p *ngIf="loadedGuide.checkInInstructions">{{ loadedGuide.checkInInstructions }}</p>
-    </section>
+          <div class="guest-flyer__schedule-grid">
+            <div class="guest-flyer__schedule-item" *ngIf="loadedGuide.checkInInstructions || loadedGuide.defaultCheckInTime">
+              <p class="guest-flyer__section-title">Check-in</p>
+              <p class="guest-flyer__time" *ngIf="loadedGuide.defaultCheckInTime">A partir das {{ loadedGuide.defaultCheckInTime.slice(0, 5) }}</p>
+              <ul class="guest-flyer__list guest-flyer__list--steps" *ngIf="checkInSteps().length">
+                <li class="guest-flyer__list-item" *ngFor="let item of checkInSteps()">{{ item }}</li>
+              </ul>
+            </div>
 
-    <section class="chapter" *ngIf="loadedGuide.checkOutInstructions || loadedGuide.defaultCheckOutTime">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">meeting_room</span>
-        Check-out
-      </h2>
-      <p class="highlight" *ngIf="loadedGuide.defaultCheckOutTime">Ate as {{ loadedGuide.defaultCheckOutTime.slice(0, 5) }}</p>
-      <p *ngIf="loadedGuide.checkOutInstructions">{{ loadedGuide.checkOutInstructions }}</p>
-    </section>
+            <div class="guest-flyer__schedule-item" *ngIf="loadedGuide.checkOutInstructions || loadedGuide.defaultCheckOutTime">
+              <p class="guest-flyer__section-title">Check-out</p>
+              <p class="guest-flyer__time" *ngIf="loadedGuide.defaultCheckOutTime">Ate as {{ loadedGuide.defaultCheckOutTime.slice(0, 5) }}</p>
+              <ul class="guest-flyer__list guest-flyer__list--steps" *ngIf="checkOutSteps().length">
+                <li class="guest-flyer__list-item" *ngFor="let item of checkOutSteps()">{{ item }}</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </section>
 
-    <section class="chapter" *ngIf="loadedGuide.houseRules">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">gavel</span>
-        Regras da casa
-      </h2>
-      <p>{{ loadedGuide.houseRules }}</p>
-    </section>
+      <section class="guest-flyer__fold">
+        <article class="guest-flyer__card" *ngIf="loadedGuide.welcomeMessage">
+          <h2 class="guest-flyer__section-heading">Boas-vindas</h2>
+          <p class="guest-flyer__text">{{ loadedGuide.welcomeMessage }}</p>
+        </article>
 
-    <section class="chapter" *ngIf="mapsHref() || fullAddress()">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">pin_drop</span>
-        Como chegar
-      </h2>
-      <div class="map-card">
-        <p class="map-address">{{ fullAddress() || 'Endereco nao informado' }}</p>
-        <div class="map-actions">
-          <a class="map-btn" *ngIf="mapsHref()" [href]="mapsHref()" target="_blank" rel="noopener noreferrer">Google Maps</a>
-          <a class="map-btn alt" *ngIf="wazeHref()" [href]="wazeHref()" target="_blank" rel="noopener noreferrer">Waze</a>
-        </div>
-      </div>
-    </section>
+        <article class="guest-flyer__card" *ngIf="loadedGuide.houseRules">
+          <h2 class="guest-flyer__section-heading">Regras da casa</h2>
+          <ul class="guest-flyer__list" *ngIf="houseRulesList().length">
+            <li class="guest-flyer__list-item" *ngFor="let item of houseRulesList()">{{ item }}</li>
+          </ul>
+        </article>
+      </section>
 
-    <section class="chapter" *ngIf="loadedGuide.localTips">
-      <h2>
-        <span class="material-symbols-rounded chapter-icon">lightbulb</span>
-        Dicas locais
-      </h2>
-      <p>{{ loadedGuide.localTips }}</p>
-    </section>
+      <section class="guest-flyer__fold">
+        <article class="guest-flyer__card" *ngIf="mapsHref() || fullAddress()">
+          <h2 class="guest-flyer__section-heading">Como chegar</h2>
+          <p class="guest-flyer__map-address">{{ fullAddress() || 'Endereco nao informado' }}</p>
+          <div class="guest-flyer__actions">
+            <a
+              class="guest-flyer__action-btn guest-flyer__action-btn--maps"
+              *ngIf="mapsHref()"
+              [href]="mapsHref()"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google Maps
+            </a>
+            <a
+              class="guest-flyer__action-btn guest-flyer__action-btn--waze"
+              *ngIf="wazeHref()"
+              [href]="wazeHref()"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Waze
+            </a>
+          </div>
+        </article>
 
-    <section class="host-footer" *ngIf="loadedGuide.hostName || hasWhatsappContact()">
-      <div>
-        <p class="host-label">Anfitriao</p>
-        <strong>{{ loadedGuide.hostName || 'Anfitriao KeepSync' }}</strong>
-        <p class="host-whatsapp" *ngIf="hasWhatsappContact()">WhatsApp: {{ loadedGuide.supportWhatsapp }}</p>
-      </div>
-      <a class="whatsapp-btn no-print" *ngIf="hasWhatsappContact()" [href]="whatsappHref()" target="_blank" rel="noopener noreferrer">
-        WhatsApp
-      </a>
-    </section>
+        <article class="guest-flyer__card" *ngIf="loadedGuide.localTips">
+          <h2 class="guest-flyer__section-heading">Dicas locais</h2>
+          <ul class="guest-flyer__list" *ngIf="localTipsList().length">
+            <li class="guest-flyer__list-item" *ngFor="let item of localTipsList()">{{ item }}</li>
+          </ul>
+        </article>
 
-    <footer class="guide-bottom">
+        <article class="guest-flyer__card guest-flyer__card--contact" *ngIf="loadedGuide.hostName || hasWhatsappContact()">
+          <h2 class="guest-flyer__section-heading">Anfitriao</h2>
+          <p class="guest-flyer__value guest-flyer__value--strong">{{ loadedGuide.hostName || 'Anfitriao KeepSync' }}</p>
+          <p class="guest-flyer__value" *ngIf="hasWhatsappContact()">WhatsApp: {{ loadedGuide.supportWhatsapp }}</p>
+          <a
+            class="guest-flyer__whatsapp-btn no-print"
+            *ngIf="hasWhatsappContact()"
+            [href]="whatsappHref()"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Falar no WhatsApp
+          </a>
+        </article>
+      </section>
+    </div>
+
+    <footer class="guest-flyer__footer">
       <span>Gerado pelo KeepSync</span>
     </footer>
   </article>
 
-  <article class="guide-booklet state-card" *ngIf="loading()">
+  <article class="guest-flyer guest-flyer--state" *ngIf="loading()">
     <h1>Carregando cartilha...</h1>
   </article>
 
-  <article class="guide-booklet state-card" *ngIf="!loading() && error()">
+  <article class="guest-flyer guest-flyer--state" *ngIf="!loading() && error()">
     <h1>Nao foi possivel abrir esta cartilha</h1>
     <p>{{ error() }}</p>
   </article>
