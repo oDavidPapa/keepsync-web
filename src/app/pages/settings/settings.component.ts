@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
 import {
@@ -170,9 +171,22 @@ export class SettingsComponent {
     return this.effectivePlanCode() !== 'FREE';
   });
 
+  readonly planActionLabel = computed(() => {
+    return this.effectivePlanCode() === 'FREE'
+      ? 'Contratar Plano'
+      : 'Gerenciar Plano';
+  });
+
+  readonly planActionIcon = computed(() => {
+    return this.effectivePlanCode() === 'FREE'
+      ? 'workspace_premium'
+      : 'manage_accounts';
+  });
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly toast: ToastService,
+    private readonly router: Router,
     private readonly userService: UserService,
     private readonly tokenStorage: TokenStorageService,
     private readonly notificationPreferenceService: NotificationPreferenceService,
@@ -363,6 +377,10 @@ export class SettingsComponent {
     });
   }
 
+  goToPlanCheckout() {
+    void this.router.navigate(['/app/billing/checkout']);
+  }
+
   onPhoneInput() {
     const phoneControl = this.profileForm.controls.phoneNumber;
     phoneControl.setValue(this.formatPhone(phoneControl.value), { emitEvent: false });
@@ -469,4 +487,5 @@ export class SettingsComponent {
   private formatDate(value: string) {
     return new Date(value).toLocaleDateString('pt-BR');
   }
+
 }

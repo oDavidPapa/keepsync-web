@@ -1,0 +1,228 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.checkout-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.current-strip,
+.checkout-hint,
+.plan-card {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--color-white);
+}
+
+.current-strip {
+  padding: 0.9rem 1rem;
+}
+
+.checkout-hint {
+  padding: 0.95rem 1rem;
+  border: none;
+  box-shadow: none;
+  background: linear-gradient(135deg, rgba(195, 83, 0, 0.14), rgba(195, 83, 0, 0.04));
+}
+
+.checkout-hint h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.current-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.strip-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.current-strip strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.2rem;
+  color: rgba(17, 24, 39, 0.95);
+}
+
+.current-strip p {
+  margin: 0.2rem 0 0;
+  color: var(--color-dark-variant);
+}
+
+.strip-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.strip-actions .ui-btn,
+.plan-card .ui-btn {
+  min-width: 0;
+}
+
+.strip-actions .ui-btn .material-symbols-rounded,
+.plan-card .ui-btn .material-symbols-rounded {
+  font-size: 1.05rem;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.plan-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  position: relative;
+}
+
+.plan-card-current {
+  box-shadow: inset 0 0 0 1px rgba(27, 156, 133, 0.28);
+}
+
+.offer-badge {
+  position: absolute;
+  top: 0.72rem;
+  right: 0.72rem;
+  border-radius: 999px;
+  background: rgba(195, 83, 0, 0.12);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+}
+
+.plan-card h3 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.02rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan-card header p {
+  margin: 0.2rem 0 0;
+  color: var(--color-dark-variant);
+  font-size: 0.82rem;
+}
+
+.price-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.price-line strong {
+  color: rgba(17, 24, 39, 0.95);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.price-line span {
+  color: var(--color-dark-variant);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.benefits {
+  margin: 0;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.benefits li {
+  color: rgba(55, 65, 81, 0.96);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.plan-card .ui-btn {
+  margin-top: auto;
+  justify-content: center;
+}
+
+@media (max-width: 920px) {
+  .current-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .strip-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .strip-actions .ui-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card .ui-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .checkout-page {
+    gap: 0.75rem;
+  }
+
+  .current-strip,
+  .checkout-hint,
+  .plan-card {
+    border-radius: 12px;
+  }
+
+  .current-strip,
+  .plan-card {
+    padding: 0.85rem;
+  }
+
+  .checkout-hint {
+    padding: 0.85rem;
+  }
+
+  .checkout-hint h2 {
+    font-size: 0.92rem;
+  }
+
+  .plan-card h3 {
+    font-size: 0.96rem;
+  }
+
+  .price-line strong {
+    font-size: 1.3rem;
+  }
+}

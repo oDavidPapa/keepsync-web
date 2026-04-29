@@ -1,0 +1,75 @@
+<div class="ui-page ui-page-fit checkout-page">
+  <app-page-header
+    title="Gerenciar Plano"
+    subtitle="Escolha o plano ideal e finalize a assinatura com seguranca no Stripe."
+    [sticky]="false"
+    [top]="0"
+  ></app-page-header>
+
+  <section class="current-strip card">
+    <div>
+      <span class="strip-label">Plano atual</span>
+      <strong>{{ currentPlanLabel() }}</strong>
+      <p>{{ subscriptionDescription() }}</p>
+    </div>
+
+    <div class="strip-actions">
+      <button
+        class="ui-btn ghost mini"
+        type="button"
+        [disabled]="loadingUser() || checkoutBusy() || portalLoading()"
+        (click)="goToSettings()"
+      >
+        <span class="material-symbols-rounded">arrow_back</span>
+        Voltar para Configuracoes
+      </button>
+      <button
+        class="ui-btn primary solid mini"
+        type="button"
+        [disabled]="loadingUser() || checkoutBusy() || portalLoading()"
+        (click)="openBillingPortal()"
+      >
+        <span class="material-symbols-rounded">manage_accounts</span>
+        {{ portalLoading() ? 'Abrindo portal...' : 'Gerenciar assinatura no Stripe' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="checkout-hint card">
+    <h2>{{ checkoutHint() }}</h2>
+  </section>
+
+  <section class="plans-grid">
+    <article
+      class="plan-card"
+      *ngFor="let offer of planOffers"
+      [class.plan-card-current]="isCurrentPlan(offer.code)"
+    >
+      <span class="offer-badge" *ngIf="offer.badge">{{ offer.badge }}</span>
+
+      <header>
+        <h3>{{ offer.name }}</h3>
+        <p>{{ offer.description }}</p>
+      </header>
+
+      <div class="price-line">
+        <strong>{{ priceLabel(offer) }}</strong>
+        <span>{{ priceCycleSuffix() }}</span>
+      </div>
+
+      <ul class="benefits">
+        <li *ngFor="let benefit of offer.benefits">{{ benefit }}</li>
+      </ul>
+
+      <button
+        class="ui-btn primary solid"
+        type="button"
+        [disabled]="loadingUser() || checkoutBusy() || portalLoading() || isCurrentPlan(offer.code) || !checkoutEnabled()"
+        (click)="startCheckout(offer.code)"
+      >
+        <span class="material-symbols-rounded">{{ checkoutButtonIcon(offer) }}</span>
+        {{ isCheckoutLoading(offer.code) ? 'Abrindo checkout...' : checkoutButtonLabel(offer) }}
+      </button>
+    </article>
+  </section>
+</div>

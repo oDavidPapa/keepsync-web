@@ -55,3 +55,16 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 - Terms modal allows `Aceitar e continuar` (calls `POST /v1/users/me/terms/accept`) or `Sair` (logout).
 - Terms modal visual updated to a cleaner style without visible borders on dialog/content separators.
 - Terms modal now uses softer typography colors, orange title/acceptance label, and no visible terms-version line.
+- Billing/plan checkout flow:
+  - checkout page route: `/app/billing/checkout`
+  - only monthly billing is available in the current UI (no yearly option)
+  - displayed prices:
+    - `BASICO`: `R$ 79,90 / mes`
+    - `PRO`: `R$ 149,90 / mes`
+  - plan cards show operational limits and sync cadence:
+    - `BASICO`: up to 3 properties, up to 3 channels per property, auto sync each 10 minutes, manual sync cooldown 3 minutes
+    - `PRO`: unlimited properties, unlimited channels per property, auto sync each 2 minutes, manual sync cooldown 1 minute
+  - settings screen plan CTA is contextual:
+    - `FREE` user: `Contratar Plano`
+    - paid user: `Gerenciar Plano`
+  - in checkout top actions, `Voltar para Configuracoes` appears before `Gerenciar assinatura no Stripe`

@@ -9,7 +9,10 @@
   gap: 1rem;
 }
 
-.settings-grid { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }
+.settings-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  align-items: stretch;
+}
 .security-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
@@ -26,6 +29,11 @@
   gap: 1rem;
   padding: 1rem;
   box-shadow: 0 1.2rem 2.2rem rgba(17, 24, 39, 0.06);
+}
+
+.settings-grid > .settings-card .card-foot,
+.settings-grid > .settings-card .plan-actions {
+  margin-top: auto;
 }
 
 .card-head h2,
@@ -101,6 +109,15 @@
 .card-foot.inline { justify-content: flex-start; }
 
 .plan-card { gap: 1.25rem; }
+
+.plan-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.plan-actions .ui-btn {
+  min-width: 0;
+}
 
 .plan-highlight {
   display: flex;

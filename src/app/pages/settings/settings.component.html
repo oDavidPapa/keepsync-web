@@ -82,14 +82,16 @@
         </div>
 
         <div class="meta-item">
-          <span class="meta-label">Conta criada em</span>
-          <strong>{{ user.createdAt | date:'dd/MM/yyyy' }}</strong>
-        </div>
-
-        <div class="meta-item">
           <span class="meta-label">Ultima atualizacao</span>
           <strong>{{ user.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
         </div>
+      </div>
+
+      <div class="plan-actions">
+        <button class="ui-btn primary solid" type="button" [disabled]="loading()" (click)="goToPlanCheckout()">
+          <span class="material-symbols-rounded">{{ planActionIcon() }}</span>
+          {{ planActionLabel() }}
+        </button>
       </div>
     </aside>
   </div>
