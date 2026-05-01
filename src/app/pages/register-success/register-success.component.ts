@@ -20,7 +20,7 @@ export class RegisterSuccessComponent {
 
   buyPlan(): void {
     this.helperMessage.set(
-      'A area de planos estara disponivel em breve. Enquanto isso, voce ja pode entrar e usar o sistema gratuitamente.'
+      'Verifique a caixa de spam/lixo eletronico e tente novamente em alguns minutos. Voce tambem pode pedir reenvio na tela de login.'
     );
   }
 }

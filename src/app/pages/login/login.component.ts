@@ -32,9 +32,11 @@ export class LoginComponent {
 
   readonly submitted = signal(false);
   readonly submitting = signal(false);
+  readonly resendingVerification = signal(false);
   readonly showPassword = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly helperMessage = signal<string | null>(null);
+  readonly canResendVerification = signal(false);
 
   constructor(
     private readonly fb: FormBuilder,
@@ -47,6 +49,7 @@ export class LoginComponent {
     this.submitted.set(true);
     this.errorMessage.set(null);
     this.helperMessage.set(null);
+    this.canResendVerification.set(false);
     this.form.markAllAsTouched();
 
     if (this.form.invalid) {
@@ -68,6 +71,31 @@ export class LoginComponent {
         error: (error) => {
           this.submitting.set(false);
           this.errorMessage.set(this.resolveErrorMessage(error));
+        },
+      });
+  }
+
+  resendVerificationEmail(): void {
+    const email = this.form.controls.email.value.trim();
+    if (!email) {
+      this.errorMessage.set('Informe o e-mail para reenviar a confirmacao.');
+      return;
+    }
+
+    this.resendingVerification.set(true);
+    this.helperMessage.set(null);
+
+    this.authService
+      .resendEmailVerification({ email })
+      .subscribe({
+        next: (response) => {
+          this.resendingVerification.set(false);
+          this.canResendVerification.set(false);
+          this.helperMessage.set(response.message);
+        },
+        error: () => {
+          this.resendingVerification.set(false);
+          this.helperMessage.set('Nao foi possivel reenviar agora. Tente novamente em instantes.');
         },
       });
   }
@@ -97,9 +125,9 @@ export class LoginComponent {
   private resolveErrorMessage(error: unknown): string {
     const httpError = error as HttpErrorResponse;
     const apiError = httpError?.error as ApiError | undefined;
-
-    if (apiError?.error === 'INVALID_CREDENTIALS') {
-      return 'E-mail ou senha invalidos.';
+    if (httpError?.status === 401 || apiError?.error === 'INVALID_CREDENTIALS' || apiError?.error === 'EMAIL_NOT_VERIFIED') {
+      this.canResendVerification.set(true);
+      return 'Nao foi possivel autenticar com os dados informados.';
     }
 
     return apiErrorMessage(error, 'Nao foi possivel realizar o login.');

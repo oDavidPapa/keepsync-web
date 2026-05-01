@@ -15,6 +15,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { RegisterSuccessComponent } from './pages/register-success/register-success.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { ContactComponent } from './pages/support/contact/contact.component';
 import { AccountDeletionComponent } from './pages/support/account-deletion/account-deletion.component';
 import { HostSupportComponent } from './pages/support/host-support/host-support.component';
@@ -30,6 +31,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
   { path: 'register/success', component: RegisterSuccessComponent, canActivate: [guestGuard] },
+  { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'termos-de-uso', component: TermsOfUseComponent },
   { path: 'politica-de-privacidade', component: PrivacyPolicyComponent },
   { path: 'guia/:publicSlug', component: PublicHostGuideComponent },

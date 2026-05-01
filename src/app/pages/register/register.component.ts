@@ -116,9 +116,27 @@ export class RegisterComponent {
   private resolveErrorMessage(error: unknown): string {
     const httpError = error as HttpErrorResponse;
     const apiError = httpError?.error as ApiError | undefined;
+    const rawStringError = typeof httpError?.error === 'string' ? httpError.error : '';
+    const normalizedApiMessage = (apiError?.message ?? '').trim().toLowerCase();
+    const normalizedRawStringError = rawStringError.trim().toLowerCase();
 
-    if (apiError?.error === 'EMAIL_ALREADY_REGISTERED') {
-      return 'Ja existe uma conta com este e-mail.';
+    if (
+      apiError?.error === 'EMAIL_ALREADY_REGISTERED'
+      || normalizedApiMessage.includes('email already registered')
+      || normalizedApiMessage.includes('ja existe uma conta com este e-mail')
+      || normalizedRawStringError.includes('email already registered')
+      || normalizedRawStringError.includes('ja existe uma conta com este e-mail')
+    ) {
+      return 'Este e-mail ja pode estar em uso. Se voce ja tem uma conta, tente fazer login ou recuperar a senha.';
+    }
+
+    if (
+      normalizedApiMessage === 'unexpected error'
+      || normalizedRawStringError === 'unexpected error'
+      || normalizedApiMessage.includes('nao foi possivel enviar o email')
+      || normalizedRawStringError.includes('nao foi possivel enviar o email')
+    ) {
+      return 'Nao foi possivel concluir seu cadastro agora. Tente novamente em instantes ou use outro e-mail.';
     }
 
     return apiErrorMessage(error, 'Nao foi possivel concluir o cadastro.');

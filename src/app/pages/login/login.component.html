@@ -46,7 +46,7 @@
               id="email"
               type="email"
               formControlName="email"
-              placeholder="voce@empresa.com"
+              placeholder="Digite seu e-mail"
               autocomplete="email"
               spellcheck="false"
             />
@@ -84,6 +84,15 @@
           </label>
 
           <div class="feedback-banner error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+          <button
+            class="text-link"
+            type="button"
+            *ngIf="canResendVerification()"
+            [disabled]="resendingVerification()"
+            (click)="resendVerificationEmail()"
+          >
+            {{ resendingVerification() ? 'Reenviando...' : 'Reenviar e-mail de confirmacao' }}
+          </button>
           <div class="feedback-banner info" *ngIf="helperMessage()">{{ helperMessage() }}</div>
 
           <button class="submit-button" type="submit" [disabled]="submitting()">

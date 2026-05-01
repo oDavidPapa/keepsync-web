@@ -1,0 +1,53 @@
+<div class="verify-page">
+  <div class="verify-card">
+    <div class="verify-brand" aria-label="KeepSync">
+      <span class="verify-brand__keep">Keep</span><span class="verify-brand__sync">Sync</span>
+    </div>
+
+    <div class="verify-title-row">
+      <div
+        class="verify-status-icon"
+        [class.verify-status-icon--success]="!loading() && success()"
+        [class.verify-status-icon--error]="!loading() && !success()"
+        [class.verify-status-icon--loading]="loading()"
+      >
+        <span *ngIf="loading()">...</span>
+        <span *ngIf="!loading() && success()">✓</span>
+        <span *ngIf="!loading() && !success()">!</span>
+      </div>
+      <h1>Confirmacao de e-mail</h1>
+    </div>
+    <p class="verify-description" *ngIf="loading()">Estamos validando seu link de confirmacao...</p>
+    <p class="verify-description" *ngIf="!loading()">{{ message() }}</p>
+
+    <div class="verify-banner verify-banner--success" *ngIf="!loading() && success()">
+      Confirmacao concluida com sucesso.
+    </div>
+
+    <div class="verify-banner verify-banner--error" *ngIf="!loading() && !success()">
+      Nao conseguimos concluir a confirmacao automaticamente.
+    </div>
+
+    <form class="verify-form" [formGroup]="resendForm" *ngIf="!loading() && !success()" (ngSubmit)="resend()">
+      <label for="email">Reenviar confirmacao para o e-mail</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        placeholder="Digite seu e-mail"
+        autocomplete="email"
+        spellcheck="false"
+      />
+      <span class="verify-form__error" *ngIf="hasEmailError()">Informe um e-mail valido.</span>
+      <button class="verify-button verify-button--secondary" type="submit" [disabled]="resending()">
+        {{ resending() ? 'Reenviando...' : 'Reenviar e-mail de confirmacao' }}
+      </button>
+    </form>
+
+    <div class="verify-actions">
+      <button class="verify-button verify-button--primary" type="button" (click)="goToLogin()">
+        Ir para login
+      </button>
+    </div>
+  </div>
+</div>
