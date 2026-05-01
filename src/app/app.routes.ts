@@ -21,6 +21,8 @@ import { HostSupportComponent } from './pages/support/host-support/host-support.
 import { PublicHostGuideComponent } from './pages/support/public-host-guide/public-host-guide.component';
 import { PlanCheckoutComponent } from './pages/billing/checkout/plan-checkout.component';
 import { PlanCheckoutSuccessComponent } from './pages/billing/checkout/success/plan-checkout-success.component';
+import { TermsOfUseComponent } from './pages/legal/terms-of-use.component';
+import { PrivacyPolicyComponent } from './pages/legal/privacy-policy.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -28,6 +30,8 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
   { path: 'register/success', component: RegisterSuccessComponent, canActivate: [guestGuard] },
+  { path: 'termos-de-uso', component: TermsOfUseComponent },
+  { path: 'politica-de-privacidade', component: PrivacyPolicyComponent },
   { path: 'guia/:publicSlug', component: PublicHostGuideComponent },
   {
     path: 'app',

@@ -68,3 +68,14 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
     - `FREE` user: `Contratar Plano`
     - paid user: `Gerenciar Plano`
   - in checkout top actions, `Voltar para Configuracoes` appears before `Gerenciar assinatura no Stripe`
+- Legal documents (V1):
+  - public routes:
+    - `/termos-de-uso`
+    - `/politica-de-privacidade`
+  - links are available in:
+    - login screen
+    - register screen
+    - register success screen
+    - forgot password screen
+    - settings screen (`Documentos legais`)
+    - first-access terms modal in main layout

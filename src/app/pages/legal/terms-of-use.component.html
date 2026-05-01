@@ -1,0 +1,38 @@
+<main class="legal-shell">
+  <section class="legal-hero">
+    <p class="legal-kicker">Documento legal</p>
+    <h1>Termos de Uso</h1>
+    <p class="legal-subtitle">Todos os topicos estao abertos por padrao para leitura completa.</p>
+    <div class="legal-meta-row">
+      <span class="legal-meta-chip">Atualizado em {{ updatedAt }}</span>
+      <a class="legal-switch-link" href="/politica-de-privacidade">Ver Politica de Privacidade</a>
+    </div>
+  </section>
+
+  <section class="legal-accordion" aria-label="Topicos dos Termos de Uso">
+    <article class="legal-item" *ngFor="let section of sections; let i = index" [class.open]="isOpen(i)">
+      <button class="legal-trigger" type="button" [attr.aria-expanded]="isOpen(i)" (click)="toggleSection(i)">
+        <span>{{ section.title }}</span>
+        <span class="legal-trigger-icon">{{ isOpen(i) ? '-' : '+' }}</span>
+      </button>
+
+      <div class="legal-panel" *ngIf="isOpen(i)">
+        <p *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+
+        <ul *ngIf="section.bullets?.length">
+          <li *ngFor="let bullet of section.bullets">{{ bullet }}</li>
+        </ul>
+
+        <p *ngIf="section.bulletsSecondaryLabel">{{ section.bulletsSecondaryLabel }}</p>
+
+        <ul *ngIf="section.bulletsSecondary?.length">
+          <li *ngFor="let bullet of section.bulletsSecondary">{{ bullet }}</li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <footer class="legal-footer">
+    Contato: <a href="mailto:suporte@keepsync.com.br">suporte&#64;keepsync.com.br</a>
+  </footer>
+</main>
