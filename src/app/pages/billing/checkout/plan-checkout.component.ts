@@ -69,7 +69,18 @@ export class PlanCheckoutComponent {
   readonly effectivePlanCode = computed<UserPlanCode>(() => resolveEffectivePlanCode(this.currentUser()));
   readonly hasActivePaidSubscription = computed(() => this.effectivePlanCode() !== 'FREE');
   readonly hasExpiredPaidSubscription = computed(() => isSubscriptionExpired(this.currentUser()));
-  readonly checkoutEnabled = computed(() => !this.hasActivePaidSubscription());
+  readonly checkoutEnabled = computed(() => this.effectivePlanCode() === 'FREE');
+  readonly isBasicPlan = computed(() => this.effectivePlanCode() === 'BASIC');
+  readonly isProPlan = computed(() => this.effectivePlanCode() === 'PRO');
+  readonly visiblePlanOffers = computed(() => {
+    if (this.isBasicPlan()) {
+      return this.planOffers.filter((offer) => offer.code === 'PRO');
+    }
+    if (this.isProPlan()) {
+      return [] as ReadonlyArray<PlanOffer>;
+    }
+    return this.planOffers;
+  });
 
   readonly currentPlanLabel = computed(() => this.planLabel(this.effectivePlanCode()));
 
@@ -92,6 +103,14 @@ export class PlanCheckoutComponent {
 
   readonly checkoutBusy = computed(() => this.checkoutLoadingPlan() !== null);
   readonly checkoutHint = computed(() => {
+    if (this.isProPlan()) {
+      return 'Voce ja esta no plano mais completo. Para alteracoes de ciclo, pagamento ou cancelamento, use o portal Stripe.';
+    }
+
+    if (this.isBasicPlan()) {
+      return 'Voce esta no plano Basico. Para subir para o Pro, use o botao de upgrade abaixo.';
+    }
+
     if (this.hasActivePaidSubscription()) {
       return 'Sua assinatura esta ativa e a renovacao e automatica. Para alteracoes de plano, ciclo ou cancelamento, use o portal Stripe.';
     }
@@ -147,6 +166,15 @@ export class PlanCheckoutComponent {
     });
   }
 
+  handleOfferAction(offer: PlanOffer) {
+    if (this.isBasicPlan() && offer.code === 'PRO') {
+      this.openBillingPortal();
+      return;
+    }
+
+    this.startCheckout(offer.code);
+  }
+
   openBillingPortal() {
     this.portalLoading.set(true);
 
@@ -188,13 +216,25 @@ export class PlanCheckoutComponent {
 
   private handleBillingResultQueryParam() {
     const billingResult = (this.route.snapshot.queryParamMap.get('billing') ?? '').trim().toLowerCase();
+    const sessionId = (this.route.snapshot.queryParamMap.get('session_id') ?? '').trim();
     if (!billingResult) {
       return;
     }
 
     if (billingResult === 'success') {
-      this.toast.success('Checkout concluido. Seu plano sera atualizado apos o webhook do Stripe.');
+      if (!sessionId.startsWith('cs_')) {
+        this.toast.warning('Retorno de pagamento invalido. Abra o checkout novamente para concluir a assinatura.');
+        this.clearBillingQueryParams();
+        return;
+      }
       this.clearBillingQueryParams();
+      void this.router.navigate(['/app/billing/checkout/success'], {
+        queryParams: {
+          billing: 'success',
+          session_id: sessionId,
+        },
+        replaceUrl: true,
+      });
       return;
     }
 
@@ -252,12 +292,38 @@ export class PlanCheckoutComponent {
   }
 
   isCheckoutLoading(planCode: BillingPlanCode) {
+    if (this.isBasicPlan() && planCode === 'PRO') {
+      return this.portalLoading();
+    }
     return this.checkoutLoadingPlan() === planCode;
   }
 
+  checkoutLoadingLabel(offer: PlanOffer) {
+    if (this.isBasicPlan() && offer.code === 'PRO') {
+      return 'Abrindo portal...';
+    }
+    return 'Abrindo checkout...';
+  }
+
+  isOfferActionDisabled(offer: PlanOffer) {
+    if (this.loadingUser() || this.checkoutBusy() || this.portalLoading()) {
+      return true;
+    }
+
+    if (this.isBasicPlan() && offer.code === 'PRO') {
+      return false;
+    }
+
+    return this.isCurrentPlan(offer.code) || !this.checkoutEnabled();
+  }
+
   checkoutButtonLabel(offer: PlanOffer) {
+    if (this.isBasicPlan() && offer.code === 'PRO') {
+      return 'Upgrade para Pro';
+    }
+
     if (!this.checkoutEnabled()) {
-      return 'Gerenciar no portal';
+      return 'Gerenciar assinatura';
     }
 
     if (this.isCurrentPlan(offer.code)) {
@@ -268,6 +334,10 @@ export class PlanCheckoutComponent {
   }
 
   checkoutButtonIcon(offer: PlanOffer) {
+    if (this.isBasicPlan() && offer.code === 'PRO') {
+      return 'trending_up';
+    }
+
     if (!this.checkoutEnabled()) {
       return 'manage_accounts';
     }

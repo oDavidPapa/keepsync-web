@@ -20,6 +20,7 @@ import { AccountDeletionComponent } from './pages/support/account-deletion/accou
 import { HostSupportComponent } from './pages/support/host-support/host-support.component';
 import { PublicHostGuideComponent } from './pages/support/public-host-guide/public-host-guide.component';
 import { PlanCheckoutComponent } from './pages/billing/checkout/plan-checkout.component';
+import { PlanCheckoutSuccessComponent } from './pages/billing/checkout/success/plan-checkout-success.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -42,6 +43,7 @@ export const routes: Routes = [
       { path: 'properties/:publicId/edit', component: PropertiesComponent },
       { path: 'settings', component: SettingsComponent },
       { path: 'billing/checkout', component: PlanCheckoutComponent },
+      { path: 'billing/checkout/success', component: PlanCheckoutSuccessComponent },
       { path: 'support/host-help', component: HostSupportComponent },
       { path: 'support/contact', component: ContactComponent },
       { path: 'support/account-deletion', component: AccountDeletionComponent },

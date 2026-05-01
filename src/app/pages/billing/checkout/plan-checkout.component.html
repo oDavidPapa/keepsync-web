@@ -39,10 +39,10 @@
     <h2>{{ checkoutHint() }}</h2>
   </section>
 
-  <section class="plans-grid">
+  <section class="plans-grid" *ngIf="visiblePlanOffers().length > 0">
     <article
       class="plan-card"
-      *ngFor="let offer of planOffers"
+      *ngFor="let offer of visiblePlanOffers()"
       [class.plan-card-current]="isCurrentPlan(offer.code)"
     >
       <span class="offer-badge" *ngIf="offer.badge">{{ offer.badge }}</span>
@@ -64,11 +64,11 @@
       <button
         class="ui-btn primary solid"
         type="button"
-        [disabled]="loadingUser() || checkoutBusy() || portalLoading() || isCurrentPlan(offer.code) || !checkoutEnabled()"
-        (click)="startCheckout(offer.code)"
+        [disabled]="isOfferActionDisabled(offer)"
+        (click)="handleOfferAction(offer)"
       >
         <span class="material-symbols-rounded">{{ checkoutButtonIcon(offer) }}</span>
-        {{ isCheckoutLoading(offer.code) ? 'Abrindo checkout...' : checkoutButtonLabel(offer) }}
+        {{ isCheckoutLoading(offer.code) ? checkoutLoadingLabel(offer) : checkoutButtonLabel(offer) }}
       </button>
     </article>
   </section>

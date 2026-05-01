@@ -1,0 +1,83 @@
+<div class="ui-page ui-page-fit billing-success-page">
+  <section class="success-shell" *ngIf="!invalidSession()">
+    <article class="success-card card">
+      <header class="success-top">
+        <div class="success-headline">
+          <div class="success-icon">
+            <span class="material-symbols-rounded">check</span>
+          </div>
+          <div class="success-copy">
+            <span class="success-badge">
+              <span class="dot"></span>
+              Pagamento confirmado
+            </span>
+            <h2>{{ successTitle() }}</h2>
+            <p>{{ successDescription() }}</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="receipt-lines">
+        <div class="line">
+          <span>Plano</span>
+          <strong class="plan-value">{{ planCycleLabel() }}</strong>
+        </div>
+        <div class="line">
+          <span>Vigencia</span>
+          <strong class="period-tags">
+            <span class="period-tag">
+              <span class="dot"></span>
+              De {{ periodStartLabel() }}
+            </span>
+            <span class="period-tag">
+              <span class="dot"></span>
+              Ate {{ periodEndLabel() }}
+            </span>
+          </strong>
+        </div>
+        <div class="line">
+          <span>Proxima cobranca</span>
+          <strong>{{ nextChargeLabel() }}</strong>
+        </div>
+        <div class="line">
+          <span>Desconto aplicado</span>
+          <strong class="discount">- R$ 0,00</strong>
+        </div>
+      </section>
+
+      <section class="total-row">
+        <div class="total-copy">
+          <span>Total pago</span>
+          <small>Cobrado hoje</small>
+        </div>
+        <strong>{{ paidTotalLabel() }}</strong>
+      </section>
+
+      <section class="action-row">
+        <button class="ui-btn primary solid mini" type="button" (click)="goToDashboard()">
+          <span class="material-symbols-rounded">dashboard</span>
+          Ir para o painel
+        </button>
+        <button class="ui-btn ghost mini" type="button" [disabled]="portalLoading()" (click)="openBillingPortal()">
+          <span class="material-symbols-rounded">manage_accounts</span>
+          {{ portalLoading() ? 'Abrindo...' : 'Gerenciar assinatura' }}
+        </button>
+      </section>
+    </article>
+    <p class="secure-note">Pagamento seguro via Stripe - Cancele quando quiser</p>
+  </section>
+
+  <section class="invalid-state card" *ngIf="invalidSession()">
+    <div class="invalid-icon">
+      <span class="material-symbols-rounded">warning</span>
+    </div>
+    <div>
+      <h3>Link de retorno invalido</h3>
+      <p>Esse acesso nao confirma pagamento. Para assinar, inicie o checkout novamente.</p>
+    </div>
+    <button class="ui-btn primary solid" type="button" (click)="backToCheckout()">
+      <span class="material-symbols-rounded">workspace_premium</span>
+      Voltar para Checkout
+    </button>
+  </section>
+</div>
